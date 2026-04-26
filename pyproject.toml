@@ -7,7 +7,7 @@ name = "p2p-fraud-detective-fr"
 version = "0.1.0"
 description = "Mini-MindBridge open-source pour détection de fraude P2P sur ETI françaises (Benford, Isolation Forest, NetworkX, Sirene v3, DECP)"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.15"
 license = { text = "MIT" }
 authors = [{ name = "Ludovic Labeaut" }]
 keywords = [
