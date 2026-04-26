@@ -1,0 +1,24 @@
+# Pondérations du moteur de risk score.
+# Modifiez ces valeurs pour adapter l'outil à votre profil de risque interne.
+
+# Seuils de validation observés (€) — utilisés par le détecteur sous-seuils.
+thresholds:
+  validation_levels: [1000, 5000, 10000, 25000, 50000]
+  epsilon_pct: 0.02      # Fenêtre [seuil − ε·seuil, seuil[ pour flagger
+  min_amount: 100        # Ignorer les très petits montants
+
+# Pondérations agrégation Finding -> RiskScore (0-100)
+detector_weights:
+  duplicates: 1.0
+  thresholds: 0.7
+  benford: 0.5
+  sirene: 1.2
+  isolation_forest: 0.8
+  graph: 1.5
+
+# Coefficient de la sévérité dans la formule finale
+severity_multiplier:
+  low: 0.1
+  medium: 0.3
+  high: 0.6
+  critical: 1.0
