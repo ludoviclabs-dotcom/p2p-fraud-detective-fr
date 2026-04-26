@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env / secrets
+.env
+.env.local
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project data
+data/cache/
+data/synthetic/*.csv
+data/synthetic/*.parquet
+data/synthetic/*.xlsx
+!data/samples/sample_5k.csv
+!data/samples/sample_5k.parquet
+
+# ML artifacts
+*.joblib
+!tests/fixtures/*.joblib
+
+# Logs
+*.log

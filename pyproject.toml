@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "p2p-fraud-detective-fr"
+version = "0.1.0"
+description = "Mini-MindBridge open-source pour détection de fraude P2P sur ETI françaises (Benford, Isolation Forest, NetworkX, Sirene v3, DECP)"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Ludovic Labeaut" }]
+keywords = [
+    "audit", "fraud-detection", "benford", "isolation-forest",
+    "p2p", "vendor-master", "sirene", "decp", "streamlit",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+
+dependencies = [
+    "streamlit>=1.36",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pydantic>=2.7",
+    "scikit-learn>=1.5",
+    "benford-py>=0.1.7",
+    "rapidfuzz>=3.9",
+    "networkx>=3.3",
+    "duckdb>=1.0",
+    "openpyxl>=3.1",
+    "pyarrow>=16.0",
+    "requests>=2.32",
+    "requests-cache>=1.2",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "faker>=26.0",
+    "plotly>=5.22",
+    "joblib>=1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.108",
+    "responses>=0.25",
+    "ruff>=0.5",
+    "black>=24.4",
+    "ipykernel>=6.29",
+    "jupyter>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ludoviclabeaut/p2p-fraud-detective-fr"
+Repository = "https://github.com/ludoviclabeaut/p2p-fraud-detective-fr"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning:benford.*",
+    "ignore::FutureWarning:pandas.*",
+]
+
+[tool.coverage.run]
+source = ["src/p2p_fraud"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

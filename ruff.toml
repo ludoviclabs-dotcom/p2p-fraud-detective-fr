@@ -1,0 +1,23 @@
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "SIM", # simplify
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "RUF001", # ambiguous unicode chars (× ℹ ° etc.) — voulus dans textes FR
+    "RUF002", # idem dans docstrings
+    "RUF003", # idem dans commentaires
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["B011"]
+"notebooks/*" = ["E402", "F401"]
