@@ -32,7 +32,19 @@ Cet outil comble le manque pour **auditeurs internes, RCSI, contrôleurs de gest
 
 🚀 **[Lien Streamlit Cloud — à venir]**
 
-📽️ **[Vidéo Loom 5 min — à venir]**
+📽️ **[Vidéo Loom 5 min — à venir]** ([script](docs/demo-script.md))
+
+## Performance mesurée (ground truth synthétique 10k factures)
+
+| Détecteur | Recall | Précision | F1 |
+|---|---|---|---|
+| Doublons (exact + fuzzy) | **1.000** | 0.30 | 0.47 |
+| Sous-seuils | **1.000** | 0.46 | 0.63 |
+| Anneaux IBAN (graph NetworkX) | **1.000** | élevée | élevé |
+| Isolation Forest (sur outliers étiquetés) | 0.62 | — | — |
+
+Reproductible : `pytest -s tests/`. Voir [docs/methodologie-audit.md](docs/methodologie-audit.md)
+pour le mapping ISA 240 / AS 2401 / Sapin 2 / DORA.
 
 ## Quickstart
 
