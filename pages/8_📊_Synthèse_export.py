@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import io
+import tempfile
+import zipfile
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from p2p_fraud.export.excel_findings import build_workbook
+from p2p_fraud.export.parquet_for_powerbi import export_to_parquet
 from p2p_fraud.scoring.risk_engine import aggregate_findings, severity_band, to_dataframe
 
 st.set_page_config(page_title="Synthèse — P2P Fraud Detective", page_icon="📊", layout="wide")
@@ -101,7 +106,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 st.subheader("📥 Export")
-ec1, ec2 = st.columns(2)
+ec1, ec2, ec3 = st.columns(3)
 
 with ec1:
     csv_buf = df_join.to_csv(index=False).encode("utf-8")
@@ -113,11 +118,32 @@ with ec1:
     )
 
 with ec2:
-    parquet_buf = io.BytesIO()
-    df_scores.to_parquet(parquet_buf, index=False)
+    # Workbook Excel auditeur (Summary + Findings + Invoices + RiskScores)
+    wb = build_workbook(invoices=df, findings=all_findings, risk_scores=scores)
+    xlsx_buf = io.BytesIO()
+    wb.save(xlsx_buf)
     st.download_button(
-        "🪶 Parquet (tous les scores — pour Power BI)",
-        data=parquet_buf.getvalue(),
-        file_name="p2p_risk_scores.parquet",
-        mime="application/octet-stream",
+        "📊 Workbook Excel auditeur",
+        data=xlsx_buf.getvalue(),
+        file_name="p2p_findings.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        help="4 onglets : Summary, RiskScores, Findings (avec hyperliens), Invoices",
+    )
+
+with ec3:
+    # Bundle Parquet pour Power BI
+    with (
+        tempfile.TemporaryDirectory() as tmp,
+        zipfile.ZipFile((zip_buf := io.BytesIO()), "w", zipfile.ZIP_DEFLATED) as zf,
+    ):
+        tmp_path = Path(tmp)
+        export_to_parquet(tmp_path, invoices=df, findings=all_findings, risk_scores=scores)
+        for parquet_file in tmp_path.glob("*.parquet"):
+            zf.write(parquet_file, arcname=parquet_file.name)
+    st.download_button(
+        "🪶 Bundle Parquet (Power BI)",
+        data=zip_buf.getvalue(),
+        file_name="p2p_powerbi_dataset.zip",
+        mime="application/zip",
+        help="invoices.parquet + findings.parquet + risk_scores.parquet — à connecter dans Power BI Desktop",
     )
