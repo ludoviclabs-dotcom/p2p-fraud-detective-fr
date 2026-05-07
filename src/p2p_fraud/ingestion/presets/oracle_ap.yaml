@@ -1,0 +1,33 @@
+name: oracle_ap
+label: "Oracle AP — AP_INVOICES_ALL / AP_SUPPLIERS"
+description: |
+  Export Oracle EBS / Fusion AP_INVOICES_ALL joint à AP_SUPPLIERS et
+  AP_INVOICE_DISTRIBUTIONS_ALL. Champs anglais, dates ISO 8601.
+
+signature_columns:
+  - INVOICE_ID
+  - VENDOR_ID
+  - INVOICE_NUM
+  - INVOICE_AMOUNT
+  - INVOICE_DATE
+  - INVOICE_CURRENCY_CODE
+  - GL_DATE
+  - PO_NUMBER
+
+mapping:
+  invoice_id: INVOICE_NUM
+  siren: VENDOR_TAX_ID_NUM
+  vendor_name: VENDOR_NAME
+  iban: REMIT_TO_IBAN
+  amount: INVOICE_AMOUNT
+  currency: INVOICE_CURRENCY_CODE
+  invoice_date: INVOICE_DATE
+  posting_date: GL_DATE
+  po_number: PO_NUMBER
+  user_id: CREATED_BY
+  cost_center: COST_CENTER_SEGMENT
+  gl_account: NATURAL_ACCOUNT_SEGMENT
+
+date_format: "%Y-%m-%d"
+decimal_separator: "."
+thousand_separator: ","

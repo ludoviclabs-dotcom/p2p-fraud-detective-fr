@@ -1,0 +1,31 @@
+name: cegid_loop
+label: "Cegid Loop — Export factures fournisseurs"
+description: |
+  Export Cegid Loop (Y2, XRP Sprint, Cegid PMI) — très courant chez les ETI françaises.
+  Champs en français, dates au format JJ/MM/AAAA.
+
+signature_columns:
+  - "Numéro de facture"
+  - "Tiers"
+  - "Date de pièce"
+  - "Montant TTC"
+  - "Compte général"
+  - "Code journal"
+
+mapping:
+  invoice_id: "Numéro de facture"
+  siren: "SIREN"
+  vendor_name: "Tiers"
+  iban: "IBAN"
+  amount: "Montant TTC"
+  currency: "Devise"
+  invoice_date: "Date de pièce"
+  posting_date: "Date de comptabilisation"
+  po_number: "Numéro de commande"
+  user_id: "Utilisateur"
+  cost_center: "Centre de coût"
+  gl_account: "Compte général"
+
+date_format: "%d/%m/%Y"
+decimal_separator: ","
+thousand_separator: " "

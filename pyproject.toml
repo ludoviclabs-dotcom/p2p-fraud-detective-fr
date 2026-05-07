@@ -64,6 +64,12 @@ Repository = "https://github.com/ludoviclabeaut/p2p-fraud-detective-fr"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+p2p_fraud = [
+    "scoring/*.yaml",
+    "ingestion/presets/*.yaml",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
