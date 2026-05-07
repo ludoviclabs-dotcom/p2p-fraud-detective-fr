@@ -1,0 +1,11 @@
+entity_id,name,aliases,kind,country,list_source,listed_at,reason
+EU-2024-0142,"Acme Energy Holdings Ltd","ACME ENERGY HOLDINGS;Acme Energy Hldgs",entity,RU,EU_CONSOLIDATED,2024-03-12,"Sanctions sectorielles UE — énergie"
+EU-2024-0203,"BlackTrident Trading SA","BlackTrident SA;BlackTrident",entity,CY,EU_CONSOLIDATED,2024-05-08,"Contournement de sanctions"
+US-OFAC-SDN-58812,"Sirius Maritime LLC","SIRIUS MARITIME;Sirius Maritime",entity,IR,OFAC_SDN,2023-11-21,"Soutien à entité sanctionnée"
+FR-TRESOR-2025-018,"Société Aigle Noir","Aigle Noir SARL;SOCIETE AIGLE NOIR",entity,FR,FR_TRESOR,2025-02-14,"Gel des avoirs — financement du terrorisme"
+EU-2024-0322,"Kowalski Industrial sp z o.o.","Kowalski Industrial",entity,PL,EU_CONSOLIDATED,2024-09-01,"Détournement de biens à double usage"
+PEP-FR-001,"Jean-Pierre Dubois","DUBOIS Jean-Pierre;Jean P. Dubois",person,FR,PEP_FR,2024-01-01,"Personne politiquement exposée — élu local"
+PEP-FR-002,"Marie Lefèvre","LEFEVRE Marie",person,FR,PEP_FR,2023-06-15,"Personne politiquement exposée — directrice agence d'État"
+PEP-EU-118,"Anton Petrov","PETROV Anton;Petrov A.",person,BG,PEP_EU,2024-04-22,"Membre de gouvernement étranger"
+US-OFAC-SDN-58999,"Reza Ghorbani","GHORBANI Reza",person,IR,OFAC_SDN,2024-07-30,"Soutien à programme de prolifération"
+FR-TRESOR-2025-027,"Dimitri Volkov","VOLKOV Dimitri;Volkov D.",person,RU,FR_TRESOR,2025-04-02,"Gel des avoirs"
