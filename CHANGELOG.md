@@ -28,6 +28,24 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
   - Service `cases.service` avec garde-fous (clôture motivée obligatoire,
     pas de modification post-clôture).
   - Page Streamlit `🗂️ File d'investigation` + `📜 Audit trail`.
+- Sprint 4 — Reason codes FR + score waterfall :
+  - Modèle `Contribution` ajouté à `RiskScore` (rétrocompat préservée).
+  - Table `reason_codes` couvrant les 13 règles MVP, FR + citations
+    référentielles (ISA 240, AFP 2026, AICPA, Sapin 2, LCB-FT).
+  - `aggregate_findings_with_explanations()` produit waterfall ordonné
+    par contribution + reason codes par finding.
+  - `explainer.py` : `score_waterfall`, `explain_isolation_forest_row`
+    (perturbation locale, sans dépendance shap), `top_contributions_summary`.
+  - Page Streamlit `💡 Score Explorer` (waterfall Plotly + reason codes).
+- Sprint 5 — Cockpit € exposition + fiche fournisseur 360° :
+  - Service `exposure` : `compute_finding_exposure`, `aggregate_exposure_by_vendor`
+    (déduplication par règle), `cockpit_summary` (KPIs CFO).
+  - Service `vendor_360` : agrège profil + paiements + master data history
+    + findings + sanctions, sans appel réseau.
+  - Page `🎯 Cockpit` (position 0 dans la nav) : exposition totale et critique,
+    cases ouverts/en retard SLA/critiques non assignés, top 10 fournisseurs.
+  - Page `🪪 Fiche fournisseur 360°` : onglets Profil / Paiements / Master data /
+    Findings, query param `?vendor_id=...` supporté.
 
 ### Modifié
 - README repositionné « Vendor & Payment Integrity FR-native ».
