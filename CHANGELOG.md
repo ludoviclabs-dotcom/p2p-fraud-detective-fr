@@ -7,6 +7,17 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 ## [Unreleased]
 
 ### Ajouté
+- *(prochains changements ici)*
+
+## [0.2.0] - 2026-05-07
+
+Sprints 1 → 8 (technique). Repositionnement produit, master data history,
+sanctions / PEP, case management + audit log, reason codes + waterfall +
+explainer, cockpit € exposition, fiche fournisseur 360°, presets ERP, RBAC +
+chiffrement IBAN, DPIA et registre AI Act, vectorisation des doublons et
+benchmark reproductible, site MkDocs.
+
+### Ajouté
 - ADR-0001 « Repositionnement produit » (Vendor & Payment Integrity FR-native).
 - ADR-0002 « Benford rétrogradé » (scoping orienté risque, hors score consolidé par défaut).
 - ADR-0003 « Streamlit façade démo, FastAPI prévu en M3 ».
@@ -66,6 +77,21 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
   - Page `🛡️ Gouvernance` : classification AI Act + téléchargement docs +
     bascule ML + audit log avec vérification d'intégrité + tableau récap
     sécurité.
+- Sprint 8 — Hardening technique :
+  - ADR-0004 — vectorisation doublons fuzzy via `rapidfuzz.process.cdist`,
+    gain ~20× sur 50 k factures.
+  - ADR-0005 — politique de release SemVer + tags + GitHub Releases.
+  - `scripts/bench_pipeline.py` : profilage end-to-end par étape.
+  - `scripts/benchmark_f1.py` : F1 par détecteur sur ground truth.
+  - `Makefile` : install, test, lint, format, bench, bench-f1, dataset-50k,
+    docs.
+  - 8 nouveaux tests d'intégration sécurité (RBAC × case service, tampering
+    avancés sur audit log : suppression d'entrée, swap de hashes, prev_hash
+    forgé, lifecycle complet multi-utilisateurs).
+  - Site MkDocs Material (`mkdocs.yml`, `docs/index.md`, `docs/benchmark.md`),
+    workflow GitHub Pages (`.github/workflows/docs.yml`).
+  - `RELEASE.md` : processus pas à pas (bump, tag, GitHub Release, hotfix,
+    pre-release).
 
 ### Modifié
 - README repositionné « Vendor & Payment Integrity FR-native ».
@@ -77,3 +103,9 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 ### Déprécié
 - Le finding direct produit par Benford n'est plus pris en compte dans le score
   consolidé par défaut. La compatibilité est préservée via override explicite.
+
+## [0.1.0] - 2026-05-01
+
+Première version publique : 7 détecteurs (Benford, doublons fuzzy, sous-seuils,
+Sirene v3, Isolation Forest, anneaux NetworkX, risk score consolidé), Streamlit
+multipage, dataset synthétique étiqueté, mapping ISA 240 / Sapin 2 / DORA.
