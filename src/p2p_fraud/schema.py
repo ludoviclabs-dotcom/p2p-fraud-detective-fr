@@ -87,8 +87,34 @@ class Finding(BaseModel):
         return SEVERITY_WEIGHT[self.severity]
 
 
+class Contribution(BaseModel):
+    """Contribution unitaire d'un détecteur au score consolidé d'une facture.
+
+    Sert à construire les *waterfall* d'explication (Sprint 4) : chaque ligne
+    est traçable à un Finding source (`finding_rule_id` + `signal`) et donne
+    le poids appliqué + la valeur brute + la part du score finale.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    detector: str
+    finding_rule_id: str
+    signal: str
+    severity: str
+    weight: float
+    severity_multiplier: float
+    contribution: float  # value en points sur 0..100
+    contribution_pct: float = 0.0  # part dans le score final
+    reason_fr: str | None = None
+
+
 class RiskScore(BaseModel):
-    """Score consolidé par facture (ou par fournisseur via vendor_id)."""
+    """Score consolidé par facture (ou par fournisseur via vendor_id).
+
+    Les champs `contributions` et `reason_codes_fr` sont optionnels et alimentés
+    par `aggregate_findings_with_explanations` (Sprint 4). Les anciens appelants
+    de `aggregate_findings` ne sont pas impactés (defaults vides).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -96,6 +122,8 @@ class RiskScore(BaseModel):
     score: float = Field(..., ge=0, le=100)
     findings_count: int = 0
     breakdown: dict[str, float] = Field(default_factory=dict)
+    contributions: list[Contribution] = Field(default_factory=list)
+    reason_codes_fr: list[str] = Field(default_factory=list)
 
     @field_validator("score")
     @classmethod

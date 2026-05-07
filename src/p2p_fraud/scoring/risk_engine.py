@@ -21,7 +21,8 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from p2p_fraud.schema import Finding, RiskScore, Severity
+from p2p_fraud.schema import Contribution, Finding, RiskScore, Severity
+from p2p_fraud.scoring.reason_codes import render_reason
 
 DEFAULT_WEIGHTS_PATH = Path(__file__).resolve().parent / "weights.yaml"
 
@@ -71,8 +72,13 @@ def aggregate_findings(
     weights_path: Path | None = None,
     detector_weights: dict[str, float] | None = None,
     severity_multiplier: dict[Severity, float] | None = None,
+    with_explanations: bool = False,
 ) -> dict[str, RiskScore]:
-    """Agrège une liste de Findings en RiskScore par invoice_id."""
+    """Agrège une liste de Findings en RiskScore par invoice_id.
+
+    Si `with_explanations=True`, alimente `RiskScore.contributions` (waterfall
+    Sprint 4) et `RiskScore.reason_codes_fr` (phrases FR par finding).
+    """
     detector_w, severity_m = _load_weights(weights_path)
     if detector_weights:
         detector_w = {**detector_w, **detector_weights}
@@ -82,6 +88,8 @@ def aggregate_findings(
     raw_score: dict[str, float] = defaultdict(float)
     breakdown: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     counts: dict[str, int] = defaultdict(int)
+    contribs: dict[str, list[Contribution]] = defaultdict(list)
+    reasons: dict[str, list[str]] = defaultdict(list)
 
     for f in findings:
         weight = detector_w.get(f.detector, 0.5)
@@ -89,21 +97,62 @@ def aggregate_findings(
         # Évite que des centaines de findings de scoping polluent le score.
         if weight <= 0:
             continue
-        contribution = weight * severity_m.get(f.severity, 0.3) * _NORMALIZATION
+        sev_mult = severity_m.get(f.severity, 0.3)
+        contribution = weight * sev_mult * _NORMALIZATION
         raw_score[f.invoice_id] += contribution
         breakdown[f.invoice_id][f.detector] += contribution
         counts[f.invoice_id] += 1
+        if with_explanations:
+            reason_fr = render_reason(f)
+            contribs[f.invoice_id].append(
+                Contribution(
+                    detector=f.detector,
+                    finding_rule_id=f.rule_id,
+                    signal=f.signal,
+                    severity=f.severity.value,
+                    weight=weight,
+                    severity_multiplier=sev_mult,
+                    contribution=round(contribution, 2),
+                    reason_fr=reason_fr,
+                )
+            )
+            reasons[f.invoice_id].append(reason_fr)
 
     out: dict[str, RiskScore] = {}
     for invoice_id, total in raw_score.items():
         capped = min(100.0, total)
+        invoice_contribs = contribs.get(invoice_id, [])
+        if invoice_contribs and total > 0:
+            for c in invoice_contribs:
+                c.contribution_pct = round(c.contribution / total * 100, 1)
         out[invoice_id] = RiskScore(
             invoice_id=invoice_id,
             score=capped,
             findings_count=counts[invoice_id],
             breakdown={k: round(v, 2) for k, v in breakdown[invoice_id].items()},
+            contributions=sorted(
+                invoice_contribs, key=lambda c: c.contribution, reverse=True
+            ),
+            reason_codes_fr=reasons.get(invoice_id, []),
         )
     return out
+
+
+def aggregate_findings_with_explanations(
+    findings: list[Finding],
+    *,
+    weights_path: Path | None = None,
+    detector_weights: dict[str, float] | None = None,
+    severity_multiplier: dict[Severity, float] | None = None,
+) -> dict[str, RiskScore]:
+    """Wrapper conventionnel : `aggregate_findings(..., with_explanations=True)`."""
+    return aggregate_findings(
+        findings,
+        weights_path=weights_path,
+        detector_weights=detector_weights,
+        severity_multiplier=severity_multiplier,
+        with_explanations=True,
+    )
 
 
 def to_dataframe(scores: dict[str, RiskScore]) -> pd.DataFrame:
