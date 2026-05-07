@@ -101,3 +101,47 @@ class RiskScore(BaseModel):
     @classmethod
     def _round_score(cls, v: float) -> float:
         return round(v, 2)
+
+
+class MasterDataField(StrEnum):
+    """Champs sensibles d'un fournisseur dont les changements sont surveillés."""
+
+    IBAN = "iban"
+    BIC = "bic"
+    NAME = "name"
+    ADDRESS = "address"
+    SIREN = "siren"
+    CONTACT_EMAIL = "contact_email"
+    CONTACT_PHONE = "contact_phone"
+    STATUS = "status"  # active / blocked / dormant
+
+
+class VendorMasterEvent(BaseModel):
+    """Événement de modification du master data fournisseur.
+
+    Chaque ligne est une *modification atomique d'un champ*. Pour un changement
+    multi-champs (ex. nom + IBAN le même jour), produire plusieurs événements
+    avec le même `changed_at`.
+
+    Les valeurs `iban` ne sont jamais stockées en clair en production : utilisez
+    le service `security.crypto` (à venir) ou hashez côté ingestion.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    event_id: str
+    vendor_id: str
+    field: MasterDataField
+    old_value: str | None = None
+    new_value: str | None = None
+    changed_at: datetime
+    changed_by: str | None = None  # user_id ERP
+    approved_by: str | None = None  # user_id approbateur si 4-eyes
+    source: str = "erp"  # erp | manual | api | import
+
+    @field_validator("changed_at")
+    @classmethod
+    def _aware_datetime(cls, v: datetime) -> datetime:
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v

@@ -1,4 +1,11 @@
-from p2p_fraud.synthetic.generator import FraudType
+import pytest
+
+from p2p_fraud.synthetic.generator import (
+    FraudType,
+    MasterDataEventsConfig,
+    attach_vendor_ids,
+    generate_master_data_events,
+)
 
 
 def test_dataset_shape(small_dataset):
@@ -47,3 +54,39 @@ def test_seed_reproducibility():
     a, _ = generate_dataset(cfg_a)
     b, _ = generate_dataset(cfg_b)
     assert a.equals(b)
+
+
+def test_attach_vendor_ids_adds_column(small_dataset):
+    invoices, vendors = small_dataset
+    enriched = attach_vendor_ids(invoices, vendors)
+    assert "vendor_id" in enriched.columns
+    assert (enriched["vendor_id"] != "UNKNOWN").mean() > 0.95  # quasi-tous résolus
+    # L'original reste intact (immutabilité)
+    assert "vendor_id" not in invoices.columns
+
+
+def test_master_data_events_have_ground_truth(small_dataset):
+    invoices, vendors = small_dataset
+    invoices = attach_vendor_ids(invoices, vendors)
+    events = generate_master_data_events(
+        invoices,
+        vendors,
+        MasterDataEventsConfig(
+            n_bec_swaps=5,
+            n_dormant_reactivations=3,
+            n_name_iban_same_day=2,
+            n_legitimate_changes=20,
+            seed=42,
+        ),
+    )
+    assert "fraud_type" in events.columns
+    assert (events["fraud_type"] == FraudType.BEC_IBAN_SWAP.value).sum() > 0
+    # Au moins 1 dormant ou name_iban_same_day selon la disponibilité de candidates
+    fraud_kinds = set(events.loc[events["is_fraud"], "fraud_type"].unique())
+    assert FraudType.BEC_IBAN_SWAP.value in fraud_kinds
+
+
+def test_master_data_events_require_vendor_id(small_dataset):
+    invoices, vendors = small_dataset
+    with pytest.raises(ValueError, match="vendor_id"):
+        generate_master_data_events(invoices, vendors, MasterDataEventsConfig())
