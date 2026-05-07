@@ -73,6 +73,7 @@ def aggregate_findings(
     detector_weights: dict[str, float] | None = None,
     severity_multiplier: dict[Severity, float] | None = None,
     with_explanations: bool = False,
+    ml_enabled: bool = True,
 ) -> dict[str, RiskScore]:
     """Agrège une liste de Findings en RiskScore par invoice_id.
 
@@ -84,6 +85,11 @@ def aggregate_findings(
         detector_w = {**detector_w, **detector_weights}
     if severity_multiplier:
         severity_m = {**severity_m, **severity_multiplier}
+
+    # Bascule ML (page Gouvernance / AI Act art. 50) : retire l'apport
+    # Isolation Forest du score consolidé. Les autres détecteurs sont conservés.
+    if not ml_enabled:
+        detector_w = {**detector_w, "isolation_forest": 0.0}
 
     raw_score: dict[str, float] = defaultdict(float)
     breakdown: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))

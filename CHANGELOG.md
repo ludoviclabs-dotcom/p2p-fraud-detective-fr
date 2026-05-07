@@ -46,6 +46,26 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
     cases ouverts/en retard SLA/critiques non assignés, top 10 fournisseurs.
   - Page `🪪 Fiche fournisseur 360°` : onglets Profil / Paiements / Master data /
     Findings, query param `?vendor_id=...` supporté.
+- Sprint 6 — Presets ERP (SAP / Cegid / Sage / Oracle) :
+  - 5 presets YAML embarqués (sap_lfa1_rbkp, cegid_loop, sage_x3, oracle_ap,
+    generic_csv) avec mapping vers schéma canonique + parse dates/montants.
+  - `auto_detect_preset()` : signature de colonnes (seuil 3) + fallback générique.
+  - Onglet Streamlit *Connecteur ERP* dans la page Upload.
+  - `pyproject.toml` : `package-data` pour inclure les YAML dans les wheels.
+- Sprint 7 — Sécurité, RBAC, gouvernance IA :
+  - `security.crypto` : `CryptoService` Fernet (AES-128-CBC + HMAC-SHA256),
+    helpers `encrypt_iban` / `decrypt_iban` / `iban_masked`. Idempotent,
+    rétrocompatible (texte clair toléré pour migration progressive).
+  - `security.auth` : `AuthService` + `User` + `Role` (viewer/analyst/manager/admin),
+    PBKDF2-SHA256 200k itérations, décorateur `@requires_role` programmatique
+    avec mode strict via `P2P_FRAUD_AUTH_REQUIRED=1`.
+  - `risk_engine` : nouveau paramètre `ml_enabled` (kill switch Isolation Forest)
+    pour la page Gouvernance.
+  - Templates compliance pré-remplis : DPIA (CNIL art. 35), registre AI Act
+    (UE 2024/1689), registre traitements (RGPD art. 30).
+  - Page `🛡️ Gouvernance` : classification AI Act + téléchargement docs +
+    bascule ML + audit log avec vérification d'intégrité + tableau récap
+    sécurité.
 
 ### Modifié
 - README repositionné « Vendor & Payment Integrity FR-native ».

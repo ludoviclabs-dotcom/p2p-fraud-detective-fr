@@ -107,3 +107,16 @@ def test_benford_does_not_inflate_count_for_other_invoices():
     scores = aggregate_findings(findings)
     assert scores["INV1"].findings_count == 1
     assert "benford" not in scores["INV1"].breakdown
+
+
+def test_ml_kill_switch_removes_isolation_forest_contribution():
+    """Sprint 7 : page Gouvernance peut désactiver le scoring ML (AI Act)."""
+    findings = [
+        _f("INV1", "duplicates", Severity.HIGH),
+        _f("INV1", "isolation_forest", Severity.CRITICAL),
+    ]
+    with_ml = aggregate_findings(findings, ml_enabled=True)
+    without_ml = aggregate_findings(findings, ml_enabled=False)
+    assert with_ml["INV1"].score > without_ml["INV1"].score
+    assert "isolation_forest" not in without_ml["INV1"].breakdown
+    assert without_ml["INV1"].findings_count == 1  # seul duplicates contribue
