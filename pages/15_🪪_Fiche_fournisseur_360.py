@@ -41,9 +41,7 @@ def _collect_session_findings():
 
 
 vendors = st.session_state.get("df_vendors")
-invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get(
-    "df_invoices"
-)
+invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get("df_invoices")
 master_events = st.session_state.get("df_master_events")
 findings = _collect_session_findings()
 

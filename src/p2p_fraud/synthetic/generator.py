@@ -457,7 +457,9 @@ def generate_master_data_events(
         swap_date = vendor_invoices.iloc[idx]["invoice_date"] - pd.Timedelta(days=2)
         when = pd.Timestamp(swap_date).to_pydatetime().replace(tzinfo=UTC)
         old_iban = vendor_invoices.iloc[0]["iban"]
-        new_iban = faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+        new_iban = (
+            faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+        )
         user = rng.choice(user_pool)
         ev = _new_event(
             vendor_id=vendor_id,
@@ -490,7 +492,9 @@ def generate_master_data_events(
             # Place IBAN change at last - dormant_days, after a long inactivity from "first".
             when = pd.Timestamp(row["last"] - pd.Timedelta(days=10))
             when_dt = when.to_pydatetime().replace(tzinfo=UTC)
-            new_iban = faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+            new_iban = (
+                faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+            )
             user = rng.choice(user_pool)
             ev = _new_event(
                 vendor_id=vendor_id,
@@ -519,10 +523,10 @@ def generate_master_data_events(
         when = pd.Timestamp(vendor_invoices.iloc[len(vendor_invoices) // 2]["invoice_date"])
         when_dt = when.to_pydatetime().replace(tzinfo=UTC)
         user = rng.choice(user_pool)
-        new_iban = faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
-        ev_iban = _new_event(
-            vendor_id, "iban", "FR76OLD", new_iban, when_dt, user, None, "manual"
+        new_iban = (
+            faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
         )
+        ev_iban = _new_event(vendor_id, "iban", "FR76OLD", new_iban, when_dt, user, None, "manual")
         ev_iban["is_fraud"] = True
         ev_iban["fraud_type"] = FraudType.NAME_IBAN_SAME_DAY.value
         events.append(ev_iban)
@@ -554,7 +558,9 @@ def generate_master_data_events(
             vendor_id=vendor_id,
             field_name=field_choice,
             old="OLD",
-            new=faker.email() if "email" in field_choice else faker.address().replace("\n", ", ")[:80],
+            new=faker.email()
+            if "email" in field_choice
+            else faker.address().replace("\n", ", ")[:80],
             when=when_dt,
             changed_by=user,
             approved_by=approver,

@@ -83,7 +83,9 @@ def _pbkdf2(password: str, salt: bytes, iterations: int) -> bytes:
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
 
 
-def hash_password(password: str, *, iterations: int = DEFAULT_PBKDF2_ITERATIONS) -> tuple[str, str, int]:
+def hash_password(
+    password: str, *, iterations: int = DEFAULT_PBKDF2_ITERATIONS
+) -> tuple[str, str, int]:
     """Renvoie (salt_hex, hash_hex, iterations) pour un mot de passe en clair."""
     salt = secrets.token_bytes(16)
     h = _pbkdf2(password, salt, iterations)
@@ -108,9 +110,7 @@ class AuthService:
         if path.exists():
             with path.open(encoding="utf-8") as f:
                 raw = json.load(f)
-            self._users = {
-                d["username"]: User.from_dict(d) for d in raw.get("users", [])
-            }
+            self._users = {d["username"]: User.from_dict(d) for d in raw.get("users", [])}
         else:
             log.info(
                 "Aucun store users.json trouvé (%s). AuthService en mode 'no-auth' "
@@ -155,8 +155,7 @@ def requires_role(required: Role) -> Callable:
                 return func(*args, **kwargs)
             if int(user.role) < int(required):
                 raise AuthError(
-                    f"Rôle insuffisant pour {func.__name__} : "
-                    f"{user.role.name} < {required.name}."
+                    f"Rôle insuffisant pour {func.__name__} : {user.role.name} < {required.name}."
                 )
             return func(*args, **kwargs)
 

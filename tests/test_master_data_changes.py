@@ -68,9 +68,7 @@ def test_iban_change_with_4eyes_does_not_trigger():
         approved_by="U002",
         changed_by="U001",
     )
-    invoices = pd.DataFrame(
-        [_invoice_row("INV1", "V001", when + timedelta(days=10), 5_000.0)]
-    )
+    invoices = pd.DataFrame([_invoice_row("INV1", "V001", when + timedelta(days=10), 5_000.0)])
     findings = md.detect_iban_change_without_4eyes([ev], invoices)
     assert findings == []
 
@@ -101,9 +99,7 @@ def test_iban_change_same_user_approved_treated_as_no_4eyes():
         changed_by="U001",
         approved_by="U001",  # même user
     )
-    invoices = pd.DataFrame(
-        [_invoice_row("INV1", "V001", when + timedelta(days=2), 3_000.0)]
-    )
+    invoices = pd.DataFrame([_invoice_row("INV1", "V001", when + timedelta(days=2), 3_000.0)])
     findings = md.detect_iban_change_without_4eyes([ev], invoices)
     assert len(findings) == 1
     assert findings[0].rule_id == "MD_IBAN_NO_4EYES"
@@ -158,9 +154,7 @@ def test_name_and_iban_same_day():
     base = datetime(2025, 6, 1, 9, 0, tzinfo=UTC)
     iban_ev = _make_event("V001", MasterDataField.IBAN, base)
     name_ev = _make_event("V001", MasterDataField.NAME, base + timedelta(hours=2))
-    invoices = pd.DataFrame(
-        [_invoice_row("INV1", "V001", base + timedelta(days=3), 7_500.0)]
-    )
+    invoices = pd.DataFrame([_invoice_row("INV1", "V001", base + timedelta(days=3), 7_500.0)])
     findings = md.detect_name_and_iban_same_day([iban_ev, name_ev], invoices)
     assert len(findings) == 1
     assert findings[0].rule_id == "MD_NAME_AND_IBAN_SAME_DAY"
@@ -172,9 +166,7 @@ def test_run_all_dedupes_overlapping_findings():
     # IBAN swap sans 4-eyes ET clone vendor même jour
     iban_ev = _make_event("V001", MasterDataField.IBAN, base, approved_by=None)
     name_ev = _make_event("V001", MasterDataField.NAME, base + timedelta(hours=1))
-    invoices = pd.DataFrame(
-        [_invoice_row("INV1", "V001", base + timedelta(days=3), 7_500.0)]
-    )
+    invoices = pd.DataFrame([_invoice_row("INV1", "V001", base + timedelta(days=3), 7_500.0)])
     findings = md.run_all([iban_ev, name_ev], invoices)
     rule_ids = {f.rule_id for f in findings}
     assert "MD_IBAN_NO_4EYES" in rule_ids

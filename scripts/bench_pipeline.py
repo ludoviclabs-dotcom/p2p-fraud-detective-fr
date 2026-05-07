@@ -97,9 +97,7 @@ def main() -> None:
                 new_value=row.get("new_value"),
                 changed_at=pd.Timestamp(row["changed_at"]).to_pydatetime(),
                 changed_by=row.get("changed_by"),
-                approved_by=row.get("approved_by")
-                if pd.notna(row.get("approved_by"))
-                else None,
+                approved_by=row.get("approved_by") if pd.notna(row.get("approved_by")) else None,
                 source=row.get("source", "erp"),
             )
             for _, row in events_df.iterrows()

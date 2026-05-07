@@ -67,7 +67,7 @@ class CryptoService:
             return ""
         if not ciphertext.startswith(PREFIX):
             return ciphertext  # texte clair (migration progressive)
-        token = ciphertext[len(PREFIX):]
+        token = ciphertext[len(PREFIX) :]
         try:
             return self._fernet.decrypt(token.encode("ascii")).decode("utf-8")
         except InvalidToken as e:

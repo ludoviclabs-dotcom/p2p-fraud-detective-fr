@@ -29,8 +29,7 @@ st.set_page_config(
 )
 st.title("🎯 Cockpit")
 st.caption(
-    "Vue CFO / responsable contrôle interne. Tri par exposition financière, "
-    "pas par score brut."
+    "Vue CFO / responsable contrôle interne. Tri par exposition financière, pas par score brut."
 )
 
 
@@ -62,9 +61,7 @@ def _collect_session_findings():
 
 
 findings = _collect_session_findings()
-invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get(
-    "df_invoices"
-)
+invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get("df_invoices")
 cases = service.list_cases()
 
 if not findings:

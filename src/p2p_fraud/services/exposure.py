@@ -156,17 +156,13 @@ def cockpit_summary(
     by_vendor = aggregate_exposure_by_vendor(findings, invoices)
 
     exposure_total = sum(v.exposure_eur for v in by_vendor)
-    exposure_critical = sum(
-        v.exposure_eur for v in by_vendor if v.n_critical > 0
-    )
+    exposure_critical = sum(v.exposure_eur for v in by_vendor if v.n_critical > 0)
 
     cases = cases or []
     now = datetime.now(UTC)
     n_open = sum(1 for c in cases if not c.status.is_closed)
     n_overdue = sum(
-        1
-        for c in cases
-        if not c.status.is_closed and c.sla_deadline and c.sla_deadline < now
+        1 for c in cases if not c.status.is_closed and c.sla_deadline and c.sla_deadline < now
     )
     n_unassigned_critical = sum(
         1

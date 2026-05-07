@@ -105,9 +105,7 @@ def _detect_fuzzy(
     amounts = df["amount"].astype(float).to_numpy()
     vendor_names = df["vendor_name"].fillna("").astype(str).to_numpy()
     norm_names = np.array([_normalize_name(v) for v in vendor_names], dtype=object)
-    ibans = (
-        df.get("iban", pd.Series([""] * n)).fillna("").astype(str).to_numpy()
-    )
+    ibans = df.get("iban", pd.Series([""] * n)).fillna("").astype(str).to_numpy()
     invoice_dates = df["invoice_date"].to_numpy()
 
     # Calcul du bucket par ligne (None pour dates invalides)

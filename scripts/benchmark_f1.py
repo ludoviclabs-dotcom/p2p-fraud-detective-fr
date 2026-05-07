@@ -61,8 +61,9 @@ def evaluate_thresholds(invoices: pd.DataFrame) -> dict:
     findings = detectors_thresholds.detect_under_threshold(invoices)
     flagged = {f.invoice_id for f in findings}
     truth = set(
-        invoices.loc[invoices["fraud_type"] == FraudType.UNDER_THRESHOLD.value, "invoice_id"]
-        .astype(str)
+        invoices.loc[
+            invoices["fraud_type"] == FraudType.UNDER_THRESHOLD.value, "invoice_id"
+        ].astype(str)
     )
     tp = len(flagged & truth)
     fp = len(flagged - truth)
@@ -71,9 +72,7 @@ def evaluate_thresholds(invoices: pd.DataFrame) -> dict:
     return {"tp": tp, "fp": fp, "fn": fn, "precision": p, "recall": r, "f1": f1}
 
 
-def evaluate_master_data(
-    events: pd.DataFrame, invoices: pd.DataFrame
-) -> dict:
+def evaluate_master_data(events: pd.DataFrame, invoices: pd.DataFrame) -> dict:
     pydantic_events = [
         VendorMasterEvent(
             event_id=row["event_id"],

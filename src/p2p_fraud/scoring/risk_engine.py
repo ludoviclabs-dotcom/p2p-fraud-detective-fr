@@ -136,9 +136,7 @@ def aggregate_findings(
             score=capped,
             findings_count=counts[invoice_id],
             breakdown={k: round(v, 2) for k, v in breakdown[invoice_id].items()},
-            contributions=sorted(
-                invoice_contribs, key=lambda c: c.contribution, reverse=True
-            ),
+            contributions=sorted(invoice_contribs, key=lambda c: c.contribution, reverse=True),
             reason_codes_fr=reasons.get(invoice_id, []),
         )
     return out

@@ -32,10 +32,19 @@ def _f(invoice_id: str, detector: str, rule_id: str, severity: Severity, evidenc
 
 def test_waterfall_with_explanations_orders_by_contribution():
     findings = [
-        _f("INV1", "master_data", "MD_IBAN_NO_4EYES", Severity.CRITICAL,
-           {"changed_at": "2025-06-01", "changed_by": "U", "exposure_eur": 1000, "exposure_window_days": 90}),
-        _f("INV1", "duplicates", "DUP_EXACT", Severity.HIGH,
-           {"duplicate_of": "INV2"}),
+        _f(
+            "INV1",
+            "master_data",
+            "MD_IBAN_NO_4EYES",
+            Severity.CRITICAL,
+            {
+                "changed_at": "2025-06-01",
+                "changed_by": "U",
+                "exposure_eur": 1000,
+                "exposure_window_days": 90,
+            },
+        ),
+        _f("INV1", "duplicates", "DUP_EXACT", Severity.HIGH, {"duplicate_of": "INV2"}),
     ]
     scores = aggregate_findings_with_explanations(findings)
     rs = scores["INV1"]

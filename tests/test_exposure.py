@@ -17,10 +17,15 @@ from p2p_fraud.services.exposure import (
 )
 
 
-def _f(invoice_id: str, rule_id: str, vendor_id: str, exposure: float | None,
-       severity: Severity = Severity.CRITICAL,
-       vendor_name: str | None = None,
-       detector: str = "master_data") -> Finding:
+def _f(
+    invoice_id: str,
+    rule_id: str,
+    vendor_id: str,
+    exposure: float | None,
+    severity: Severity = Severity.CRITICAL,
+    vendor_name: str | None = None,
+    detector: str = "master_data",
+) -> Finding:
     ev = {"vendor_id": vendor_id}
     if exposure is not None:
         ev["exposure_eur"] = exposure

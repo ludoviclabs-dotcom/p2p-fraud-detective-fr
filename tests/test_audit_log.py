@@ -65,9 +65,7 @@ def test_verify_chain_detects_prev_hash_tampering(tmp_path):
     log.close()
 
     raw = sqlite3.connect(db)
-    raw.execute(
-        "UPDATE audit_log SET prev_hash = ? WHERE seq = 3", (GENESIS_HASH,)
-    )
+    raw.execute("UPDATE audit_log SET prev_hash = ? WHERE seq = 3", (GENESIS_HASH,))
     raw.commit()
     raw.close()
 
@@ -89,12 +87,20 @@ def test_export_jsonl_round_trips():
 
 
 def test_compute_hash_is_deterministic():
-    h1 = AuditLogEntry.compute_hash(1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH)
-    h2 = AuditLogEntry.compute_hash(1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH)
+    h1 = AuditLogEntry.compute_hash(
+        1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH
+    )
+    h2 = AuditLogEntry.compute_hash(
+        1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH
+    )
     assert h1 == h2
 
 
 def test_compute_hash_changes_when_payload_changes():
-    h1 = AuditLogEntry.compute_hash(1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH)
-    h2 = AuditLogEntry.compute_hash(1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 2}, GENESIS_HASH)
+    h1 = AuditLogEntry.compute_hash(
+        1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 1}, GENESIS_HASH
+    )
+    h2 = AuditLogEntry.compute_hash(
+        1, "2026-05-07T10:00:00+00:00", "u", "k", {"a": 2}, GENESIS_HASH
+    )
     assert h1 != h2

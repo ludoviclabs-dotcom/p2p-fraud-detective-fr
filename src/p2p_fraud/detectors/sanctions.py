@@ -69,9 +69,7 @@ def detect_sanctioned_vendors(
         if not matches:
             continue
         # On garde le meilleur match par catégorie (sanction vs PEP)
-        best_sanction: SanctionMatch | None = next(
-            (m for m in matches if m.is_sanction), None
-        )
+        best_sanction: SanctionMatch | None = next((m for m in matches if m.is_sanction), None)
         best_pep: SanctionMatch | None = next((m for m in matches if m.is_pep), None)
 
         exposure = float(group["amount"].sum())

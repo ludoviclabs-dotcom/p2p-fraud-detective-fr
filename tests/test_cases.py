@@ -67,9 +67,7 @@ def test_close_then_mutation_is_blocked(service: CaseService):
 
 def test_comment_is_allowed_post_closure_and_flagged(service: CaseService):
     case = service.create_case_from_finding(_finding(), actor="alice")
-    service.close(
-        case.case_id, CaseStatus.CLOSED_REJECTED, actor="alice", reason="rejet motivé"
-    )
+    service.close(case.case_id, CaseStatus.CLOSED_REJECTED, actor="alice", reason="rejet motivé")
     # Pas d'exception
     service.comment(case.case_id, actor="bob", text="post-mortem")
     events = service.list_events(case.case_id)

@@ -126,9 +126,7 @@ def waterfall_to_dataframe(steps: list[WaterfallStep]) -> pd.DataFrame:
     )
 
 
-def top_contributions_summary(
-    score: RiskScore, n: int = 3
-) -> str:
+def top_contributions_summary(score: RiskScore, n: int = 3) -> str:
     """Phrase synthèse FR : `score X/100 (top contributeurs : a, b, c)`."""
     if not score.contributions:
         return f"Score {score.score:.0f}/100"

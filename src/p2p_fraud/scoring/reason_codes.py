@@ -115,8 +115,7 @@ _REASON_CODES: dict[str, ReasonCode] = {
     "DUP_EXACT": ReasonCode(
         rule_id="DUP_EXACT",
         template_fr=(
-            "Doublon exact détecté avec la facture {duplicate_of}. "
-            "Risque de double paiement."
+            "Doublon exact détecté avec la facture {duplicate_of}. Risque de double paiement."
         ),
         citation="AICPA Audit Data Standards",
     ),

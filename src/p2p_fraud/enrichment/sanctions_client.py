@@ -142,7 +142,9 @@ class SanctionsClient:
                     kind=row.kind,
                     country=row.country if isinstance(row.country, str) else None,
                     list_source=row.list_source,
-                    listed_at=_parse_date(row.listed_at if isinstance(row.listed_at, str) else None),
+                    listed_at=_parse_date(
+                        row.listed_at if isinstance(row.listed_at, str) else None
+                    ),
                     reason=row.reason if isinstance(row.reason, str) else None,
                     score=int(best),
                 )

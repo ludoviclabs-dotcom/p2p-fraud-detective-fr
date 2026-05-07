@@ -99,7 +99,9 @@ class CaseService:
         case = Case(
             case_id=case_id,
             finding_ids=[finding.rule_id + "::" + finding.invoice_id],
-            invoice_id=finding.invoice_id if not finding.invoice_id.startswith("VENDOR::") else None,
+            invoice_id=finding.invoice_id
+            if not finding.invoice_id.startswith("VENDOR::")
+            else None,
             vendor_id=vendor_id or finding.evidence.get("vendor_id"),
             title=title or f"{finding.rule_id} — {finding.invoice_id}",
             severity=finding.severity.value,
@@ -175,9 +177,7 @@ class CaseService:
 
     def attach_evidence(self, case_id: str, *, actor: str, path: str, label: str) -> Case:
         case = self._fetch_or_raise(case_id)
-        self._record_event(
-            case_id, "evidence_attached", actor, {"path": path, "label": label}
-        )
+        self._record_event(case_id, "evidence_attached", actor, {"path": path, "label": label})
         return case
 
     def escalate(self, case_id: str, *, actor: str, channel: str, reason: str) -> Case:
@@ -238,7 +238,9 @@ class CaseService:
     def list_cases(self, *, status: CaseStatus | None = None) -> list[Case]:
         cur = self._conn.cursor()
         if status:
-            cur.execute("SELECT * FROM cases WHERE status = ? ORDER BY created_at DESC", (status.value,))
+            cur.execute(
+                "SELECT * FROM cases WHERE status = ? ORDER BY created_at DESC", (status.value,)
+            )
         else:
             cur.execute("SELECT * FROM cases ORDER BY created_at DESC")
         return [self._row_to_case(row) for row in cur.fetchall()]
@@ -373,7 +375,14 @@ class CaseService:
         cur.execute(
             "INSERT INTO case_events (event_id, case_id, kind, actor, payload, at) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            (event.event_id, case_id, kind, actor, json.dumps(payload, sort_keys=True), event.at.isoformat()),
+            (
+                event.event_id,
+                case_id,
+                kind,
+                actor,
+                json.dumps(payload, sort_keys=True),
+                event.at.isoformat(),
+            ),
         )
         self._conn.commit()
         # Audit log immutable

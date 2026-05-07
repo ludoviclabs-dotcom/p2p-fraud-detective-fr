@@ -66,7 +66,11 @@ def _exposure_after_event(
     if subset.empty:
         return 0.0, []
     subset["invoice_date"] = pd.to_datetime(subset["invoice_date"], utc=True, errors="coerce")
-    after_ts = pd.Timestamp(after).tz_convert("UTC") if pd.Timestamp(after).tzinfo else pd.Timestamp(after, tz="UTC")
+    after_ts = (
+        pd.Timestamp(after).tz_convert("UTC")
+        if pd.Timestamp(after).tzinfo
+        else pd.Timestamp(after, tz="UTC")
+    )
     end_ts = after_ts + pd.Timedelta(days=window_days)
     in_window = subset[(subset["invoice_date"] >= after_ts) & (subset["invoice_date"] <= end_ts)]
     return float(in_window["amount"].sum()), in_window["invoice_id"].astype(str).tolist()
@@ -280,9 +284,7 @@ def run_all(
             dormant_days=dormant_days,
             exposure_window_days=exposure_window_days,
         )
-        + detect_name_and_iban_same_day(
-            events, invoices, exposure_window_days=exposure_window_days
-        )
+        + detect_name_and_iban_same_day(events, invoices, exposure_window_days=exposure_window_days)
     )
     # Déduplication (invoice_id, rule_id, vendor_id)
     seen: set[tuple[str, str, str]] = set()

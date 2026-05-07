@@ -49,9 +49,7 @@ def _filter_invoices(invoices: pd.DataFrame, vendor_id: str) -> pd.DataFrame:
 def _filter_events(events: pd.DataFrame, vendor_id: str, field: str) -> list[dict]:
     if events is None or events.empty or "vendor_id" not in events.columns:
         return []
-    sub = events.loc[
-        (events["vendor_id"] == vendor_id) & (events["field"] == field)
-    ].copy()
+    sub = events.loc[(events["vendor_id"] == vendor_id) & (events["field"] == field)].copy()
     if sub.empty:
         return []
     return [
@@ -114,9 +112,7 @@ def get_vendor_summary(
 
     findings_filtered = _filter_findings(findings or [], vendor_id)
     summary.findings = findings_filtered
-    summary.is_sanctioned = any(
-        f.rule_id == "SANCTIONS_VENDOR_HIT" for f in findings_filtered
-    )
+    summary.is_sanctioned = any(f.rule_id == "SANCTIONS_VENDOR_HIT" for f in findings_filtered)
     summary.is_pep = any(f.rule_id == "SANCTIONS_VENDOR_PEP" for f in findings_filtered)
 
     return summary

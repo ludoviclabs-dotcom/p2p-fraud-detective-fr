@@ -101,9 +101,7 @@ class Preset:
         return out
 
 
-def _coerce_amount(
-    series: pd.Series, decimal_sep: str, thousand_sep: str
-) -> pd.Series:
+def _coerce_amount(series: pd.Series, decimal_sep: str, thousand_sep: str) -> pd.Series:
     if pd.api.types.is_numeric_dtype(series):
         return series.astype(float)
     cleaned = series.astype(str).str.strip()
@@ -146,9 +144,7 @@ def auto_detect_preset(
     """
     headers = list(headers)
     candidates = [
-        (p, p.signature_match_score(headers))
-        for p in list_presets()
-        if p.signature_columns
+        (p, p.signature_match_score(headers)) for p in list_presets() if p.signature_columns
     ]
     candidates.sort(key=lambda x: x[1], reverse=True)
     if candidates and candidates[0][1] >= threshold:

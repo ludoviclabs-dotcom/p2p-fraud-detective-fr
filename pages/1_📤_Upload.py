@@ -155,8 +155,11 @@ with tab_erp:
                 st.error(f"Erreur d'application du preset : {e}")
                 st.stop()
 
-            missing = [c for c in ("invoice_id", "vendor_name", "amount", "invoice_date")
-                       if c not in canonical_df.columns]
+            missing = [
+                c
+                for c in ("invoice_id", "vendor_name", "amount", "invoice_date")
+                if c not in canonical_df.columns
+            ]
             if missing:
                 st.error(f"❌ Colonnes obligatoires manquantes après mapping : {missing}")
                 st.stop()
