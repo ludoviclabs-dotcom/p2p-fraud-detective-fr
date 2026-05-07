@@ -28,10 +28,12 @@ DEFAULT_WEIGHTS_PATH = Path(__file__).resolve().parent / "weights.yaml"
 _DEFAULT_DETECTOR_WEIGHTS: dict[str, float] = {
     "duplicates": 1.0,
     "thresholds": 0.7,
-    "benford": 0.5,
+    "benford": 0.0,  # rétrogradé en outil de scoping (ADR-0002)
     "sirene": 1.2,
     "isolation_forest": 0.8,
     "graph": 1.5,
+    "master_data": 1.5,
+    "sanctions": 1.6,
 }
 
 _DEFAULT_SEVERITY_MULT: dict[Severity, float] = {
@@ -83,6 +85,10 @@ def aggregate_findings(
 
     for f in findings:
         weight = detector_w.get(f.detector, 0.5)
+        # Détecteurs avec poids 0 (ex. Benford depuis ADR-0002) : skip.
+        # Évite que des centaines de findings de scoping polluent le score.
+        if weight <= 0:
+            continue
         contribution = weight * severity_m.get(f.severity, 0.3) * _NORMALIZATION
         raw_score[f.invoice_id] += contribution
         breakdown[f.invoice_id][f.detector] += contribution

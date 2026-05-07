@@ -8,10 +8,19 @@ import streamlit as st
 
 from p2p_fraud.detectors.benford import detect_outlier_invoices, run_benford_tests
 
-st.set_page_config(page_title="Benford — P2P Fraud Detective", page_icon="🔢", layout="wide")
-st.title("🔢 Loi de Newcomb-Benford")
+st.set_page_config(page_title="Scoping orienté risque — P2P Fraud Detective", page_icon="🔢", layout="wide")
+st.title("🔢 Scoping orienté risque (Loi de Newcomb-Benford)")
 st.caption(
     "Tests F1D (1er chiffre), F2D (2 premiers chiffres) et LD (dernier chiffre) — chi² + MAD (Nigrini)."
+)
+
+st.info(
+    "ℹ️ **Outil de scoping, pas d'alerte directe.** "
+    "Conformément à [ADR-0002](../docs/decisions/0002-benford-retrograde.md), "
+    "Benford est utilisé pour orienter l'échantillonnage JET / ISA 240 sur des "
+    "populations à examiner — il n'alimente pas le score consolidé par défaut. "
+    "Activez-le manuellement via `detector_weights={\"benford\": 0.5}` si votre "
+    "profil de risque le justifie."
 )
 
 if "df_invoices" not in st.session_state:
