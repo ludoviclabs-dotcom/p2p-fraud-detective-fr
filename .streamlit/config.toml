@@ -35,6 +35,7 @@ borderColor = "#1F3A6E"
 
 [client]
 toolbarMode = "viewer"
+showSidebarNavigation = false
 
 [browser]
 gatherUsageStats = false
