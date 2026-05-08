@@ -81,3 +81,42 @@ def test_custom_detector_weights():
     scores_doubled = aggregate_findings(findings, detector_weights={"duplicates": 2.0})
     # 60 → 100 (capé)
     assert scores_doubled["INV1"].score >= scores_default["INV1"].score
+
+
+def test_benford_finding_is_filtered_by_default():
+    """ADR-0002 : Benford est rétrogradé en scoping, poids 0 par défaut."""
+    findings = [_f("INV1", "benford", Severity.CRITICAL)]
+    scores = aggregate_findings(findings)
+    assert scores == {}, "Un finding Benford seul ne doit produire aucun score consolidé"
+
+
+def test_benford_can_be_reactivated_via_override():
+    """La rétrocompatibilité reste possible via override explicite des poids."""
+    findings = [_f("INV1", "benford", Severity.CRITICAL)]
+    scores = aggregate_findings(findings, detector_weights={"benford": 0.5})
+    assert "INV1" in scores
+    assert scores["INV1"].score == 30.0  # 0.5 * 1.0 * 60
+
+
+def test_benford_does_not_inflate_count_for_other_invoices():
+    """Findings Benford filtrés ne polluent pas le findings_count."""
+    findings = [
+        _f("INV1", "duplicates", Severity.HIGH),
+        _f("INV1", "benford", Severity.CRITICAL),
+    ]
+    scores = aggregate_findings(findings)
+    assert scores["INV1"].findings_count == 1
+    assert "benford" not in scores["INV1"].breakdown
+
+
+def test_ml_kill_switch_removes_isolation_forest_contribution():
+    """Sprint 7 : page Gouvernance peut désactiver le scoring ML (AI Act)."""
+    findings = [
+        _f("INV1", "duplicates", Severity.HIGH),
+        _f("INV1", "isolation_forest", Severity.CRITICAL),
+    ]
+    with_ml = aggregate_findings(findings, ml_enabled=True)
+    without_ml = aggregate_findings(findings, ml_enabled=False)
+    assert with_ml["INV1"].score > without_ml["INV1"].score
+    assert "isolation_forest" not in without_ml["INV1"].breakdown
+    assert without_ml["INV1"].findings_count == 1  # seul duplicates contribue

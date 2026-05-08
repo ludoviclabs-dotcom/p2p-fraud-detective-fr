@@ -16,4 +16,5 @@ pyyaml>=6.0
 faker>=26.0
 plotly>=5.22
 joblib>=1.4
+cryptography>=43.0
 -e .

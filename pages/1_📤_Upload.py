@@ -10,6 +10,11 @@ import streamlit as st
 
 from p2p_fraud.ingestion.column_mapper import CANONICAL_COLUMNS
 from p2p_fraud.ingestion.parsers import IngestionError, load_invoices
+from p2p_fraud.ingestion.presets import (
+    auto_detect_preset,
+    list_presets,
+    load_preset,
+)
 from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
 
 st.set_page_config(page_title="Upload — P2P Fraud Detective", page_icon="📤", layout="wide")
@@ -18,8 +23,13 @@ st.caption(
     "Importez un export Excel/CSV de factures fournisseurs, ou générez un dataset synthétique pour la démo."
 )
 
-tab_upload, tab_synthetic, tab_sample = st.tabs(
-    ["📁 Importer un fichier", "🎲 Générer un dataset", "📦 Charger l'échantillon"]
+tab_upload, tab_erp, tab_synthetic, tab_sample = st.tabs(
+    [
+        "📁 Importer un fichier",
+        "🔌 Connecteur ERP (presets)",
+        "🎲 Générer un dataset",
+        "📦 Charger l'échantillon",
+    ]
 )
 
 
@@ -79,6 +89,94 @@ with tab_upload:
             st.json(report["mapping"])
         _persist(df, source_label=uploaded.name)
         _show_summary(df)
+
+with tab_erp:
+    st.markdown(
+        "**Import via preset ERP** — auto-détecte le format depuis les en-têtes "
+        "(SAP, Cegid Loop, Sage X3, Oracle AP) et applique le mapping + parse "
+        "des dates et montants au bon format."
+    )
+
+    presets = list_presets()
+    preset_names = [p.name for p in presets]
+    preset_labels = {p.name: f"{p.label} ({p.name})" for p in presets}
+
+    erp_uploaded = st.file_uploader(
+        "Déposez votre export ERP", type=["csv", "xlsx", "xls"], key="erp_uploader"
+    )
+
+    if erp_uploaded is not None:
+        try:
+            erp_buf = io.BytesIO(erp_uploaded.read())
+            suffix = Path(erp_uploaded.name).suffix.lower()
+            if suffix in {".xlsx", ".xls"}:
+                raw_df = pd.read_excel(erp_buf)
+            else:
+                raw_df = pd.read_csv(erp_buf, sep=None, engine="python")
+        except (pd.errors.ParserError, ValueError) as e:
+            st.error(f"Erreur de lecture brute : {e}")
+            st.stop()
+
+        st.write(f"📊 {len(raw_df):,} lignes lues, {len(raw_df.columns)} colonnes.")
+        with st.expander("🔍 En-têtes détectées"):
+            st.write(list(raw_df.columns))
+
+        detected = auto_detect_preset(raw_df.columns.tolist())
+        default_idx = preset_names.index(detected.name) if detected else 0
+        if detected:
+            st.success(f"✅ Preset auto-détecté : **{detected.label}** ({detected.name})")
+        else:
+            st.info("Aucun preset détecté — sélectionnez manuellement.")
+
+        chosen_name = st.selectbox(
+            "Preset",
+            preset_names,
+            index=default_idx,
+            format_func=lambda n: preset_labels.get(n, n),
+        )
+        chosen = load_preset(chosen_name)
+
+        with st.expander("ℹ️ Description du preset"):
+            st.markdown(chosen.description or "—")
+            st.write(
+                {
+                    "date_format": chosen.date_format,
+                    "decimal_separator": chosen.decimal_separator,
+                    "thousand_separator": chosen.thousand_separator,
+                    "signature_columns": chosen.signature_columns,
+                    "mapping": chosen.mapping,
+                }
+            )
+
+        if st.button("🚀 Appliquer le preset", type="primary"):
+            try:
+                canonical_df = chosen.apply(raw_df)
+            except (KeyError, ValueError) as e:
+                st.error(f"Erreur d'application du preset : {e}")
+                st.stop()
+
+            missing = [
+                c
+                for c in ("invoice_id", "vendor_name", "amount", "invoice_date")
+                if c not in canonical_df.columns
+            ]
+            if missing:
+                st.error(f"❌ Colonnes obligatoires manquantes après mapping : {missing}")
+                st.stop()
+
+            # Drop des lignes invalides (amount NaN ou invoice_id null)
+            before = len(canonical_df)
+            canonical_df = canonical_df.dropna(subset=["amount", "invoice_id"]).reset_index(
+                drop=True
+            )
+            after = len(canonical_df)
+            st.success(
+                f"✅ {after:,} factures importées via preset `{chosen.name}` "
+                f"(filtrées : {before - after} lignes invalides)."
+            )
+            _persist(canonical_df, source_label=f"erp:{chosen.name}:{erp_uploaded.name}")
+            _show_summary(canonical_df)
+
 
 with tab_synthetic:
     st.markdown(

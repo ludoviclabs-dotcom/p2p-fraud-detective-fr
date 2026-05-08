@@ -87,8 +87,34 @@ class Finding(BaseModel):
         return SEVERITY_WEIGHT[self.severity]
 
 
+class Contribution(BaseModel):
+    """Contribution unitaire d'un détecteur au score consolidé d'une facture.
+
+    Sert à construire les *waterfall* d'explication (Sprint 4) : chaque ligne
+    est traçable à un Finding source (`finding_rule_id` + `signal`) et donne
+    le poids appliqué + la valeur brute + la part du score finale.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    detector: str
+    finding_rule_id: str
+    signal: str
+    severity: str
+    weight: float
+    severity_multiplier: float
+    contribution: float  # value en points sur 0..100
+    contribution_pct: float = 0.0  # part dans le score final
+    reason_fr: str | None = None
+
+
 class RiskScore(BaseModel):
-    """Score consolidé par facture (ou par fournisseur via vendor_id)."""
+    """Score consolidé par facture (ou par fournisseur via vendor_id).
+
+    Les champs `contributions` et `reason_codes_fr` sont optionnels et alimentés
+    par `aggregate_findings_with_explanations` (Sprint 4). Les anciens appelants
+    de `aggregate_findings` ne sont pas impactés (defaults vides).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -96,8 +122,54 @@ class RiskScore(BaseModel):
     score: float = Field(..., ge=0, le=100)
     findings_count: int = 0
     breakdown: dict[str, float] = Field(default_factory=dict)
+    contributions: list[Contribution] = Field(default_factory=list)
+    reason_codes_fr: list[str] = Field(default_factory=list)
 
     @field_validator("score")
     @classmethod
     def _round_score(cls, v: float) -> float:
         return round(v, 2)
+
+
+class MasterDataField(StrEnum):
+    """Champs sensibles d'un fournisseur dont les changements sont surveillés."""
+
+    IBAN = "iban"
+    BIC = "bic"
+    NAME = "name"
+    ADDRESS = "address"
+    SIREN = "siren"
+    CONTACT_EMAIL = "contact_email"
+    CONTACT_PHONE = "contact_phone"
+    STATUS = "status"  # active / blocked / dormant
+
+
+class VendorMasterEvent(BaseModel):
+    """Événement de modification du master data fournisseur.
+
+    Chaque ligne est une *modification atomique d'un champ*. Pour un changement
+    multi-champs (ex. nom + IBAN le même jour), produire plusieurs événements
+    avec le même `changed_at`.
+
+    Les valeurs `iban` ne sont jamais stockées en clair en production : utilisez
+    le service `security.crypto` (à venir) ou hashez côté ingestion.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    event_id: str
+    vendor_id: str
+    field: MasterDataField
+    old_value: str | None = None
+    new_value: str | None = None
+    changed_at: datetime
+    changed_by: str | None = None  # user_id ERP
+    approved_by: str | None = None  # user_id approbateur si 4-eyes
+    source: str = "erp"  # erp | manual | api | import
+
+    @field_validator("changed_at")
+    @classmethod
+    def _aware_datetime(cls, v: datetime) -> datetime:
+        if v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v

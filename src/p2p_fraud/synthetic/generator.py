@@ -1,6 +1,11 @@
 """Générateur de dataset synthétique de factures avec patterns de fraude étiquetés.
 
 Le ground truth (`is_fraud`, `fraud_type`) permet d'évaluer F1 par détecteur.
+
+Ajout Sprint 1 : `generate_master_data_events()` produit un journal d'événements
+master data avec scénarios étiquetés (`bec_iban_swap`, `dormant_reactivation`).
+La fonction est *additive* — elle peut être appelée séparément sans impacter
+les générations existantes.
 """
 
 from __future__ import annotations
@@ -8,8 +13,9 @@ from __future__ import annotations
 import argparse
 import math
 import random
+import uuid
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 
@@ -27,6 +33,9 @@ class FraudType(StrEnum):
     SHARED_IBAN_RING = "shared_iban_ring"
     AMOUNT_OUTLIER = "amount_outlier"
     WEEKEND_UNUSUAL_USER = "weekend_unusual_user"
+    BEC_IBAN_SWAP = "bec_iban_swap"
+    DORMANT_REACTIVATION = "dormant_reactivation"
+    NAME_IBAN_SAME_DAY = "name_iban_same_day"
 
 
 @dataclass
@@ -341,6 +350,226 @@ def generate_dataset(cfg: GeneratorConfig | None = None) -> tuple[pd.DataFrame, 
     df = pd.DataFrame(rows)
     df = df.sample(frac=1, random_state=cfg.seed).reset_index(drop=True)
     return df, vendors
+
+
+def attach_vendor_ids(invoices: pd.DataFrame, vendors: pd.DataFrame) -> pd.DataFrame:
+    """Joint la colonne `vendor_id` à un DataFrame de factures.
+
+    Sortie utilisée par le détecteur master_data_changes (qui a besoin du lien
+    facture ↔ fournisseur). La colonne `vendor_id` n'est PAS ajoutée par
+    `generate_dataset` afin de préserver la compatibilité avec le schéma Pydantic
+    `Invoice` (extra="forbid"). Appelez `attach_vendor_ids` uniquement quand vous
+    travaillez sur un DataFrame brut (pas après un parse Pydantic).
+    """
+    if invoices.empty:
+        return invoices.copy()
+    name_to_vid = dict(zip(vendors["vendor_name"], vendors["vendor_id"], strict=False))
+    out = invoices.copy()
+    out["vendor_id"] = out["vendor_name"].map(name_to_vid).fillna("UNKNOWN")
+    return out
+
+
+@dataclass
+class MasterDataEventsConfig:
+    """Configuration de la génération synthétique d'événements master data."""
+
+    n_bec_swaps: int = 30
+    n_dormant_reactivations: int = 15
+    n_name_iban_same_day: int = 10
+    n_legitimate_changes: int = 200
+    dormant_days: int = 200
+    seed: int = 42
+
+
+def _new_event(
+    vendor_id: str,
+    field_name: str,
+    old: str | None,
+    new: str | None,
+    when: datetime,
+    changed_by: str,
+    approved_by: str | None,
+    source: str = "erp",
+) -> dict:
+    return {
+        "event_id": f"E-{uuid.uuid4().hex[:12]}",
+        "vendor_id": vendor_id,
+        "field": field_name,
+        "old_value": old,
+        "new_value": new,
+        "changed_at": when,
+        "changed_by": changed_by,
+        "approved_by": approved_by,
+        "source": source,
+        "is_fraud": False,
+        "fraud_type": "none",
+    }
+
+
+def generate_master_data_events(
+    invoices: pd.DataFrame,
+    vendors: pd.DataFrame,
+    cfg: MasterDataEventsConfig | None = None,
+) -> pd.DataFrame:
+    """Génère un journal d'événements master data avec ground truth.
+
+    Hypothèses :
+    - Les invoices sont déjà générées (avec colonne `vendor_id`).
+    - On garantit que les BEC swaps précèdent au moins une facture du fournisseur.
+    """
+    cfg = cfg or MasterDataEventsConfig()
+    rng = random.Random(cfg.seed)
+    faker = Faker("fr_FR")
+    Faker.seed(cfg.seed)
+
+    if "vendor_id" not in invoices.columns:
+        raise ValueError(
+            "invoices doit contenir une colonne vendor_id. "
+            "Appelez `attach_vendor_ids(invoices, vendors)` avant de générer les events."
+        )
+
+    inv = invoices.copy()
+    inv["invoice_date"] = pd.to_datetime(inv["invoice_date"], errors="coerce")
+    inv = inv.dropna(subset=["invoice_date"])
+    user_pool = [f"U{i:03d}" for i in range(50)]
+
+    events: list[dict] = []
+
+    # 1. BEC IBAN swaps : changement IBAN sans 4-eyes, suivi de paiements.
+    eligible_vendors = (
+        inv.groupby("vendor_id")
+        .agg(invoice_count=("invoice_id", "size"), max_date=("invoice_date", "max"))
+        .reset_index()
+    )
+    eligible_vendors = eligible_vendors[eligible_vendors["invoice_count"] >= 3]
+    bec_targets = eligible_vendors.sample(
+        n=min(cfg.n_bec_swaps, len(eligible_vendors)), random_state=cfg.seed
+    )
+    for _, row in bec_targets.iterrows():
+        vendor_id = row["vendor_id"]
+        vendor_invoices = inv[inv["vendor_id"] == vendor_id].sort_values("invoice_date")
+        # On choisit une date entre la 1ère et la dernière facture, puis on
+        # marque les factures *postérieures* comme impactées.
+        if len(vendor_invoices) < 2:
+            continue
+        # Pick a swap date in the middle third
+        idx = rng.randint(len(vendor_invoices) // 3, max(1, 2 * len(vendor_invoices) // 3))
+        swap_date = vendor_invoices.iloc[idx]["invoice_date"] - pd.Timedelta(days=2)
+        when = pd.Timestamp(swap_date).to_pydatetime().replace(tzinfo=UTC)
+        old_iban = vendor_invoices.iloc[0]["iban"]
+        new_iban = (
+            faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+        )
+        user = rng.choice(user_pool)
+        ev = _new_event(
+            vendor_id=vendor_id,
+            field_name="iban",
+            old=old_iban,
+            new=new_iban,
+            when=when,
+            changed_by=user,
+            approved_by=None,  # pas de 4-eyes
+            source="manual",
+        )
+        ev["is_fraud"] = True
+        ev["fraud_type"] = FraudType.BEC_IBAN_SWAP.value
+        events.append(ev)
+
+    # 2. Dormant reactivation : on choisit un fournisseur avec un grand gap.
+    vendor_first_last = (
+        inv.groupby("vendor_id")
+        .agg(first=("invoice_date", "min"), last=("invoice_date", "max"))
+        .reset_index()
+    )
+    candidates = vendor_first_last[
+        (vendor_first_last["last"] - vendor_first_last["first"]).dt.days > cfg.dormant_days * 1.2
+    ]
+    n_dormant = min(cfg.n_dormant_reactivations, len(candidates))
+    if n_dormant > 0:
+        targets = candidates.sample(n=n_dormant, random_state=cfg.seed + 1)
+        for _, row in targets.iterrows():
+            vendor_id = row["vendor_id"]
+            # Place IBAN change at last - dormant_days, after a long inactivity from "first".
+            when = pd.Timestamp(row["last"] - pd.Timedelta(days=10))
+            when_dt = when.to_pydatetime().replace(tzinfo=UTC)
+            new_iban = (
+                faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+            )
+            user = rng.choice(user_pool)
+            ev = _new_event(
+                vendor_id=vendor_id,
+                field_name="iban",
+                old="FR76OLD",
+                new=new_iban,
+                when=when_dt,
+                changed_by=user,
+                approved_by=rng.choice([u for u in user_pool if u != user]),
+                source="manual",
+            )
+            ev["is_fraud"] = True
+            ev["fraud_type"] = FraudType.DORMANT_REACTIVATION.value
+            events.append(ev)
+
+    # 3. Name + IBAN même jour
+    same_day_targets = eligible_vendors.sample(
+        n=min(cfg.n_name_iban_same_day, len(eligible_vendors)),
+        random_state=cfg.seed + 2,
+    )
+    for _, row in same_day_targets.iterrows():
+        vendor_id = row["vendor_id"]
+        vendor_invoices = inv[inv["vendor_id"] == vendor_id].sort_values("invoice_date")
+        if vendor_invoices.empty:
+            continue
+        when = pd.Timestamp(vendor_invoices.iloc[len(vendor_invoices) // 2]["invoice_date"])
+        when_dt = when.to_pydatetime().replace(tzinfo=UTC)
+        user = rng.choice(user_pool)
+        new_iban = (
+            faker.iban() if hasattr(faker, "iban") else f"FR76{rng.randint(10**20, 10**21 - 1)}"
+        )
+        ev_iban = _new_event(vendor_id, "iban", "FR76OLD", new_iban, when_dt, user, None, "manual")
+        ev_iban["is_fraud"] = True
+        ev_iban["fraud_type"] = FraudType.NAME_IBAN_SAME_DAY.value
+        events.append(ev_iban)
+        ev_name = _new_event(
+            vendor_id,
+            "name",
+            "OLD NAME SARL",
+            faker.company() + " SARL",
+            when_dt + timedelta(hours=1),
+            user,
+            None,
+            "manual",
+        )
+        ev_name["is_fraud"] = True
+        ev_name["fraud_type"] = FraudType.NAME_IBAN_SAME_DAY.value
+        events.append(ev_name)
+
+    # 4. Changements légitimes (bruit) — adresse, contact email, IBAN avec 4-eyes ok
+    legit_pool = vendors.sample(
+        n=min(cfg.n_legitimate_changes, len(vendors)), random_state=cfg.seed + 3
+    )
+    for _, vrow in legit_pool.iterrows():
+        vendor_id = vrow["vendor_id"]
+        when_dt = datetime(2024, rng.randint(1, 12), rng.randint(1, 28), tzinfo=UTC)
+        field_choice = rng.choice(["address", "contact_email", "iban", "contact_phone"])
+        user = rng.choice(user_pool)
+        approver = rng.choice([u for u in user_pool if u != user])
+        ev = _new_event(
+            vendor_id=vendor_id,
+            field_name=field_choice,
+            old="OLD",
+            new=faker.email()
+            if "email" in field_choice
+            else faker.address().replace("\n", ", ")[:80],
+            when=when_dt,
+            changed_by=user,
+            approved_by=approver,
+            source="erp",
+        )
+        events.append(ev)
+
+    df = pd.DataFrame(events)
+    return df.sort_values("changed_at").reset_index(drop=True)
 
 
 def main() -> None:

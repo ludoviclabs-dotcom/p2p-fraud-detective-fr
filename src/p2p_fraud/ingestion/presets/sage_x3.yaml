@@ -1,0 +1,32 @@
+name: sage_x3
+label: "Sage X3 — Tables PINVOICE / BPSUPPLIER"
+description: |
+  Export Sage X3 (PINVOICE pour les factures, BPSUPPLIER pour fournisseurs).
+  Largement déployé chez les ETI industrielles françaises.
+
+signature_columns:
+  - PIVNUM
+  - BPRNUM
+  - INVDAT
+  - AMTATI
+  - CUR
+  - ACCNUM
+  - CCE
+
+mapping:
+  invoice_id: PIVNUM        # Numéro facture
+  siren: BPRTAX_FR          # Identifiant fiscal FR
+  vendor_name: BPRNAM       # Raison sociale
+  iban: BIDNUM              # IBAN bancaire
+  amount: AMTATI            # Montant TTC
+  currency: CUR             # Devise
+  invoice_date: INVDAT      # Date facture
+  posting_date: ACCDAT      # Date comptable
+  po_number: POHNUM         # Numéro commande
+  user_id: CREUSR           # Créateur
+  cost_center: CCE
+  gl_account: ACCNUM
+
+date_format: "%Y-%m-%d"
+decimal_separator: "."
+thousand_separator: ""

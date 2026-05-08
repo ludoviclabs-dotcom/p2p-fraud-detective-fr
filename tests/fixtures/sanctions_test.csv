@@ -1,0 +1,4 @@
+entity_id,name,aliases,kind,country,list_source,listed_at,reason
+TEST-EU-001,"Acme Test Corp","Acme Test;ACME TEST CORP",entity,FR,EU_CONSOLIDATED,2025-01-15,"Test sanctions"
+TEST-PEP-001,"Marie Dupont","DUPONT Marie",person,FR,PEP_FR,2024-06-01,"Test PEP"
+TEST-OFAC-001,"Shadow Industries","Shadow Industries Ltd;Shadow Ind.",entity,RU,OFAC_SDN,2024-09-30,"Test OFAC"

@@ -54,3 +54,9 @@ data/synthetic/*.xlsx
 
 # Logs
 *.log
+
+# MkDocs build output (généré par make docs / CI)
+site/
+
+# Benchmark artifacts (régénérés par make bench-f1)
+docs/benchmark_results.json

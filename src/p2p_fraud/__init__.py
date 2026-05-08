@@ -1,3 +1,3 @@
-"""P2P Fraud Detective FR — détection de fraude Procure-to-Pay pour ETI françaises."""
+"""P2P Fraud Detective FR — Vendor & Payment Integrity FR-native."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

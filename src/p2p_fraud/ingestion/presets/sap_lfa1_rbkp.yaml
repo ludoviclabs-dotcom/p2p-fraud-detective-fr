@@ -1,0 +1,37 @@
+name: sap_lfa1_rbkp
+label: "SAP — LFA1 / RBKP / BSEG (ECC, S/4HANA)"
+description: |
+  Export standard SAP combiné fournisseur (LFA1) + écritures (BSEG/BKPF) + facture
+  (RBKP). Utilisé chez 70 % des grands groupes français.
+  Champ `LIFNR` = référence fournisseur, `BELNR` = numéro pièce, `BUKRS` = société.
+
+# Colonnes diagnostiques : si au moins 3 sont présentes dans l'export brut,
+# le preset est auto-détecté.
+signature_columns:
+  - LIFNR
+  - BELNR
+  - BUKRS
+  - WRBTR
+  - BLDAT
+  - WAERS
+  - HKONT
+  - USNAM
+
+mapping:
+  invoice_id: BELNR        # Numéro de pièce comptable
+  siren: LIFNR_TAXNUM      # Numéro fiscal externe (mappé sur SIREN en France)
+  vendor_name: NAME1       # Raison sociale fournisseur
+  iban: IBAN               # Si exporté via LFBK
+  amount: WRBTR            # Montant en devise document
+  currency: WAERS          # Devise document
+  invoice_date: BLDAT      # Date pièce
+  posting_date: BUDAT      # Date comptabilisation
+  po_number: EBELN         # Numéro commande
+  user_id: USNAM           # Utilisateur saisie
+  cost_center: KOSTL
+  gl_account: HKONT
+
+# Conventions de format
+date_format: "%Y%m%d"      # SAP exporte AAAAMMJJ
+decimal_separator: ","     # Sortie standard FR
+thousand_separator: " "

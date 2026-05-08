@@ -1,6 +1,6 @@
 # P2P Fraud Detective FR
 
-> Mini-MindBridge open-source pour les ETI françaises — détection de fraude Procure-to-Pay sur exports comptables (factures fournisseurs), exploitant les sources publiques **Sirene v3** et **DECP** que les outils anglo-saxons (DataSnipper, MindBridge, Trustpair, Tipalti) ignorent.
+> **Vendor & Payment Integrity FR-native** — détection de fraude Procure-to-Pay, monitoring du master data fournisseur, et piste d'audit signée pour ETI, cabinets d'audit et secteur public/hospitalier.
 
 🇫🇷 **FR** · [🇬🇧 EN below](#english)
 
@@ -8,23 +8,27 @@
 
 ## Pourquoi cet outil
 
-La fraude P2P (factures fictives, doublons, fournisseurs fantômes, détournement d'IBAN, montants juste sous seuil de validation) reste le scénario le plus coûteux en contrôle interne. Les outils du marché (DataSnipper, MindBridge, Trustpair) sont chers et anglo-saxons ; aucun n'exploite nativement les sources publiques françaises (Sirene, DECP, Annuaire des entreprises).
+80 % de la fraude P2P passe par un changement d'IBAN ou un fournisseur fictif — pas par une anomalie statistique exotique. Cet outil regarde ce que personne ne regarde côté français : **l'historique du master data fournisseur**, croisé avec les sources publiques (Sirene, DECP, RBE, listes de sanctions) et une **piste d'audit que votre CAC peut signer**.
 
-Cet outil comble le manque pour **auditeurs internes, RCSI, contrôleurs de gestion et CAC** d'ETI françaises.
+**Cibles** : ETI 200 M€ – 2 Md€ CA, cabinets d'audit mid-tier, hôpitaux / universités / établissements publics.
+
+**Promesse** : détecter et documenter, en moins de 24 heures, 100 % des changements de coordonnées bancaires fournisseurs à risque, avec preuve auditable signée — sans envoyer une seule donnée hors de votre SI.
 
 ## Ce qu'il fait
 
-À partir d'un export Excel/CSV de factures fournisseurs (champs `LFA1`/`RBKP` style SAP : SIREN, fournisseur, IBAN, montant, date, PO), l'outil exécute en cascade :
+À partir d'un export Excel/CSV de factures fournisseurs (champs `LFA1`/`RBKP` style SAP : SIREN, fournisseur, IBAN, montant, date, PO) + optionnellement l'historique des modifications master data, l'outil exécute en cascade :
 
 | # | Détecteur | Méthode | Référentiel |
 |---|---|---|---|
-| 1 | **Loi de Benford** | 1er chiffre, 2 premiers, dernier. Chi² + MAD (Nigrini) | ISA 240 — fraude écritures comptables |
+| 1 | **Master data history** | Diff IBAN / nom / SIREN / adresse / dormant + 4-eyes | AFP 2026, ISA 240 |
 | 2 | **Doublons fuzzy** | Bucket montant ± 0,01 € + date ± 2 j + RapidFuzz nom | AICPA Audit Data Standards |
 | 3 | **Sous seuils** | Détection fenêtre `[seuil − ε, seuil[` paramétrable | Contrôle interne, séparation des tâches |
 | 4 | **Cross-check Sirene** | API Sirene v3, statut, date création, code APE | INSEE — référentiel officiel |
-| 5 | **Isolation Forest** | Pipeline scikit-learn sur features comportementales | ML anomaly detection |
-| 6 | **Anneaux de fraude** | Graphe NetworkX `(employees ⟷ vendors)` | Forensic accounting |
-| 7 | **Risk score consolidé** | Combinaison pondérée (YAML éditable) | Continuous auditing |
+| 5 | **Sanctions / PEP** | OpenSanctions / Trésor FR / OFAC, matching RapidFuzz | LCB-FT, Sapin 2 art. 17 |
+| 6 | **Isolation Forest** | Pipeline scikit-learn sur features comportementales | ML anomaly detection |
+| 7 | **Anneaux de fraude** | Graphe NetworkX `(employees ⟷ vendors)` | Forensic accounting |
+| 8 | **Risk score consolidé** | Combinaison pondérée (YAML éditable) + reason codes FR | Continuous auditing |
+| ⓘ | *Benford (scoping)* | F1D / F2D / LD chi² + MAD — orientation d'échantillonnage | ISA 240 (outil ancillaire) |
 
 **Sortie** : tableau de findings classés par risk score, exportable en `.xlsx` avec hyperliens, et fichier Parquet alimentant un dashboard **Power BI** (`powerbi/p2p-fraud-dashboard.pbix`).
 
@@ -79,12 +83,13 @@ Tests F1 par détecteur sur ground truth synthétique : objectif ≥ 0,85 pour l
 
 ```
 src/p2p_fraud/
-├── schema.py          # Pydantic : Invoice, Vendor, Finding
+├── schema.py          # Pydantic : Invoice, Vendor, Finding, VendorMasterEvent
 ├── ingestion/         # Parser Excel/CSV + mapping LFA1/RBKP/BSEG
-├── detectors/         # Benford, doublons, seuils, IForest, graphe
-├── enrichment/        # Sirene v3, DECP DuckDB
+├── detectors/         # Doublons, seuils, IForest, graphe, master_data_changes, sanctions, benford (scoping)
+├── enrichment/        # Sirene v3, DECP DuckDB, sanctions client
 ├── scoring/           # Risk engine + weights.yaml
-├── synthetic/         # Générateur dataset étiqueté
+├── synthetic/         # Générateur dataset étiqueté (factures + master data events)
+├── cases/             # Case management v0 + audit log immutable chaîné par hash
 └── export/            # Excel hyperliens + Parquet pour Power BI
 ```
 
@@ -103,11 +108,11 @@ Voir [`docs/methodologie-audit.md`](docs/methodologie-audit.md).
 
 ## English
 
-> Open-source mini-MindBridge for French SMEs — Procure-to-Pay fraud detection on accounting exports, leveraging public **Sirene v3** and **DECP** sources that Anglo-Saxon tools (DataSnipper, MindBridge, Trustpair) overlook.
+> **Vendor & Payment Integrity, FR-native** — P2P fraud detection, vendor master data monitoring, and signed audit trail for mid-market companies, audit firms, and the public/healthcare sector.
 
 ### What it does
 
-Ingest Excel/CSV vendor invoice exports (SAP-style `LFA1`/`RBKP` fields), then run a 7-stage cascade: **Benford's law**, **fuzzy duplicates**, **just-under-threshold detection**, **Sirene v3 cross-check**, **Isolation Forest**, **NetworkX fraud rings**, **consolidated risk score**. Output: ranked findings as `.xlsx` with hyperlinks and a Parquet feed for the bundled Power BI dashboard.
+Ingest Excel/CSV vendor invoice exports (SAP-style `LFA1`/`RBKP` fields) plus optional master data change history, then run a layered pipeline: **master data history (IBAN/name/address swaps, dormant reactivation, 4-eyes breach)**, **fuzzy duplicates**, **just-under-threshold detection**, **Sirene v3 cross-check**, **OpenSanctions / PEP**, **Isolation Forest**, **NetworkX fraud rings**, **consolidated risk score with French reason codes**. Benford remains available as a *scoping* tool. Output: ranked findings as `.xlsx` with hyperlinks, a Parquet feed for the bundled Power BI dashboard, and an immutable hash-chained audit log.
 
 ### Quickstart
 

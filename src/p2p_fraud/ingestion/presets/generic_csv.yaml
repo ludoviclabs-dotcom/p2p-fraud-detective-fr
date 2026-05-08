@@ -1,0 +1,26 @@
+name: generic_csv
+label: "Export générique (déjà au schéma canonique ou proche)"
+description: |
+  Preset par défaut pour les exports génériques (Excel manuel, autres ERP).
+  Le mapping s'appuie sur les alias historiques de column_mapper.auto_map_columns.
+
+# Pas de signature stricte — c'est le fallback.
+signature_columns: []
+
+mapping:
+  invoice_id: invoice_id
+  siren: siren
+  vendor_name: vendor_name
+  iban: iban
+  amount: amount
+  currency: currency
+  invoice_date: invoice_date
+  posting_date: posting_date
+  po_number: po_number
+  user_id: user_id
+  cost_center: cost_center
+  gl_account: gl_account
+
+date_format: null
+decimal_separator: "."
+thousand_separator: ""

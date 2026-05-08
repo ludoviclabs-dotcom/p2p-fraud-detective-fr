@@ -8,13 +8,23 @@ thresholds:
   min_amount: 100        # Ignorer les très petits montants
 
 # Pondérations agrégation Finding -> RiskScore (0-100)
+#
+# Benford est rétrogradé en outil de scoping (ADR-0002) — son poids par défaut
+# est 0 et les findings `detector="benford"` sont filtrés du score consolidé.
+# Pour réactiver Benford comme contributeur direct, mettre un poids > 0 ici, ou
+# passer `detector_weights={"benford": 0.5}` au moteur de scoring.
+#
+# master_data : changement IBAN sans 4-eyes, dormant réactivé, etc. (Sprint 1).
+# sanctions   : OpenSanctions / PEP / Trésor FR (Sprint 2).
 detector_weights:
   duplicates: 1.0
   thresholds: 0.7
-  benford: 0.5
+  benford: 0.0
   sirene: 1.2
   isolation_forest: 0.8
   graph: 1.5
+  master_data: 1.5
+  sanctions: 1.6
 
 # Coefficient de la sévérité dans la formule finale
 severity_multiplier:

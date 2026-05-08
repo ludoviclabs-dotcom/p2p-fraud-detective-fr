@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "p2p-fraud-detective-fr"
-version = "0.1.0"
+version = "0.2.0"
 description = "Mini-MindBridge open-source pour détection de fraude P2P sur ETI françaises (Benford, Isolation Forest, NetworkX, Sirene v3, DECP)"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
@@ -43,6 +43,7 @@ dependencies = [
     "faker>=26.0",
     "plotly>=5.22",
     "joblib>=1.4",
+    "cryptography>=43.0",
 ]
 
 [project.optional-dependencies]
@@ -55,6 +56,8 @@ dev = [
     "black>=24.4",
     "ipykernel>=6.29",
     "jupyter>=1.0",
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
 ]
 
 [project.urls]
@@ -63,6 +66,12 @@ Repository = "https://github.com/ludoviclabeaut/p2p-fraud-detective-fr"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+p2p_fraud = [
+    "scoring/*.yaml",
+    "ingestion/presets/*.yaml",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
