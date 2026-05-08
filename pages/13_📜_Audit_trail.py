@@ -10,8 +10,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from p2p_fraud.cases.audit_log import AuditLog
-from p2p_fraud.cases.service import CaseService
+from pages._helpers import get_case_service
 
 st.set_page_config(
     page_title="Audit trail — P2P Fraud Detective",
@@ -25,12 +24,7 @@ st.caption(
 )
 
 
-@st.cache_resource
-def _service() -> CaseService:
-    return CaseService(":memory:", AuditLog(":memory:"))
-
-
-service = _service()
+service = get_case_service()
 audit = service.audit_log
 entries = audit.all()
 

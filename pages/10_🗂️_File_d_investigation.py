@@ -11,10 +11,10 @@ from collections.abc import Iterable
 import pandas as pd
 import streamlit as st
 
-from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.models import CaseStatus
-from p2p_fraud.cases.service import CaseClosedError, CaseService
+from p2p_fraud.cases.service import CaseClosedError
 from p2p_fraud.schema import Finding
+from pages._helpers import get_case_service
 
 st.set_page_config(
     page_title="File d'investigation — P2P Fraud Detective",
@@ -28,13 +28,7 @@ st.caption(
 )
 
 
-@st.cache_resource
-def _service() -> CaseService:
-    """Persiste cases + audit log en mémoire pour la session Streamlit."""
-    return CaseService(":memory:", AuditLog(":memory:"))
-
-
-service = _service()
+service = get_case_service()
 
 
 def _collect_session_findings() -> list[Finding]:
