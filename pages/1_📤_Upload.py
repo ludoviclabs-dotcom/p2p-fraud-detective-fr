@@ -15,10 +15,14 @@ from p2p_fraud.ingestion.presets import (
     list_presets,
     load_preset,
 )
+from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
 
-st.set_page_config(page_title="Upload — P2P Fraud Detective", page_icon="📤", layout="wide")
-st.title("📤 Upload des factures")
+init_page(
+    title="Import des données",
+    surtitle="Données",
+    kicker=("CSV/Excel + auto-détection ERP"),
+)
 st.caption(
     "Importez un export Excel/CSV de factures fournisseurs, ou générez un dataset synthétique pour la démo."
 )

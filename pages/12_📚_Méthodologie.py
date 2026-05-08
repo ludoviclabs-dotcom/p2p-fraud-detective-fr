@@ -10,8 +10,13 @@ from __future__ import annotations
 
 import streamlit as st
 
-st.set_page_config(page_title="Méthodologie — P2P Fraud Detective", page_icon="📚", layout="wide")
-st.title("📚 Méthodologie d'audit")
+from p2p_fraud.streamlit_theme import init_page
+
+init_page(
+    title="Méthodologie",
+    surtitle="Gouvernance",
+    kicker=("ISA 240, Sapin 2, AI Act, sources"),
+)
 st.caption("Mapping des détecteurs sur les référentiels professionnels.")
 
 st.markdown(

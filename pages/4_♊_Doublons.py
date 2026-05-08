@@ -6,10 +6,13 @@ import pandas as pd
 import streamlit as st
 
 from p2p_fraud.detectors.duplicates import detect_duplicates
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(page_title="Doublons — P2P Fraud Detective", page_icon="♊", layout="wide")
-st.title("♊ Doublons (exacts + fuzzy)")
-st.caption("Bucketing montant ± 0,01 € + fenêtre date paramétrable + RapidFuzz `token_set_ratio`.")
+init_page(
+    title="Doublons",
+    surtitle="Contrôles statistiques",
+    kicker=("Bucketing montant ± 0,01 € + fenêtre date paramétrable + RapidFuzz token_set_ratio"),
+)
 
 if "df_invoices" not in st.session_state:
     st.warning("Aucun dataset chargé. Direction la page **📤 Upload**.")

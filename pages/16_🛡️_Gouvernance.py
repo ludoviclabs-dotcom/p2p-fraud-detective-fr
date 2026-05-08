@@ -15,13 +15,13 @@ import streamlit as st
 
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.service import CaseService
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(
-    page_title="Gouvernance — P2P Fraud Detective",
-    page_icon="🛡️",
-    layout="wide",
+init_page(
+    title="Gouvernance",
+    surtitle="Gouvernance",
+    kicker=("AI Act, RGPD, RBAC, kill switch ML"),
 )
-st.title("🛡️ Gouvernance IA et données")
 st.caption(
     "Registre AI Act (UE 2024/1689), DPIA (CNIL art. 35), registre traitements "
     "(RGPD art. 30) et journal des décisions automatisées."

@@ -21,13 +21,13 @@ from p2p_fraud.services.exposure import (
     cases_to_dataframe,
     cockpit_summary,
 )
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(
-    page_title="Cockpit — P2P Fraud Detective",
-    page_icon="🎯",
-    layout="wide",
+init_page(
+    title="Cockpit",
+    surtitle="Pilotage",
+    kicker=("Vue consolidée des risques P2P"),
 )
-st.title("🎯 Cockpit")
 st.caption(
     "Vue CFO / responsable contrôle interne. Tri par exposition financière, pas par score brut."
 )

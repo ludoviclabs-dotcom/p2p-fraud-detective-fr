@@ -9,11 +9,15 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from p2p_fraud.enrichment.sirene_client import SireneClient, cross_check_invoices
+from p2p_fraud.streamlit_theme import init_page
 
 load_dotenv()
 
-st.set_page_config(page_title="Sirene check — P2P Fraud Detective", page_icon="🇫🇷", layout="wide")
-st.title("🇫🇷 Cross-check API Sirene v3")
+init_page(
+    title="Contrôle Sirene",
+    surtitle="Données",
+    kicker=("Validation INSEE en temps réel"),
+)
 st.caption(
     "Vérifie chaque SIREN contre le référentiel INSEE : existence, statut administratif, "
     "date de création vs 1ère facture."

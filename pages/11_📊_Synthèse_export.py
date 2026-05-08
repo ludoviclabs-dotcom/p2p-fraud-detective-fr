@@ -14,9 +14,13 @@ import streamlit as st
 from p2p_fraud.export.excel_findings import build_workbook
 from p2p_fraud.export.parquet_for_powerbi import export_to_parquet
 from p2p_fraud.scoring.risk_engine import aggregate_findings, severity_band, to_dataframe
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(page_title="Synthèse — P2P Fraud Detective", page_icon="📊", layout="wide")
-st.title("📊 Synthèse consolidée — risk score 0-100")
+init_page(
+    title="Synthèse — export",
+    surtitle="Investigation",
+    kicker=("Risk score consolidé · Excel · Parquet"),
+)
 st.caption(
     "Combine les Findings produits par tous les détecteurs en un score unique par facture, "
     "via les pondérations de `weights.yaml`."
@@ -94,7 +98,6 @@ fig = px.histogram(
     color="band",
     nbins=40,
     title="Risk score 0-100",
-    template="plotly_dark",
     color_discrete_map={
         "CRITIQUE": "#ef4444",
         "ÉLEVÉ": "#f97316",

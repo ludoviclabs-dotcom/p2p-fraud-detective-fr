@@ -16,18 +16,18 @@ import streamlit as st
 
 from p2p_fraud.detectors import master_data_changes as md
 from p2p_fraud.schema import VendorMasterEvent
+from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.generator import (
     MasterDataEventsConfig,
     attach_vendor_ids,
     generate_master_data_events,
 )
 
-st.set_page_config(
-    page_title="Master data history — P2P Fraud Detective",
-    page_icon="🏦",
-    layout="wide",
+init_page(
+    title="Référentiel — historique",
+    surtitle="Données",
+    kicker=("Détection BEC + 4-eyes manquant"),
 )
-st.title("🏦 Master data history")
 st.caption(
     "Le scénario fraude n°1 (AFP 2026) : changement d'IBAN sans 4-eyes, "
     "fournisseur dormant réactivé, clone vendor (nom + IBAN même jour)."
@@ -109,7 +109,6 @@ fig = px.scatter(
     color="field",
     hover_data=["vendor_id", "old_value", "new_value", "changed_by", "approved_by"],
     height=380,
-    template="plotly_dark",
 )
 st.plotly_chart(fig, use_container_width=True)
 

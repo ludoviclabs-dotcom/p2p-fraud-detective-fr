@@ -10,14 +10,14 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
-st.set_page_config(
-    page_title="Audit trail — P2P Fraud Detective",
-    page_icon="📜",
-    layout="wide",
+init_page(
+    title="Piste d'audit",
+    surtitle="Investigation",
+    kicker=("Journal immutable hash-chaîné SHA-256"),
 )
-st.title("📜 Audit trail (lecture seule)")
 st.caption(
     "Journal immutable chaîné par hash SHA-256. Toute altération est détectable. "
     "Conforme aux exigences ISA 240 §32, AFA, ACPR (DORA art. 28)."

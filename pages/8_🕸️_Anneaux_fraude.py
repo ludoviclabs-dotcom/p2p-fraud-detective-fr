@@ -8,9 +8,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from p2p_fraud.detectors.graph import detect_fraud_rings
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(page_title="Anneaux fraude — P2P Fraud Detective", page_icon="🕸️", layout="wide")
-st.title("🕸️ Anneaux de fraude — analyse de graphe")
+init_page(
+    title="Anneaux de fraude",
+    surtitle="Détection ML",
+    kicker=("Graphe NetworkX (employees ⟷ vendors)"),
+)
 st.caption(
     "Graphe biparti `vendors ⟷ IBAN`. Détection : IBAN partagé entre fournisseurs (CRITICAL) "
     "+ clusters fournisseurs liés par attributs (HIGH)."
@@ -100,7 +104,6 @@ if st.button("🔍 Lancer l'analyse de graphe", type="primary"):
                 )
             )
             fig.update_layout(
-                template="plotly_dark",
                 height=520,
                 showlegend=False,
                 xaxis={"visible": False},

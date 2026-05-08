@@ -18,13 +18,13 @@ from p2p_fraud.scoring.explainer import (
     waterfall_to_dataframe,
 )
 from p2p_fraud.scoring.risk_engine import aggregate_findings_with_explanations
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(
-    page_title="Score Explorer — P2P Fraud Detective",
-    page_icon="💡",
-    layout="wide",
+init_page(
+    title="Explorateur de score",
+    surtitle="Détection ML",
+    kicker=("Waterfall + reason codes FR"),
 )
-st.title("💡 Score Explorer")
 st.caption(
     "Explication des scores consolidés en français : reason codes, waterfall des "
     "contributions par finding, et perturbation Isolation Forest pour le ML. "
@@ -112,7 +112,6 @@ fig = go.Figure(
 )
 fig.update_layout(
     yaxis_title="Points (0–100)",
-    template="plotly_dark",
     height=420,
     margin={"t": 30, "b": 80, "l": 30, "r": 30},
 )

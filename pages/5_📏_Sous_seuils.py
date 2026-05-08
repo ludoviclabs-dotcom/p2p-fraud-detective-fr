@@ -7,9 +7,13 @@ import plotly.express as px
 import streamlit as st
 
 from p2p_fraud.detectors.thresholds import _load_threshold_config, detect_under_threshold
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(page_title="Sous-seuils — P2P Fraud Detective", page_icon="📏", layout="wide")
-st.title("📏 Montants juste sous seuil de validation")
+init_page(
+    title="Fractionnement / sous-seuils",
+    surtitle="Contrôles statistiques",
+    kicker=("Détection clusters intentionnels"),
+)
 st.caption(
     "Fenêtre `[seuil − ε·seuil, seuil[` paramétrable. Sévérité aggravée par clustering fournisseur."
 )
@@ -52,7 +56,6 @@ if findings:
         color="severity",
         nbins=60,
         title="Concentration des montants flaggés",
-        template="plotly_dark",
     )
     st.plotly_chart(fig, use_container_width=True)
 else:
