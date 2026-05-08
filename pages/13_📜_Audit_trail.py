@@ -45,20 +45,37 @@ if st.button("Recalculer la chaîne de hash", type="primary"):
 st.divider()
 st.subheader("📋 Entrées")
 if entries:
-    df = pd.DataFrame(
-        [
-            {
-                "seq": e.seq,
-                "at": e.at,
-                "actor": e.actor,
-                "kind": e.kind,
-                "payload": e.payload,
-                "prev_hash (8)": e.prev_hash[:8],
-                "hash (8)": e.hash[:8],
-            }
-            for e in entries
-        ]
+    # Filtre par seq via query_param `seq` (deep-link partageable)
+    qp_seq = st.query_params.get("seq", "")
+    seq_filter_str = st.text_input(
+        "Filtrer par seq (deep-link `?seq=N`)",
+        value=qp_seq,
+        help="Saisir une séquence pour pointer une entrée précise. Vide = toutes.",
     )
+    if seq_filter_str and seq_filter_str != st.query_params.get("seq"):
+        st.query_params["seq"] = seq_filter_str
+    elif not seq_filter_str and "seq" in st.query_params:
+        del st.query_params["seq"]
+
+    rows = [
+        {
+            "seq": e.seq,
+            "at": e.at,
+            "actor": e.actor,
+            "kind": e.kind,
+            "payload": e.payload,
+            "prev_hash (8)": e.prev_hash[:8],
+            "hash (8)": e.hash[:8],
+        }
+        for e in entries
+    ]
+    if seq_filter_str:
+        try:
+            target_seq = int(seq_filter_str)
+            rows = [r for r in rows if r["seq"] == target_seq]
+        except ValueError:
+            st.warning(f"Seq invalide : `{seq_filter_str}` n'est pas un entier.")
+    df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, height=420)
 
     st.subheader("📦 Export JSONL (archivage WORM)")
