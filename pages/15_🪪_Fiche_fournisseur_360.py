@@ -8,13 +8,13 @@ import streamlit as st
 
 from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(
-    page_title="Fiche fournisseur 360° — P2P Fraud Detective",
-    page_icon="🪪",
-    layout="wide",
+init_page(
+    title="Fiche fournisseur 360°",
+    surtitle="Investigation",
+    kicker=("Profil · paiements · master data · findings"),
 )
-st.title("🪪 Fiche fournisseur 360°")
 st.caption(
     "Vue consolidée par fournisseur : profil, paiements, historique master data, "
     "findings, sanctions/PEP. Aucun appel réseau — uniquement les données chargées en session."
@@ -141,7 +141,6 @@ with tabs[1]:
                 sub,
                 x="invoice_date",
                 y="amount",
-                template="plotly_dark",
                 title="Paiements dans le temps",
             )
             st.plotly_chart(fig, use_container_width=True)

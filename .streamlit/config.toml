@@ -1,13 +1,44 @@
 [theme]
-primaryColor = "#7C3AED"
-backgroundColor = "#0A1628"
-secondaryBackgroundColor = "#162236"
-textColor = "#FFFFFF"
-font = "sans serif"
+base = "light"
+primaryColor = "#1F3A6E"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6FA"
+textColor = "#1A1F2C"
+linkColor = "#1F3A6E"
+font = "Inter, sans-serif"
+headingFont = "Inter, sans-serif"
+codeFont = "JetBrains Mono, monospace"
+borderColor = "#E1E5EE"
+showWidgetBorder = true
+baseRadius = "0.375rem"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "https://rsms.me/inter/font-files/Inter-Regular.woff2?v=3.19"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "https://rsms.me/inter/font-files/Inter-SemiBold.woff2?v=3.19"
+weight = 600
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "https://rsms.me/inter/font-files/Inter-Bold.woff2?v=3.19"
+weight = 700
+
+[theme.sidebar]
+backgroundColor = "#0F1B33"
+textColor = "#E6EAF2"
+primaryColor = "#E5A93A"
+borderColor = "#1F3A6E"
+
+[client]
+toolbarMode = "viewer"
+
+[browser]
+gatherUsageStats = false
 
 [server]
 headless = true
 runOnSave = true
-
-[browser]
-gatherUsageStats = false

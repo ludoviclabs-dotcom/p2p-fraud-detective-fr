@@ -7,13 +7,13 @@ import streamlit as st
 
 from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
 from p2p_fraud.enrichment.sanctions_client import SanctionsClient
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(
-    page_title="Sanctions PEP — P2P Fraud Detective",
-    page_icon="⚖️",
-    layout="wide",
+init_page(
+    title="Sanctions & PEP",
+    surtitle="Contrôles statistiques",
+    kicker=("OFAC, Trésor FR, UE consolidée"),
 )
-st.title("⚖️ Sanctions / PEP")
 st.caption(
     "Cross-check fournisseurs vs OFAC SDN, listes consolidées UE, Trésor FR et "
     "listes PEP (personnes politiquement exposées)."

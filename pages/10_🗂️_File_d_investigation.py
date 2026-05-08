@@ -14,14 +14,14 @@ import streamlit as st
 from p2p_fraud.cases.models import CaseStatus
 from p2p_fraud.cases.service import CaseClosedError
 from p2p_fraud.schema import Finding
+from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
-st.set_page_config(
-    page_title="File d'investigation — P2P Fraud Detective",
-    page_icon="🗂️",
-    layout="wide",
+init_page(
+    title="File d'investigation",
+    surtitle="Pilotage",
+    kicker=("Case management + audit log immutable"),
 )
-st.title("🗂️ File d'investigation")
 st.caption(
     "Case management v0 avec audit log immutable chaîné par hash SHA-256. "
     "Toute mutation est journalisée et vérifiable."

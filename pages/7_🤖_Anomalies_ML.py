@@ -7,9 +7,13 @@ import plotly.express as px
 import streamlit as st
 
 from p2p_fraud.detectors.isolation_forest import detect_anomalies
+from p2p_fraud.streamlit_theme import init_page
 
-st.set_page_config(page_title="Anomalies ML — P2P Fraud Detective", page_icon="🤖", layout="wide")
-st.title("🤖 Isolation Forest — anomalies ML")
+init_page(
+    title="Anomalies (ML)",
+    surtitle="Détection ML",
+    kicker=("Isolation Forest + perturbation locale"),
+)
 st.caption(
     "Pipeline scikit-learn (StandardScaler → IsolationForest) sur features "
     "comportementales : log_amount, weekday, ratio vendor avg, écart depuis "
@@ -48,7 +52,6 @@ if st.button("🔍 Entraîner & scorer", type="primary"):
         result.scores.rename("anomaly_score"),
         nbins=50,
         title="Distribution des scores (0 = normal, 100 = anomalie maximale)",
-        template="plotly_dark",
     )
     st.plotly_chart(fig, use_container_width=True)
 
