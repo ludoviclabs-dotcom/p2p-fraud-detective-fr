@@ -1,20 +1,11 @@
 """Theming Streamlit centralisé — palette, CSS, Plotly, header institutionnel.
 
-Usage canonique en tête de chaque page Streamlit :
-
-    from p2p_fraud.streamlit_theme import init_page
-
-    init_page(
-        title="Cockpit",
-        surtitle="Pilotage",
-        kicker="Vue consolidée des risques P2P",
-    )
-
-`init_page` s'occupe de :
-1. `st.set_page_config(...)` (doit être le premier appel Streamlit) ;
-2. injection du CSS partagé (palette navy/charcoal/or, ribbon DÉMO) ;
-3. enregistrement du template Plotly « p2pfd » ;
-4. affichage de l'en-tête institutionnel (sur-titre + titre + kicker).
+Architecture (v0.3 — st.navigation) :
+- `streamlit_app.py` (entry point) appelle `init_app()` une fois en haut, puis
+  configure `st.navigation(...)` et lance `pg.run()`.
+- Chaque page sous `pages/` appelle `init_page(title, surtitle, kicker)` en
+  premier — pas de `set_page_config` au niveau page (Streamlit l'interdit
+  quand l'entry script l'a déjà appelé).
 """
 
 from __future__ import annotations
@@ -28,9 +19,6 @@ from p2p_fraud.streamlit_theme.header import page_header
 from p2p_fraud.streamlit_theme.plot import register as register_plotly
 
 DEMO_VERSION = "0.3"
-
-_PAGE_CONFIG_DONE = False
-_PLOTLY_REGISTERED = False
 
 
 def _menu_items() -> dict:
@@ -46,6 +34,26 @@ def _menu_items() -> dict:
     }
 
 
+def init_app(
+    *,
+    page_title: str = "P2P Fraud Detective FR — Démonstrateur d'audit",
+    page_icon: str = "🛡️",
+) -> None:
+    """À appeler une fois en haut de `streamlit_app.py` (entry point).
+
+    Configure le `st.set_page_config` global. À ne pas appeler depuis les
+    pages — Streamlit interdit deux appels par script run.
+    """
+    with contextlib.suppress(st.errors.StreamlitAPIException):
+        st.set_page_config(
+            page_title=page_title,
+            page_icon=page_icon,
+            layout="wide",
+            initial_sidebar_state="expanded",
+            menu_items=_menu_items(),
+        )
+
+
 def inject_css() -> None:
     """Injecte le CSS partagé (palette, ribbon DÉMO, masquage footer Streamlit)."""
     st.markdown(CSS, unsafe_allow_html=True)
@@ -57,35 +65,29 @@ def init_page(
     surtitle: str,
     kicker: str | None = None,
     page_title: str | None = None,
-    page_icon: str = "🛡️",
+    page_icon: str | None = None,
 ) -> None:
-    """À appeler en tout premier dans chaque page Streamlit.
+    """À appeler en tout premier dans chaque page Streamlit (sous `pg.run()`).
 
-    Les pages déjà chargées continuent de fonctionner si `set_page_config` a
-    déjà été appelé — Streamlit autorise un seul appel par session de page,
-    on garde donc une garde idempotente.
+    - `title`     : titre principal de la page.
+    - `surtitle`  : section de la nav (ex. « Pilotage », « Détection ML »).
+    - `kicker`    : courte description sous le titre (optionnelle).
+
+    Les paramètres `page_title` / `page_icon` sont conservés pour rétrocompat
+    avec les anciennes signatures, mais ignorés (set_page_config est posé une
+    fois par `init_app()` dans l'entry point).
     """
-    global _PAGE_CONFIG_DONE, _PLOTLY_REGISTERED
-
-    if not _PAGE_CONFIG_DONE:
-        # `set_page_config` peut être déjà appelé par Streamlit lors d'une
-        # transition entre pages — on ignore alors silencieusement.
-        with contextlib.suppress(st.errors.StreamlitAPIException):
-            st.set_page_config(
-                page_title=page_title or f"{title} — P2P Fraud Detective FR",
-                page_icon=page_icon,
-                layout="wide",
-                initial_sidebar_state="expanded",
-                menu_items=_menu_items(),
-            )
-        _PAGE_CONFIG_DONE = True
-
-    if not _PLOTLY_REGISTERED:
-        register_plotly()
-        _PLOTLY_REGISTERED = True
-
+    del page_title, page_icon  # rétrocompat — ignorés depuis `st.navigation`
+    register_plotly()
     inject_css()
     page_header(title=title, surtitle=surtitle, kicker=kicker)
 
 
-__all__ = ["DEMO_VERSION", "init_page", "inject_css", "page_header", "register_plotly"]
+__all__ = [
+    "DEMO_VERSION",
+    "init_app",
+    "init_page",
+    "inject_css",
+    "page_header",
+    "register_plotly",
+]
