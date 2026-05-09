@@ -9,6 +9,49 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 ### Ajouté
 - *(prochains changements ici)*
 
+## [0.3.0] - 2026-05-09
+
+Refonte UX/UI institutionnelle (H1 Quick Wins + H2 Refonte intermédiaire).
+Transformation « POC → démonstrateur expert » : thème clair navy/or, 6 sections
+de navigation, Méthodologie complète, Gouvernance RGAA/RGPD, PDF stylé, ego-network.
+
+### Ajouté — H1 Quick Wins
+- Thème institutionnel clair navy/charcoal/or (`.streamlit/config.toml` intégral).
+- Police Inter (OFL) + JetBrains Mono via `[[theme.fontFaces]]`.
+- Module CSS centralisé (`streamlit_theme/css.py`) : variables design tokens, KPI
+  stylés border-left navy, ribbon « DÉMONSTRATEUR · v0.3 » fixed top-right.
+- Template Plotly `p2pfd` unifié (`streamlit_theme/plot.py`) — palette nav/or/alert,
+  fond blanc, Inter — enregistré comme template par défaut.
+- `page_header(title, surtitle, kicker)` remplace `st.title()` sur les 17 pages.
+- Architecture `init_app()` / `init_page()` pour éviter le doublon `set_page_config`.
+- `st.navigation` à 6 sections (loi de Miller).
+- Cockpit refondu : mission + 4 KPI métiers + 6 raccourcis + demo cases seedés.
+- Deep-links `?case_id`, `?invoice_id`, `?seq`.
+- Wrappers `@st.cache_data` Sirene (TTL 1h) et sanctions (TTL 24h).
+- 7 tests de régression theming.
+
+### Ajouté — H2 Refonte intermédiaire
+- **Méthodologie** : refonte complète (10 sections) — sources, seuils statistiques,
+  calibration ML, métriques F1, limites/biais, schéma architecture, mapping référentiels.
+- **Gouvernance** : déclaration RGAA 4.1 partielle, mention RGPD, tableau RBAC 4 rôles.
+- **Audit trail `file.imported`** : SHA-256 fichier + n_rows journalisé à chaque upload.
+- **streamlit-aggrid** sur File investigation et Fiche fournisseur 360°.
+- **Ego-network interactif** (`streamlit-agraph`) — nœud central, rayon ≤ 2, 200 nœuds
+  max, coloration sémantique, drill-down Fiche 360°.
+- **Export PDF stylé** (`weasyprint` + Jinja2) — rapport A4 institutionnel.
+- `packages.txt` pour apt deps weasyprint sur Streamlit Cloud.
+- `@st.fragment` sur Score explorer.
+- CI smoke test : `sleep 12`, curl health + root.
+- `docs/accessibilite.md` : déclaration RGAA 4.1 partielle avec ratios de contraste.
+
+### Modifié
+- 17 pages migrées de `st.title()` vers `init_page(title, surtitle, kicker)`.
+- Suppression de tous les `template="plotly_dark"` codés en dur.
+- `streamlit_app.py` : pure dispatcher (`init_app()` + `st.navigation`).
+
+### Dépendances ajoutées
+- `streamlit-aggrid>=1.2.1`, `streamlit-agraph>=0.0.45`, `weasyprint>=62.0`, `jinja2>=3.1`
+
 ## [0.2.0] - 2026-05-07
 
 Sprints 1 → 8 (technique). Repositionnement produit, master data history,
