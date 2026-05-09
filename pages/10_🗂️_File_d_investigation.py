@@ -106,7 +106,12 @@ else:
     # AgGrid avec sélection de ligne persistée
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_selection("single", use_checkbox=False, pre_selected_rows=[0])
-    gb.configure_column("exposure_eur", header_name="Exposition €", type=["numericColumn"], valueFormatter="'€ ' + value?.toLocaleString('fr-FR', {maximumFractionDigits:0})")
+    gb.configure_column(
+        "exposure_eur",
+        header_name="Exposition €",
+        type=["numericColumn"],
+        valueFormatter="'€ ' + value?.toLocaleString('fr-FR', {maximumFractionDigits:0})",
+    )
     gb.configure_column("case_id", header_name="Case ID")
     gb.configure_column("status", header_name="Statut")
     gb.configure_column("severity", header_name="Sévérité")

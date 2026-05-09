@@ -140,7 +140,15 @@ with tabs[1]:
         sub = sub.sort_values("invoice_date")
         display_cols = [
             c
-            for c in ["invoice_id", "invoice_date", "amount", "currency", "po_number", "user_id", "gl_account"]
+            for c in [
+                "invoice_id",
+                "invoice_date",
+                "amount",
+                "currency",
+                "po_number",
+                "user_id",
+                "gl_account",
+            ]
             if c in sub.columns
         ]
         _aggrid_simple(sub[display_cols], height=240)
