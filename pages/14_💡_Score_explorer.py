@@ -91,61 +91,68 @@ default_idx = invoice_ids_list.index(qp_inv) if qp_inv in invoice_ids_list else 
 invoice_id = st.selectbox("Facture", invoice_ids_list, index=default_idx)
 if invoice_id and invoice_id != st.query_params.get("invoice_id"):
     st.query_params["invoice_id"] = invoice_id
-rs = scores[invoice_id]
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Score consolidé", f"{rs.score:.0f}/100")
-col2.metric("Nombre de findings", rs.findings_count)
-top_pct = rs.contributions[0].contribution_pct if rs.contributions else 0
-col3.metric("Part du top contributeur", f"{top_pct} %")
 
-steps = score_waterfall(rs)
-df_steps = waterfall_to_dataframe(steps)
+@st.fragment
+def _render_score_detail(inv_id: str) -> None:
+    rs = scores[inv_id]
 
-st.markdown("**Waterfall des contributions au score** :")
-fig = go.Figure(
-    go.Waterfall(
-        name="contributions",
-        orientation="v",
-        measure=["relative"] * len(df_steps),
-        x=df_steps["label"],
-        y=df_steps["delta"],
-        text=[f"+{d:.1f}" for d in df_steps["delta"]],
-        textposition="outside",
-        connector={"line": {"color": "rgba(63, 63, 63, 0.4)"}},
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Score consolidé", f"{rs.score:.0f}/100")
+    col2.metric("Nombre de findings", rs.findings_count)
+    top_pct = rs.contributions[0].contribution_pct if rs.contributions else 0
+    col3.metric("Part du top contributeur", f"{top_pct} %")
+
+    steps = score_waterfall(rs)
+    df_steps = waterfall_to_dataframe(steps)
+
+    st.markdown("**Waterfall des contributions au score** :")
+    fig = go.Figure(
+        go.Waterfall(
+            name="contributions",
+            orientation="v",
+            measure=["relative"] * len(df_steps),
+            x=df_steps["label"],
+            y=df_steps["delta"],
+            text=[f"+{d:.1f}" for d in df_steps["delta"]],
+            textposition="outside",
+            connector={"line": {"color": "rgba(63, 63, 63, 0.4)"}},
+        )
     )
-)
-fig.update_layout(
-    yaxis_title="Points (0–100)",
-    height=420,
-    margin={"t": 30, "b": 80, "l": 30, "r": 30},
-)
-st.plotly_chart(fig, use_container_width=True)
-
-st.divider()
-st.subheader("📝 Reason codes (français)")
-if rs.reason_codes_fr:
-    for code in rs.reason_codes_fr:
-        st.markdown(f"- {code}")
-else:
-    st.caption("Aucun reason code disponible (legacy mode).")
-
-st.divider()
-st.subheader("🤖 Top features ML (Isolation Forest, si modèle dispo)")
-pipeline = st.session_state.get("iforest_pipeline")
-feature_row = st.session_state.get(f"iforest_features::{invoice_id}")
-feature_columns = st.session_state.get("iforest_feature_columns")
-
-if pipeline is None or feature_row is None or feature_columns is None:
-    st.caption(
-        "Pour activer l'explication ML, lancez la page **🤖 Anomalies ML** sur ce dataset. "
-        "Le pipeline et les features par facture seront alors disponibles ici."
+    fig.update_layout(
+        yaxis_title="Points (0–100)",
+        height=420,
+        margin={"t": 30, "b": 80, "l": 30, "r": 30},
     )
-else:
-    from p2p_fraud.scoring.explainer import explain_isolation_forest_row
+    st.plotly_chart(fig, use_container_width=True)
 
-    contribs = explain_isolation_forest_row(pipeline, feature_row, feature_columns)
-    df_features = pd.DataFrame(
-        [{"feature": c.feature, "delta_anomaly_score": c.delta_anomaly_score} for c in contribs]
-    )
-    st.dataframe(df_features, use_container_width=True)
+    st.divider()
+    st.subheader("📝 Reason codes (français)")
+    if rs.reason_codes_fr:
+        for code in rs.reason_codes_fr:
+            st.markdown(f"- {code}")
+    else:
+        st.caption("Aucun reason code disponible (legacy mode).")
+
+    st.divider()
+    st.subheader("🤖 Top features ML (Isolation Forest, si modèle dispo)")
+    pipeline = st.session_state.get("iforest_pipeline")
+    feature_row = st.session_state.get(f"iforest_features::{inv_id}")
+    feature_columns = st.session_state.get("iforest_feature_columns")
+
+    if pipeline is None or feature_row is None or feature_columns is None:
+        st.caption(
+            "Pour activer l'explication ML, lancez la page **🤖 Anomalies ML** sur ce dataset. "
+            "Le pipeline et les features par facture seront alors disponibles ici."
+        )
+    else:
+        from p2p_fraud.scoring.explainer import explain_isolation_forest_row
+
+        contribs = explain_isolation_forest_row(pipeline, feature_row, feature_columns)
+        df_features = pd.DataFrame(
+            [{"feature": c.feature, "delta_anomaly_score": c.delta_anomaly_score} for c in contribs]
+        )
+        st.dataframe(df_features, use_container_width=True)
+
+
+_render_score_detail(invoice_id)

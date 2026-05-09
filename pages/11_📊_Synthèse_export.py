@@ -13,8 +13,10 @@ import streamlit as st
 
 from p2p_fraud.export.excel_findings import build_workbook
 from p2p_fraud.export.parquet_for_powerbi import export_to_parquet
+from p2p_fraud.export.pdf_synthese import build_pdf
 from p2p_fraud.scoring.risk_engine import aggregate_findings, severity_band, to_dataframe
 from p2p_fraud.streamlit_theme import init_page
+from pages._helpers import get_case_service
 
 init_page(
     title="Synthèse — export",
@@ -109,7 +111,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 st.subheader("📥 Export")
-ec1, ec2, ec3 = st.columns(3)
+ec1, ec2, ec3, ec4 = st.columns(4)
 
 with ec1:
     csv_buf = df_join.to_csv(index=False).encode("utf-8")
@@ -150,3 +152,26 @@ with ec3:
         mime="application/zip",
         help="invoices.parquet + findings.parquet + risk_scores.parquet — à connecter dans Power BI Desktop",
     )
+
+with ec4:
+    # PDF stylé weasyprint
+    if st.button("📄 Générer le PDF stylé", help="Rapport institutionnel PDF (navy/or, Inter, tabular-nums)"):
+        with st.spinner("Génération du PDF…"):
+            try:
+                _service = get_case_service()
+                _cases = _service.list_cases()
+                _audit_entries = _service.audit_log.all()
+                pdf_bytes = build_pdf(
+                    invoices_df=df,
+                    findings=all_findings,
+                    cases=_cases,
+                    audit_entries=_audit_entries,
+                )
+                st.download_button(
+                    "⬇️ Télécharger le rapport PDF",
+                    data=pdf_bytes,
+                    file_name="p2p_synthese_audit.pdf",
+                    mime="application/pdf",
+                )
+            except Exception as exc:
+                st.error(f"Erreur génération PDF : {exc}")
