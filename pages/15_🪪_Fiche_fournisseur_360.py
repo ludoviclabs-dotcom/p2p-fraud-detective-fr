@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
 from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
@@ -40,6 +41,28 @@ def _collect_session_findings():
     return out
 
 
+def _aggrid_simple(df: pd.DataFrame, height: int = 240) -> None:
+    """AgGrid en lecture seule, tri/filtre activés, format € sur colonnes numériques."""
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(sortable=True, filter=True, resizable=True)
+    for col in df.select_dtypes("number").columns:
+        if "amount" in col or "eur" in col or "paid" in col:
+            gb.configure_column(
+                col,
+                type=["numericColumn"],
+                valueFormatter="value != null ? value.toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' €' : '—'",
+            )
+    AgGrid(
+        df,
+        gridOptions=gb.build(),
+        update_mode=GridUpdateMode.NO_UPDATE,
+        data_return_mode=DataReturnMode.AS_INPUT,
+        height=height,
+        use_container_width=True,
+        allow_unsafe_jscode=True,
+    )
+
+
 vendors = st.session_state.get("df_vendors")
 invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get("df_invoices")
 master_events = st.session_state.get("df_master_events")
@@ -54,13 +77,14 @@ if not vendor_options:
     st.error("La table fournisseurs ne contient pas de colonne `vendor_id`.")
     st.stop()
 
-# Pré-sélection : si un vendor_id est passé en query param ou choisi avant
 default_idx = 0
 preselect = st.query_params.get("vendor_id")
 if preselect and preselect in vendor_options:
     default_idx = vendor_options.index(preselect)
 
 vendor_id = st.selectbox("Fournisseur", vendor_options, index=default_idx)
+if vendor_id and vendor_id != st.query_params.get("vendor_id"):
+    st.query_params["vendor_id"] = vendor_id
 
 summary = get_vendor_summary(
     vendor_id,
@@ -76,8 +100,6 @@ def _fmt_eur(value: float | None) -> str:
         return "—"
     return f"{value:,.0f} €".replace(",", " ")
 
-
-# --- Bandeau d'identification ---
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Nom", summary.vendor_name or "—")
@@ -116,33 +138,14 @@ with tabs[1]:
         sub = summary.invoices.copy()
         sub["invoice_date"] = pd.to_datetime(sub["invoice_date"], errors="coerce")
         sub = sub.sort_values("invoice_date")
-        st.dataframe(
-            sub[
-                [
-                    c
-                    for c in [
-                        "invoice_id",
-                        "invoice_date",
-                        "amount",
-                        "currency",
-                        "po_number",
-                        "user_id",
-                        "gl_account",
-                    ]
-                    if c in sub.columns
-                ]
-            ],
-            use_container_width=True,
-            height=240,
-        )
-        # Timeline d'évolution des paiements
+        display_cols = [
+            c
+            for c in ["invoice_id", "invoice_date", "amount", "currency", "po_number", "user_id", "gl_account"]
+            if c in sub.columns
+        ]
+        _aggrid_simple(sub[display_cols], height=240)
         try:
-            fig = px.bar(
-                sub,
-                x="invoice_date",
-                y="amount",
-                title="Paiements dans le temps",
-            )
+            fig = px.bar(sub, x="invoice_date", y="amount", title="Paiements dans le temps")
             st.plotly_chart(fig, use_container_width=True)
         except (ValueError, KeyError, TypeError):
             pass
@@ -156,10 +159,10 @@ with tabs[2]:
     else:
         if not iban.empty:
             st.markdown("#### Historique IBAN")
-            st.dataframe(iban, use_container_width=True)
+            _aggrid_simple(iban, height=200)
         if not name_h.empty:
             st.markdown("#### Historique nom")
-            st.dataframe(name_h, use_container_width=True)
+            _aggrid_simple(name_h, height=200)
 
 with tabs[3]:
     st.markdown("### Findings")
@@ -177,4 +180,4 @@ with tabs[3]:
             }
             for f in summary.findings
         ]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, height=320)
+        _aggrid_simple(pd.DataFrame(rows), height=320)

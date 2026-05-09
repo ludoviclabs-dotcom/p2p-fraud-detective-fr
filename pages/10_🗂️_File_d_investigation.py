@@ -1,7 +1,7 @@
 """Page file d'investigation — case management v0.
 
 Crée des cases depuis les findings de la session, permet assignation, commentaire,
-escalade et clôture motivée.
+escalade et clôture motivée. Tableau AgGrid avec sélection de ligne persistée.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 import streamlit as st
+from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
 from p2p_fraud.cases.models import CaseStatus
 from p2p_fraud.cases.service import CaseClosedError
@@ -101,11 +102,45 @@ else:
             for c in cases
         ]
     ).sort_values("exposure_eur", ascending=False, na_position="last")
-    st.dataframe(df, use_container_width=True, height=320)
 
+    # AgGrid avec sélection de ligne persistée
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_selection("single", use_checkbox=False, pre_selected_rows=[0])
+    gb.configure_column("exposure_eur", header_name="Exposition €", type=["numericColumn"], valueFormatter="'€ ' + value?.toLocaleString('fr-FR', {maximumFractionDigits:0})")
+    gb.configure_column("case_id", header_name="Case ID")
+    gb.configure_column("status", header_name="Statut")
+    gb.configure_column("severity", header_name="Sévérité")
+    gb.configure_column("title", flex=2)
+    gb.configure_default_column(sortable=True, filter=True, resizable=True)
+    gb.configure_grid_options(domLayout="normal")
+    grid_options = gb.build()
+
+    grid_response = AgGrid(
+        df,
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
+        height=320,
+        use_container_width=True,
+        allow_unsafe_jscode=True,
+    )
+
+    # Résoudre le case sélectionné (AgGrid ou query_param)
+    selected_rows = grid_response.get("selected_rows")
     case_ids = [c.case_id for c in cases]
     qp_case = st.query_params.get("case_id", "")
-    default_idx = case_ids.index(qp_case) if qp_case in case_ids else 0
+
+    if selected_rows is not None and len(selected_rows) > 0:
+        if isinstance(selected_rows, pd.DataFrame):
+            selected_case_id = selected_rows.iloc[0]["case_id"]
+        else:
+            selected_case_id = selected_rows[0]["case_id"]
+    elif qp_case in case_ids:
+        selected_case_id = qp_case
+    else:
+        selected_case_id = case_ids[0]
+
+    default_idx = case_ids.index(selected_case_id) if selected_case_id in case_ids else 0
     selected = st.selectbox(
         "Case à inspecter / muter",
         case_ids,
