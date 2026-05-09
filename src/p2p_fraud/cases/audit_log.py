@@ -99,6 +99,25 @@ class AuditLog:
             seq=seq, at=at, actor=actor, kind=kind, payload=payload, prev_hash=prev_hash, hash=h
         )
 
+    def append_file_import(
+        self,
+        *,
+        actor: str,
+        filename: str,
+        content_hash_sha256: str,
+        n_rows: int,
+    ) -> AuditLogEntry:
+        """Journalise l'import d'un fichier avec son hash SHA-256 pour traçabilité WORM."""
+        return self.append(
+            actor=actor,
+            kind="file.imported",
+            payload={
+                "filename": filename,
+                "sha256": content_hash_sha256,
+                "n_rows": n_rows,
+            },
+        )
+
     # --- API de lecture ---
 
     def all(self) -> list[AuditLogEntry]:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from p2p_fraud.ingestion.presets import (
 )
 from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
+from pages._helpers import get_case_service
 
 init_page(
     title="Import des données",
@@ -35,6 +37,17 @@ tab_upload, tab_erp, tab_synthetic, tab_sample = st.tabs(
         "📦 Charger l'échantillon",
     ]
 )
+
+
+def _audit_file_import(filename: str, file_bytes: bytes, n_rows: int) -> None:
+    sha256 = hashlib.sha256(file_bytes).hexdigest()
+    actor = st.session_state.get("current_user", "upload.page")
+    get_case_service().audit_log.append_file_import(
+        actor=actor,
+        filename=filename,
+        content_hash_sha256=sha256,
+        n_rows=n_rows,
+    )
 
 
 def _persist(df: pd.DataFrame, source_label: str) -> None:
@@ -92,6 +105,8 @@ with tab_upload:
         with st.expander("🔗 Mapping de colonnes"):
             st.json(report["mapping"])
         _persist(df, source_label=uploaded.name)
+        buf.seek(0)
+        _audit_file_import(uploaded.name, buf.read(), len(df))
         _show_summary(df)
 
 with tab_erp:
@@ -179,6 +194,8 @@ with tab_erp:
                 f"(filtrées : {before - after} lignes invalides)."
             )
             _persist(canonical_df, source_label=f"erp:{chosen.name}:{erp_uploaded.name}")
+            erp_buf.seek(0)
+            _audit_file_import(erp_uploaded.name, erp_buf.read(), len(canonical_df))
             _show_summary(canonical_df)
 
 
