@@ -155,7 +155,9 @@ with ec3:
 
 with ec4:
     # PDF stylé weasyprint
-    if st.button("📄 Générer le PDF stylé", help="Rapport institutionnel PDF (navy/or, Inter, tabular-nums)"):
+    if st.button(
+        "📄 Générer le PDF stylé", help="Rapport institutionnel PDF (navy/or, Inter, tabular-nums)"
+    ):
         with st.spinner("Génération du PDF…"):
             try:
                 _service = get_case_service()

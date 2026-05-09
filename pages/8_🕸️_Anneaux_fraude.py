@@ -117,10 +117,10 @@ if len(ego.nodes()) > NODE_CAP:
 
 # Construire les objets agraph
 COLORS = {
-    "central": "#E5A93A",   # gold
-    "suspect": "#A23E48",   # alert
-    "vendor": "#1F3A6E",    # navy
-    "iban": "#3E7CB1",      # navy-500
+    "central": "#E5A93A",  # gold
+    "suspect": "#A23E48",  # alert
+    "vendor": "#1F3A6E",  # navy
+    "iban": "#3E7CB1",  # navy-500
 }
 
 
@@ -151,8 +151,7 @@ agraph_nodes = [
     for n in ego.nodes()
 ]
 agraph_edges = [
-    Edge(source=str(u), target=str(v), color="#9AA3B2", width=1)
-    for u, v in ego.edges()
+    Edge(source=str(u), target=str(v), color="#9AA3B2", width=1) for u, v in ego.edges()
 ]
 
 config = Config(

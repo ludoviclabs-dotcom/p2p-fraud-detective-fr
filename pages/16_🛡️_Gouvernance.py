@@ -162,6 +162,7 @@ if new_state != ml_enabled:
         "L'agrégation tiendra compte de cette bascule au prochain calcul."
     )
 
+
 # ── Journal des décisions ─────────────────────────────────────────────────────
 @st.cache_resource
 def _service() -> CaseService:

@@ -351,7 +351,9 @@ def build_pdf(
     n_invoices = f"{len(invoices_df):,}".replace(",", " ")
     exposure_total_raw = invoices_df["amount"].sum() if "amount" in invoices_df.columns else 0.0
     exposure_total = _fmt_eur(exposure_total_raw)
-    n_critical = sum(1 for f in findings if getattr(f.severity, "value", f.severity) in ("CRITICAL", "critical"))
+    n_critical = sum(
+        1 for f in findings if getattr(f.severity, "value", f.severity) in ("CRITICAL", "critical")
+    )
 
     open_statuses = {"open", "OPEN", "in_progress", "IN_PROGRESS", "escalated", "ESCALATED"}
     n_cases_open = sum(1 for c in cases if getattr(c.status, "value", c.status) in open_statuses)
@@ -359,57 +361,71 @@ def build_pdf(
     # Top vendors by exposure
     vendor_rows = []
     if findings and "vendor_id" in invoices_df.columns and "amount" in invoices_df.columns:
-        finding_vids = {getattr(f, "vendor_id", None) for f in findings if getattr(f, "vendor_id", None)}
-        sub = invoices_df[invoices_df["vendor_id"].isin(finding_vids)] if finding_vids else invoices_df
+        finding_vids = {
+            getattr(f, "vendor_id", None) for f in findings if getattr(f, "vendor_id", None)
+        }
+        sub = (
+            invoices_df[invoices_df["vendor_id"].isin(finding_vids)]
+            if finding_vids
+            else invoices_df
+        )
         if not sub.empty:
             grp = (
                 sub.groupby("vendor_id")
                 .agg(
                     n_invoices=("invoice_id", "count"),
                     exposure_eur=("amount", "sum"),
-                    vendor_name=("vendor_name", "first") if "vendor_name" in sub.columns else ("vendor_id", "first"),
+                    vendor_name=("vendor_name", "first")
+                    if "vendor_name" in sub.columns
+                    else ("vendor_id", "first"),
                 )
                 .sort_values("exposure_eur", ascending=False)
                 .head(n_top_vendors)
                 .reset_index()
             )
             for _, row in grp.iterrows():
-                vendor_rows.append({
-                    "vendor_name": str(row.get("vendor_name", row["vendor_id"]))[:45],
-                    "n_invoices": int(row["n_invoices"]),
-                    "exposure_eur": _fmt_eur(row["exposure_eur"]),
-                    "max_score": "—",
-                })
+                vendor_rows.append(
+                    {
+                        "vendor_name": str(row.get("vendor_name", row["vendor_id"]))[:45],
+                        "n_invoices": int(row["n_invoices"]),
+                        "exposure_eur": _fmt_eur(row["exposure_eur"]),
+                        "max_score": "—",
+                    }
+                )
 
     # Top cases
     cases_rows = []
     sorted_cases = sorted(
         cases,
-        key=lambda c: (getattr(c, "exposure_eur", None) or 0),
+        key=lambda c: getattr(c, "exposure_eur", None) or 0,
         reverse=True,
     )[:10]
     for c in sorted_cases:
-        cases_rows.append({
-            "case_id": str(c.case_id)[:16],
-            "title": str(c.title or "—")[:50],
-            "severity": str(c.severity),
-            "severity_css": _severity_css(str(c.severity)),
-            "status": getattr(c.status, "value", str(c.status)),
-            "exposure_eur": _fmt_eur(getattr(c, "exposure_eur", None)),
-            "assignee": str(c.assignee or "—"),
-        })
+        cases_rows.append(
+            {
+                "case_id": str(c.case_id)[:16],
+                "title": str(c.title or "—")[:50],
+                "severity": str(c.severity),
+                "severity_css": _severity_css(str(c.severity)),
+                "status": getattr(c.status, "value", str(c.status)),
+                "exposure_eur": _fmt_eur(getattr(c, "exposure_eur", None)),
+                "assignee": str(c.assignee or "—"),
+            }
+        )
 
     # Audit entries (last 10)
     audit_rows = []
     for e in audit_entries[-10:]:
         payload_str = str(e.payload)[:80] if e.payload else "—"
-        audit_rows.append({
-            "seq": e.seq,
-            "at": str(e.at)[:19],
-            "actor": str(e.actor)[:20],
-            "kind": str(e.kind),
-            "payload": payload_str,
-        })
+        audit_rows.append(
+            {
+                "seq": e.seq,
+                "at": str(e.at)[:19],
+                "actor": str(e.actor)[:20],
+                "kind": str(e.kind),
+                "payload": payload_str,
+            }
+        )
 
     env = Environment(loader=BaseLoader(), autoescape=True)
     template = env.from_string(_HTML_TEMPLATE)
