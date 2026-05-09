@@ -85,7 +85,12 @@ st.dataframe(recap.head(50), use_container_width=True, height=320)
 st.divider()
 st.subheader("🔍 Décomposition d'un score")
 
-invoice_id = st.selectbox("Facture", recap["invoice_id"].tolist())
+invoice_ids_list = recap["invoice_id"].tolist()
+qp_inv = st.query_params.get("invoice_id", "")
+default_idx = invoice_ids_list.index(qp_inv) if qp_inv in invoice_ids_list else 0
+invoice_id = st.selectbox("Facture", invoice_ids_list, index=default_idx)
+if invoice_id and invoice_id != st.query_params.get("invoice_id"):
+    st.query_params["invoice_id"] = invoice_id
 rs = scores[invoice_id]
 
 col1, col2, col3 = st.columns(3)

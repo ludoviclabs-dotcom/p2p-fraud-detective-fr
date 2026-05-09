@@ -103,9 +103,17 @@ else:
     ).sort_values("exposure_eur", ascending=False, na_position="last")
     st.dataframe(df, use_container_width=True, height=320)
 
+    case_ids = [c.case_id for c in cases]
+    qp_case = st.query_params.get("case_id", "")
+    default_idx = case_ids.index(qp_case) if qp_case in case_ids else 0
     selected = st.selectbox(
-        "Case à inspecter / muter", [c.case_id for c in cases], key="selected_case"
+        "Case à inspecter / muter",
+        case_ids,
+        index=default_idx,
+        key="selected_case",
     )
+    if selected and selected != st.query_params.get("case_id"):
+        st.query_params["case_id"] = selected
     case = service.get(selected)
     st.markdown(f"**Statut** : `{case.status.value}` · **Assignee** : {case.assignee or '—'}")
 
