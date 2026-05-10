@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import io
 import logging
-import os
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -30,11 +29,15 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from p2p_fraud.cases.service import CaseService
+from p2p_fraud.config import get_settings
 from p2p_fraud.detectors.duplicates import detect_duplicates
 from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
 from p2p_fraud.detectors.thresholds import detect_threshold_splits
+from p2p_fraud.logging_setup import configure_logging
 from p2p_fraud.schema import Finding
 from p2p_fraud.scoring.engine import aggregate_findings_with_explanations
+
+configure_logging()
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +65,7 @@ _bearer = HTTPBearer(auto_error=False)
 
 
 def _get_api_secret() -> str:
-    return os.environ.get("FRAUD_API_SECRET", "")
+    return get_settings().fraud_api_secret
 
 
 def _require_auth(
@@ -83,8 +86,7 @@ def _require_auth(
 def _case_service() -> CaseService:
     global _CASE_SERVICE
     if _CASE_SERVICE is None:
-        db_path = os.environ.get("FRAUD_CASES_DB", "cases.db")
-        _CASE_SERVICE = CaseService(db_path=db_path)
+        _CASE_SERVICE = CaseService(db_path=get_settings().fraud_cases_db)
     return _CASE_SERVICE
 
 

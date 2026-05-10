@@ -16,7 +16,6 @@ On ne fait PAS d'appel pour les SIREN nuls/vides.
 from __future__ import annotations
 
 import logging
-import os
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -26,6 +25,7 @@ from typing import Any
 import pandas as pd
 import requests
 
+from p2p_fraud.config import get_settings
 from p2p_fraud.enrichment.cache import get_cached_session
 from p2p_fraud.schema import Finding, Severity
 
@@ -61,7 +61,7 @@ class SireneClient:
         timeout: float = 10.0,
         session: requests.Session | None = None,
     ) -> None:
-        self.token = token or os.environ.get("SIRENE_API_TOKEN", "").strip()
+        self.token = (token or get_settings().sirene_api_token or "").strip()
         self._enabled = bool(self.token)
         self._timeout = timeout
         self._min_interval = 1.0 / max(1, rate_limit_qps)

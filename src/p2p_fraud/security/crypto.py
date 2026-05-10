@@ -15,10 +15,11 @@ Conception :
 from __future__ import annotations
 
 import logging
-import os
 import re
 
 from cryptography.fernet import Fernet, InvalidToken
+
+from ..config import get_settings
 
 log = logging.getLogger(__name__)
 
@@ -37,10 +38,10 @@ def _generate_ephemeral_key() -> bytes:
 
 
 def _read_key() -> bytes:
-    raw = os.environ.get(ENV_VAR, "").strip()
+    raw = (get_settings().p2p_fraud_data_key or "").strip()
     if not raw:
         return _generate_ephemeral_key()
-    return raw.encode("ascii") if isinstance(raw, str) else raw
+    return raw.encode("ascii")
 
 
 class CryptoService:

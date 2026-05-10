@@ -6,8 +6,28 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 
 ## [Unreleased]
 
-### Ajouté
-- *(prochains changements ici)*
+### Ajouté — Phase 4 / PR P4-1 (Hardening foundation)
+- `p2p_fraud.config.Settings` (pydantic-settings) — singleton de configuration
+  applicative qui centralise les 13 variables d'environnement précédemment
+  dispersées dans 6 modules. Noms historiques conservés pour rétrocompat
+  (`SIRENE_API_TOKEN`, `OIDC_*`, `FRAUD_*`, `P2P_FRAUD_*`).
+- `p2p_fraud.logging_setup.configure_logging()` — configuration centralisée du
+  root logger avec format `text` ou `json` (python-json-logger) selon
+  `LOG_FORMAT`. Idempotent, appelable depuis Streamlit, FastAPI, scheduler CLI.
+- `tests/test_config.py` — 10 tests unitaires (rétrocompat env vars, parsing
+  case-insensitive, idempotence du logging, fallback gracieux JSON).
+- `.env.example` étendu avec toutes les variables connues + commentaires.
+- Dépendances : `pydantic-settings>=2.0`, `python-json-logger>=2.0`.
+
+### Modifié — Phase 4 / PR P4-1
+- `src/p2p_fraud/enrichment/sirene_client.py`, `llm/narrative_generator.py`,
+  `api/main.py`, `security/oidc.py`, `security/auth.py`, `security/crypto.py`
+  — remplacement des `os.environ.get(...)` par `get_settings()`.
+- `streamlit_app.py` et `api/main.py` appellent `configure_logging()` au boot.
+
+### Préparé — Phase 4
+- Champs `Settings.database_url`, `slack_webhook_url`, `teams_webhook_url`,
+  `sentry_dsn` exposés en amont des PRs P4-2 / P4-6.
 
 ## [0.3.0] - 2026-05-09
 

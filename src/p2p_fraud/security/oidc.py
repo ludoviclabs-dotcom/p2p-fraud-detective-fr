@@ -32,10 +32,11 @@ import base64
 import hashlib
 import json
 import logging
-import os
 import secrets
 from dataclasses import dataclass
 from urllib.parse import urlencode
+
+from ..config import get_settings
 
 log = logging.getLogger(__name__)
 
@@ -54,17 +55,15 @@ class OIDCConfig:
 
     @classmethod
     def from_env(cls) -> OIDCConfig | None:
-        issuer = os.environ.get("OIDC_ISSUER", "")
-        client_id = os.environ.get("OIDC_CLIENT_ID", "")
-        redirect_uri = os.environ.get("OIDC_REDIRECT_URI", "")
-        if not (issuer and client_id and redirect_uri):
+        s = get_settings()
+        if not (s.oidc_issuer and s.oidc_client_id and s.oidc_redirect_uri):
             return None
         return cls(
-            issuer=issuer,
-            client_id=client_id,
-            redirect_uri=redirect_uri,
-            scopes=os.environ.get("OIDC_SCOPES", DEFAULT_SCOPES),
-            client_secret=os.environ.get("OIDC_CLIENT_SECRET", ""),
+            issuer=s.oidc_issuer,
+            client_id=s.oidc_client_id,
+            redirect_uri=s.oidc_redirect_uri,
+            scopes=s.oidc_scopes or DEFAULT_SCOPES,
+            client_secret=s.oidc_client_secret,
         )
 
 
@@ -118,7 +117,7 @@ def map_groups_to_role(groups: list[str], *, role_map: dict | None = None) -> st
     Hiérarchie de fallback : admin > manager > analyst > viewer.
     """
     if role_map is None:
-        raw = os.environ.get("OIDC_ROLE_MAP", "")
+        raw = get_settings().oidc_role_map
         try:
             role_map = json.loads(raw) if raw else {}
         except json.JSONDecodeError:
