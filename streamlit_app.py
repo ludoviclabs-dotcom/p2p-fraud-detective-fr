@@ -26,6 +26,16 @@ pages = {
             title="File d'investigation",
             icon=":material/inbox:",
         ),
+        st.Page(
+            "pages/18_🔔_Alertes.py",
+            title="Alertes & monitoring",
+            icon=":material/notifications_active:",
+        ),
+        st.Page(
+            "pages/19_👥_Collaboration.py",
+            title="Collaboration multi-user",
+            icon=":material/groups:",
+        ),
     ],
     "🗂️ Données": [
         st.Page(
@@ -64,6 +74,11 @@ pages = {
             "pages/9_⚖️_Sanctions_PEP.py",
             title="Sanctions & PEP",
             icon=":material/gavel:",
+        ),
+        st.Page(
+            "pages/17_🏛️_DECP_RBE.py",
+            title="DECP & RBE INPI",
+            icon=":material/account_balance:",
         ),
     ],
     "🤖 Détection ML": [
@@ -115,4 +130,17 @@ pages = {
 }
 
 pg = st.navigation(pages, position="sidebar", expanded=True)
+
+with st.sidebar:
+    st.divider()
+    if st.button(
+        "🗑️ Purger la session",
+        help="RGPD — droit à l'effacement. Supprime toutes les données chargées en mémoire.",
+        use_container_width=True,
+    ):
+        keys_to_clear = [k for k in list(st.session_state.keys()) if k != "current_user"]
+        for k in keys_to_clear:
+            del st.session_state[k]
+        st.toast("Session purgée — toutes les données ont été effacées.", icon="🗑️")
+
 pg.run()

@@ -15,7 +15,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from p2p_fraud.cases.audit_log import AuditLog
+from p2p_fraud.cases.mentions import MentionStore, build_mentions
 from p2p_fraud.cases.models import Case, CaseEvent, CaseStatus
+from p2p_fraud.cases.sla import DEFAULT_SLA, SLAConfig
 from p2p_fraud.schema import Finding
 
 
@@ -73,6 +75,8 @@ class CaseService:
         audit_log: AuditLog | None = None,
         *,
         sla_hours_default: int = 5 * 24,  # 5 jours ouvrés ≈ approximation simple
+        sla_config: SLAConfig | None = None,
+        mention_store: MentionStore | None = None,
     ) -> None:
         self._path = str(db_path)
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
@@ -80,6 +84,20 @@ class CaseService:
         self._conn.commit()
         self._audit = audit_log or AuditLog(":memory:")
         self._sla_default = timedelta(hours=sla_hours_default)
+        self._sla = sla_config or DEFAULT_SLA
+        self._mentions = mention_store or MentionStore(":memory:")
+
+    @property
+    def sla(self) -> SLAConfig:
+        return self._sla
+
+    @property
+    def mentions(self) -> MentionStore:
+        return self._mentions
+
+    def _sla_deadline_for(self, severity: str) -> datetime:
+        """Calcule la deadline SLA en utilisant la config par sévérité."""
+        return self._sla.deadline_for(severity)
 
     @property
     def audit_log(self) -> AuditLog:
@@ -108,7 +126,7 @@ class CaseService:
             exposure_eur=float(finding.evidence.get("exposure_eur") or 0) or None,
             status=CaseStatus.NEW,
             assignee=None,
-            sla_deadline=datetime.now(UTC) + self._sla_default,
+            sla_deadline=self._sla_deadline_for(finding.severity.value),
             created_by=actor,
         )
         self._persist(case)
@@ -141,7 +159,7 @@ class CaseService:
             severity=max_severity,
             exposure_eur=exposure,
             status=CaseStatus.NEW,
-            sla_deadline=datetime.now(UTC) + self._sla_default,
+            sla_deadline=self._sla_deadline_for(max_severity),
             created_by=actor,
         )
         self._persist(case)
@@ -167,11 +185,18 @@ class CaseService:
     def comment(self, case_id: str, *, actor: str, text: str) -> Case:
         case = self._fetch_or_raise(case_id)
         # Les commentaires post-clôture sont autorisés mais flaggés.
+        mentions = build_mentions(case_id=case_id, text=text, mentioned_by=actor)
+        if mentions:
+            self._mentions.record(mentions)
         self._record_event(
             case_id,
             "commented",
             actor,
-            {"text": text, "post_closure": case.status.is_closed},
+            {
+                "text": text,
+                "post_closure": case.status.is_closed,
+                "mentions": [m.mentioned_user for m in mentions],
+            },
         )
         return case
 

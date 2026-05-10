@@ -33,6 +33,14 @@ if "df_invoices" not in st.session_state:
 
 df: pd.DataFrame = st.session_state["df_invoices"]
 
+n_valid = int(df["amount"].notna().sum())
+if n_valid < 1000:
+    st.warning(
+        f"⚠️ **{n_valid:,} montants exploitables** — moins de 1 000 observations. "
+        "La loi de Benford n'est statistiquement fiable qu'au-delà de 1 000 valeurs "
+        "(Nigrini, 2012). Les résultats ci-dessous sont indicatifs uniquement."
+    )
+
 with st.spinner("Calcul des distributions Benford…"):
     results = run_benford_tests(df["amount"].astype(float))
 

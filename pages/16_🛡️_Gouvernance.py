@@ -1,10 +1,11 @@
-"""Page Gouvernance — registre AI Act, DPIA, journal des décisions, RGAA, RGPD, RBAC.
+"""Page Gouvernance — registre AI Act, DPIA, journal des décisions, RGAA, RGPD, RBAC, AMLD6, CSRD.
 
 Vue lecture seule pour les rôles non-admin. Permet :
 - de visualiser le statut de classification AI Act du système ;
-- d'accéder aux templates DPIA + AI Act + RGPD ;
+- d'accéder aux templates DPIA + AI Act + RGPD + AMLD6 mapping ;
 - de basculer le scoring ML (Isolation Forest) hors / dans le score consolidé ;
-- de visualiser le journal des décisions automatisées (vérifié intégrité).
+- de visualiser le journal des décisions automatisées (vérifié intégrité) ;
+- d'exporter les fournisseurs à risque pour le reporting CSRD art. 29.
 """
 
 from __future__ import annotations
@@ -20,12 +21,12 @@ from p2p_fraud.streamlit_theme import init_page
 init_page(
     title="Gouvernance",
     surtitle="Gouvernance & méthode",
-    kicker=("AI Act · RGPD · RGAA 4.1 · RBAC · kill switch ML"),
+    kicker=("AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD"),
 )
 st.caption(
     "Registre AI Act (UE 2024/1689), DPIA (CNIL art. 35), registre de traitements "
-    "(RGPD art. 30), déclaration d'accessibilité partielle RGAA 4.1 et "
-    "journal des décisions automatisées."
+    "(RGPD art. 30), AMLD6 (6e directive anti-blanchiment), CSRD (rapport de durabilité), "
+    "déclaration d'accessibilité partielle RGAA 4.1 et journal des décisions automatisées."
 )
 
 # ── Classification AI Act ─────────────────────────────────────────────────────
@@ -247,3 +248,136 @@ with st.expander("📋 Détail de la déclaration RGAA 4.1"):
         [github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr](https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/issues).
         """
     )
+
+# ── AMLD6 ─────────────────────────────────────────────────────────────────────
+st.divider()
+st.subheader("🏦 AMLD6 — 6e Directive anti-blanchiment (UE 2018/1673)")
+
+st.info(
+    "La **6e directive anti-blanchiment** (AMLD6, transposée en droit français) est la référence "
+    "de **Tracfin** pour les déclarations de soupçon (DSO). "
+    "P2P Fraud Detective FR couvre partiellement les obligations LCB-FT via les détecteurs "
+    "Sanctions/PEP, Master data (IBAN suspect) et DECP/RBE (bénéficiaires effectifs)."
+)
+
+with st.expander("📋 Mapping AMLD6 — couverture par détecteur"):
+    st.markdown(
+        """
+        | Article AMLD6 | Obligation | Détecteur couvrant | Statut |
+        |---|---|---|---|
+        | Art. 18 — EDD | Mesures de vigilance renforcée (PEP, pays tiers à risque) | Sanctions & PEP, DECP/RBE | ✅ Partiel |
+        | Art. 19 — UBO | Identification des bénéficiaires effectifs | DECP/RBE (RBE_BENEFICIAL_OWNER_MATCH) | ✅ Partiel |
+        | Art. 20 — IBAN suspect | Changements de domiciliation bancaire | Master data (IBAN_CHANGE) | ✅ Couvert |
+        | Art. 24 — DSO | Brouillon de déclaration de soupçon Tracfin | LLM narrative (ISA 240) | ✅ Partiel |
+        | Art. 30 — Registre UBO | Consultation du registre RBE INPI | DECP/RBE client | ✅ Partiel |
+        | Art. 42 — Formation | Traçabilité des contrôles effectués | Audit log SHA-256 | ✅ Couvert |
+
+        **Limites** : AMLD6 art. 18/19 exigent une intégration live avec les API INPI et Tracfin
+        (GAFI/FATF listes tiers). En mode démo, les données RBE sont synthétiques.
+        """
+    )
+
+amld6_doc = docs_root / "amld6_mapping.md"
+if amld6_doc.exists():
+    with st.expander("📄 Mapping AMLD6 complet — télécharger"):
+        st.download_button(
+            "⬇️ Télécharger amld6_mapping.md",
+            data=amld6_doc.read_text(encoding="utf-8"),
+            file_name="amld6_mapping.md",
+            mime="text/markdown",
+        )
+
+if st.button("📝 Générer brouillon DSO Tracfin (simulation)", key="gen_dso"):
+    st.info(
+        "**Brouillon DSO Tracfin** — à compléter par le RCCI / responsable conformité.\n\n"
+        "**Déclarant** : [Organisation] \n"
+        "**Date** : {}\n"
+        "**Motif** : Suspicion de blanchiment d'argent via le cycle Procure-to-Pay.\n"
+        "**Fournisseur(s) concerné(s)** : [voir findings CRITICAL en session]\n"
+        "**Éléments factuels** : [findings exports disponibles via Synthèse → export]\n\n"
+        "*Ce brouillon doit être validé par un juriste avant transmission à Tracfin "
+        "(portail ERMES, article L. 561-15 CMF).*".format(
+            __import__("datetime").date.today().isoformat()
+        )
+    )
+
+# ── CSRD ──────────────────────────────────────────────────────────────────────
+st.divider()
+st.subheader("🌱 CSRD — Rapport de durabilité (Directive UE 2022/2464)")
+
+st.info(
+    "La **Directive CSRD** (Corporate Sustainability Reporting Directive) exige des "
+    "grandes entreprises un rapport de durabilité incluant la chaîne de valeur Scope 3 "
+    "(fournisseurs). Les fournisseurs identifiés comme risques P2P CRITICAL/HIGH "
+    "doivent figurer dans l'évaluation des risques ESG (ESRS S2 — Travailleurs chaîne valeur)."
+)
+
+with st.expander("📋 Lien CSRD / risques P2P"):
+    st.markdown(
+        """
+        | Standard ESRS | Exigence | Lien P2P Fraud Detective |
+        |---|---|---|
+        | **ESRS G1** — Conduite des affaires | Politique anti-corruption, due diligence tiers | Sapin 2 art. 17 → détecteurs Sanctions, DECP/RBE |
+        | **ESRS G1-4** — Prévention corruption | Cartographie risques fournisseurs | Score de risque consolidé + exposition € |
+        | **ESRS S2** — Travailleurs chaîne valeur | Identification risques dans la supply chain | Findings HIGH/CRITICAL exportables |
+        | **ESRS E1** — Changement climatique | Concentration fournisseurs Scope 3 | Anneaux de fraude → concentration fournisseurs |
+
+        **Recommandation** : exporter les fournisseurs CRITICAL/HIGH vers votre solution CSRD
+        (e.g. Tennaxia, Sweep, Persefoni) via l'export CSV Synthèse ou l'API `/detect`.
+        """
+    )
+
+if "df_invoices" in st.session_state:
+    import pandas as pd
+
+    findings_keys = (
+        "findings_master_data",
+        "findings_sanctions",
+        "findings_decp_rbe",
+        "findings_duplicates",
+        "findings_thresholds",
+    )
+    csrd_findings = []
+    for k in findings_keys:
+        v = st.session_state.get(k)
+        if v:
+            csrd_findings.extend(v)
+
+    critical_high = [f for f in csrd_findings if f.severity.value in ("critical", "high")]
+    if critical_high:
+        csrd_vendors = list(
+            {f.evidence.get("vendor_name") for f in critical_high if f.evidence.get("vendor_name")}
+        )
+        st.write(
+            f"**{len(csrd_vendors)} fournisseur(s) CRITICAL/HIGH** identifié(s) pour "
+            "inclusion dans le reporting CSRD ESRS G1/S2 :"
+        )
+
+        csrd_rows = [
+            {
+                "vendor_name": f.evidence.get("vendor_name"),
+                "siren": f.evidence.get("siren"),
+                "severity": f.severity.value,
+                "rule_id": f.rule_id,
+                "exposure_eur": f.evidence.get("exposure_eur"),
+                "reason": f.evidence.get("reason", "")[:120],
+            }
+            for f in critical_high
+        ]
+        df_csrd = pd.DataFrame(csrd_rows).drop_duplicates(subset=["vendor_name", "rule_id"])
+        st.dataframe(df_csrd, use_container_width=True, height=280)
+
+        csv_csrd = df_csrd.to_csv(index=False, encoding="utf-8")
+        st.download_button(
+            "⬇️ Export CSRD fournisseurs à risque (CSV ESRS G1/S2)",
+            data=csv_csrd,
+            file_name="csrd_fournisseurs_a_risque.csv",
+            mime="text/csv",
+        )
+    else:
+        st.success(
+            "Aucun fournisseur CRITICAL/HIGH en session. "
+            "Lancez les détecteurs (Sanctions, DECP/RBE, Master data) pour alimenter cet onglet."
+        )
+else:
+    st.info("Chargez un dataset via **📤 Import des données** pour générer l'export CSRD.")

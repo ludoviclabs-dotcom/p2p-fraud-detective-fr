@@ -185,8 +185,24 @@ if summary and summary.top_vendors:
             for v in summary.top_vendors
         ]
     )
-    st.dataframe(df_top, use_container_width=True, height=320)
-    st.caption("👉 Ouvrez la **🪪 Fiche fournisseur 360°** pour le drill-down.")
+    sel = st.dataframe(
+        df_top,
+        use_container_width=True,
+        height=320,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="top10_sel",
+    )
+    selected_rows = sel.selection.rows if sel and sel.selection else []
+    if selected_rows:
+        row_idx = selected_rows[0]
+        vid = df_top.iloc[row_idx]["vendor_id"]
+        vname = df_top.iloc[row_idx].get("vendor_name", vid)
+        if st.button(f"🪪 Ouvrir la fiche de {vname}", type="primary", key="drill_fiche"):
+            st.query_params["vendor_id"] = str(vid)
+            st.switch_page("pages/15_🪪_Fiche_fournisseur_360.py")
+    else:
+        st.caption("👆 Cliquez sur une ligne pour ouvrir la **🪪 Fiche fournisseur 360°**.")
 elif cases:
     st.info(
         "Top 10 calculé sur les findings de la session. "
