@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
-from p2p_fraud.enrichment.sanctions_client import SanctionsClient
+from p2p_fraud.enrichment.sanctions_client import DEFAULT_SNAPSHOT, SanctionsClient
 from p2p_fraud.streamlit_theme import init_page
 
 init_page(
@@ -24,6 +24,14 @@ if "df_invoices" not in st.session_state:
     st.stop()
 
 invoices: pd.DataFrame = st.session_state["df_invoices"]
+
+_snap_name = DEFAULT_SNAPSHOT.name
+_snap_date = (
+    _snap_name.replace("snapshot_", "").replace(".csv", "")
+    if "snapshot_" in _snap_name
+    else "inconnue"
+)
+st.caption(f"Snapshot embarqué : **{_snap_name}** — date de mise à jour : **{_snap_date}**")
 
 with st.expander("ℹ️ Sources et méthodologie"):
     st.markdown(

@@ -11,6 +11,18 @@ from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
 from p2p_fraud.streamlit_theme import init_page
 
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cached_vendor_summary(vendor_id, invoices, vendors, master_events, findings_tuple):
+    return get_vendor_summary(
+        vendor_id,
+        invoices=invoices,
+        vendors=vendors,
+        master_events=master_events,
+        findings=list(findings_tuple),
+    )
+
+
 init_page(
     title="Fiche fournisseur 360°",
     surtitle="Investigation",
@@ -86,12 +98,12 @@ vendor_id = st.selectbox("Fournisseur", vendor_options, index=default_idx)
 if vendor_id and vendor_id != st.query_params.get("vendor_id"):
     st.query_params["vendor_id"] = vendor_id
 
-summary = get_vendor_summary(
+summary = _cached_vendor_summary(
     vendor_id,
     invoices=invoices,
     vendors=vendors,
     master_events=master_events,
-    findings=findings,
+    findings_tuple=tuple(findings),
 )
 
 

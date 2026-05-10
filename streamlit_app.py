@@ -115,4 +115,17 @@ pages = {
 }
 
 pg = st.navigation(pages, position="sidebar", expanded=True)
+
+with st.sidebar:
+    st.divider()
+    if st.button(
+        "🗑️ Purger la session",
+        help="RGPD — droit à l'effacement. Supprime toutes les données chargées en mémoire.",
+        use_container_width=True,
+    ):
+        keys_to_clear = [k for k in list(st.session_state.keys()) if k != "current_user"]
+        for k in keys_to_clear:
+            del st.session_state[k]
+        st.toast("Session purgée — toutes les données ont été effacées.", icon="🗑️")
+
 pg.run()
