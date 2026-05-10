@@ -1,0 +1,247 @@
+"""Page Collaboration — multi-user, @mentions, SLA configurable, OIDC."""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+import pandas as pd
+import streamlit as st
+
+from p2p_fraud.cases.mentions import extract_mentions
+from p2p_fraud.cases.sla import SLAConfig
+from p2p_fraud.security.oidc import OIDCConfig, build_authorization_url, make_pkce_challenge
+from p2p_fraud.streamlit_theme import init_page
+from pages._helpers import get_case_service
+
+init_page(
+    title="Collaboration multi-user",
+    surtitle="Pilotage",
+    kicker="Multi-user · @mentions · SLA configurable · OIDC (Microsoft Entra ID)",
+)
+st.caption(
+    "Configuration de l'équipe d'auditeurs, gestion des @mentions dans les commentaires, "
+    "SLA paramétrable par sévérité, authentification fédérée OIDC."
+)
+
+service = get_case_service()
+
+# ─── Identité courante ────────────────────────────────────────────────────────
+st.divider()
+st.subheader("👤 Identité utilisateur")
+
+current_user = st.session_state.get("current_user", "")
+new_user = st.text_input(
+    "Nom d'utilisateur (utilisé dans les @mentions et l'audit log)",
+    value=current_user,
+    placeholder="ex: jdupont, sbernard, audit.senior",
+    help="Format alphanumérique + tirets/underscores. Sera utilisé pour tracer "
+    "l'auteur des commentaires et alimenter les notifications @mention.",
+    max_chars=40,
+)
+if new_user and new_user != current_user:
+    st.session_state["current_user"] = new_user.strip().lower()
+    st.success(f"✅ Utilisateur courant : `{new_user.strip().lower()}`")
+
+# ─── SLA configurable ─────────────────────────────────────────────────────────
+st.divider()
+st.subheader("⏱️ SLA configurable par sévérité")
+
+st.caption(
+    "Délai de clôture cible par sévérité. Au-delà, le case est marqué « en retard SLA » "
+    "dans le Cockpit. Valeurs alignées sur AMLD6 art. 24 (déclaration sans délai pour CRITICAL)."
+)
+
+current_sla: SLAConfig = service.sla
+c1, c2, c3, c4 = st.columns(4)
+crit_h = c1.number_input(
+    "CRITICAL (h)", min_value=1, max_value=720, value=current_sla.critical_hours
+)
+high_h = c2.number_input("HIGH (h)", min_value=1, max_value=720, value=current_sla.high_hours)
+med_h = c3.number_input("MEDIUM (h)", min_value=1, max_value=720, value=current_sla.medium_hours)
+low_h = c4.number_input("LOW (h)", min_value=1, max_value=8760, value=current_sla.low_hours)
+
+if st.button("💾 Mettre à jour la SLA", type="primary"):
+    new_sla = SLAConfig(
+        critical_hours=int(crit_h),
+        high_hours=int(high_h),
+        medium_hours=int(med_h),
+        low_hours=int(low_h),
+    )
+    service._sla = new_sla
+    st.success(
+        f"✅ SLA mise à jour — CRITICAL: {crit_h}h, HIGH: {high_h}h, "
+        f"MEDIUM: {med_h}h, LOW: {low_h}h."
+    )
+
+# ─── @mentions ────────────────────────────────────────────────────────────────
+st.divider()
+st.subheader("💬 Mentions reçues (@user)")
+
+if not current_user:
+    st.info("Saisissez votre nom d'utilisateur ci-dessus pour voir vos mentions.")
+else:
+    only_unread = st.checkbox("Afficher uniquement les non lues", value=True)
+    user_mentions = service.mentions.for_user(current_user, only_unread=only_unread)
+
+    if not user_mentions:
+        st.success(f"Aucune mention {'non lue' if only_unread else ''} pour `{current_user}`.")
+    else:
+        st.write(f"**{len(user_mentions)}** mention(s) {'non lue(s)' if only_unread else ''} :")
+        for m in user_mentions[:50]:
+            with st.container(border=True):
+                col_a, col_b = st.columns([3, 1])
+                col_a.markdown(
+                    f"**@{m.mentioned_by}** vous a mentionné dans le case "
+                    f"`{m.case_id}` ({m.created_at[:19]})"
+                )
+                col_b.caption(m.case_id)
+                st.text(m.text)
+        if st.button("✅ Marquer toutes comme lues", key="mark_all_read"):
+            n = service.mentions.mark_read(username=current_user)
+            st.success(f"{n} mention(s) marquée(s) comme lue(s).")
+            st.rerun()
+
+# ─── Test d'extraction @mentions ──────────────────────────────────────────────
+st.divider()
+st.subheader("🧪 Tester le parsing @mentions")
+
+sample_text = st.text_area(
+    "Exemple de commentaire",
+    value="Bonjour @sbernard, peux-tu valider cette alerte ? Cc @audit.senior et @jdupont.",
+    height=80,
+)
+extracted = extract_mentions(sample_text)
+st.write(f"**Mentions détectées** : {extracted if extracted else '(aucune)'}")
+
+# ─── Vue équipe ───────────────────────────────────────────────────────────────
+st.divider()
+st.subheader("👥 Équipe d'auditeurs")
+
+cases = service.list_cases()
+if cases:
+    assignees = sorted(
+        {c.assignee for c in cases if c.assignee} | {c.created_by for c in cases if c.created_by}
+    )
+    df_team = pd.DataFrame(
+        [
+            {
+                "user": user,
+                "cases_assigned": sum(
+                    1 for c in cases if c.assignee == user and not c.status.is_closed
+                ),
+                "cases_created": sum(1 for c in cases if c.created_by == user),
+                "cases_closed": sum(1 for c in cases if c.assignee == user and c.status.is_closed),
+            }
+            for user in assignees
+        ]
+    )
+    st.dataframe(df_team, use_container_width=True, height=200)
+else:
+    st.info("Aucun case en session — l'équipe sera détectée à mesure des assignations.")
+
+# ─── SLA overdue ──────────────────────────────────────────────────────────────
+st.divider()
+st.subheader("⚠️ Cases en dépassement SLA")
+
+now = datetime.now(UTC)
+overdue = []
+for c in cases:
+    if c.status.is_closed:
+        continue
+    deadline = service.sla.deadline_for(c.severity, from_dt=c.created_at)
+    if deadline < now:
+        overdue.append(
+            {
+                "case_id": c.case_id,
+                "severity": c.severity,
+                "title": c.title,
+                "assignee": c.assignee or "(non assigné)",
+                "exposure_eur": c.exposure_eur,
+                "created_at": c.created_at.isoformat()
+                if hasattr(c.created_at, "isoformat")
+                else c.created_at,
+                "overdue_hours": int((now - deadline).total_seconds() / 3600),
+            }
+        )
+
+if overdue:
+    st.error(f"🚨 {len(overdue)} case(s) en dépassement SLA")
+    df_overdue = pd.DataFrame(overdue).sort_values("overdue_hours", ascending=False)
+    st.dataframe(df_overdue, use_container_width=True, height=240)
+else:
+    st.success("✅ Aucun case en dépassement SLA.")
+
+# ─── OIDC / Microsoft Entra ID ────────────────────────────────────────────────
+st.divider()
+st.subheader("🔐 Authentification fédérée OIDC")
+
+oidc_cfg = OIDCConfig.from_env()
+if oidc_cfg is None:
+    st.warning(
+        "**OIDC non configuré.** Pour activer l'authentification fédérée Microsoft Entra ID, "
+        "Auth0 ou Keycloak, configurez les variables d'environnement suivantes :"
+    )
+    st.code(
+        """
+OIDC_ISSUER=https://login.microsoftonline.com/{tenant_id}/v2.0
+OIDC_CLIENT_ID=<application_id>
+OIDC_REDIRECT_URI=https://yourapp.com/oidc/callback
+OIDC_SCOPES=openid email profile
+OIDC_ROLE_MAP={"DG-Audit":"admin","Audit-Senior":"manager","Audit-Junior":"analyst"}
+        """,
+        language="bash",
+    )
+    st.markdown(
+        "**Configuration recommandée** : créer une application dans Microsoft Entra ID "
+        "avec un redirect URI vers votre déploiement, configurer les scopes `openid email "
+        "profile groups`, et mapper les groupes Entra ID vers les rôles RBAC via "
+        "`OIDC_ROLE_MAP`."
+    )
+else:
+    st.success(f"✅ OIDC configuré — issuer : `{oidc_cfg.issuer}`")
+    if st.button("🔑 Tester l'URL d'autorisation OIDC"):
+        pkce = make_pkce_challenge()
+        url = build_authorization_url(oidc_cfg, pkce=pkce)
+        st.markdown(f"[Authentification OIDC]({url})")
+        with st.expander("PKCE challenge généré"):
+            st.code(
+                f"code_verifier: {pkce.code_verifier}\n"
+                f"code_challenge: {pkce.code_challenge}\n"
+                f"state: {pkce.state}\n"
+                f"nonce: {pkce.nonce}"
+            )
+
+# ─── Backend persistant ───────────────────────────────────────────────────────
+st.divider()
+st.subheader("🗄️ Backend de persistance")
+
+st.info(
+    "**Mode démo** : SQLite en mémoire (`:memory:`) — données perdues à chaque redémarrage. "
+    "**Mode production** : SQLite fichier (`cases.db`) ou PostgreSQL via SQLAlchemy. "
+    "Configurer via `FRAUD_CASES_DB` (chemin SQLite) ou `DATABASE_URL` "
+    "(`postgresql://user:pass@host:5432/db`)."
+)
+
+with st.expander("📚 Migration SQLite → PostgreSQL"):
+    st.markdown(
+        """
+        **Étapes** :
+        1. Provisionner une base PostgreSQL 14+ (Aiven, Neon, Supabase, RDS).
+        2. Créer le schéma via les migrations Alembic (`alembic/`).
+        3. Configurer `DATABASE_URL=postgresql://user:pass@host:5432/p2pfd`.
+        4. Migrer les données existantes :
+           ```bash
+           sqlite3 cases.db ".dump cases" > cases.sql
+           # Adapter la syntaxe SQLite → PostgreSQL puis :
+           psql $DATABASE_URL < cases.sql
+           ```
+        5. Redémarrer l'application — `CaseService` détecte le backend via `DATABASE_URL`.
+
+        **Avantages PostgreSQL** :
+        - Multi-utilisateurs concurrents (verrous SKIP LOCKED)
+        - Recherche fulltext (tsvector) sur titres/commentaires
+        - JSONB pour les payloads d'événements
+        - Backup point-in-time (PITR)
+        - Réplication streaming pour HA
+        """
+    )

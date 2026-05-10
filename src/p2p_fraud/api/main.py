@@ -84,7 +84,7 @@ def _case_service() -> CaseService:
     global _CASE_SERVICE
     if _CASE_SERVICE is None:
         db_path = os.environ.get("FRAUD_CASES_DB", "cases.db")
-        _CASE_SERVICE = CaseService(store_path=db_path)
+        _CASE_SERVICE = CaseService(db_path=db_path)
     return _CASE_SERVICE
 
 
@@ -342,12 +342,19 @@ def close_case(
     La raison de clôture doit être non vide (≥ 10 caractères).
     L'événement est journalisé dans la piste d'audit SHA-256.
     """
+    from p2p_fraud.cases.models import CaseStatus
+
     service = _case_service()
     try:
-        service.close_case(case_id=case_id, actor=req.actor, reason=req.reason)
+        service.close(
+            case_id=case_id,
+            status=CaseStatus.CLOSED_CONFIRMED,
+            actor=req.actor,
+            reason=req.reason,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except RuntimeError as exc:
+    except (RuntimeError, ValueError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return {

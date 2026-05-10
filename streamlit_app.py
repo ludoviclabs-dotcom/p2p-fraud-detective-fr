@@ -31,6 +31,11 @@ pages = {
             title="Alertes & monitoring",
             icon=":material/notifications_active:",
         ),
+        st.Page(
+            "pages/19_👥_Collaboration.py",
+            title="Collaboration multi-user",
+            icon=":material/groups:",
+        ),
     ],
     "🗂️ Données": [
         st.Page(
