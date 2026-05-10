@@ -1,17 +1,21 @@
-"""Persistance des alertes — historique SQLite append-only.
+"""Persistance des alertes — historique append-only via SQLAlchemy.
 
-Stocke chaque alerte envoyée (avec status par canal) pour audit.
+Stocke chaque alerte envoyée (avec status par canal) pour audit. Backend
+agnostique : SQLite (`:memory:` ou fichier) en démo, PostgreSQL en prod
+via `Settings.database_url`.
 """
 
 from __future__ import annotations
 
 import json
-import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from sqlalchemy import Engine, text
+
 from p2p_fraud.alerts.rules import Alert
+from p2p_fraud.persistence import Base, make_engine
 
 
 @dataclass(frozen=True)
@@ -30,62 +34,57 @@ class AlertHistoryEntry:
 
 
 class AlertStore:
-    """Historique persistent des alertes — append-only en SQLite."""
+    """Historique persistent des alertes — append-only.
 
-    SCHEMA = """
-    CREATE TABLE IF NOT EXISTS alert_history (
-        seq INTEGER PRIMARY KEY AUTOINCREMENT,
-        triggered_at TEXT NOT NULL,
-        rule_name TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        title TEXT NOT NULL,
-        body TEXT NOT NULL,
-        metadata TEXT NOT NULL,
-        finding_invoice_id TEXT,
-        finding_rule_id TEXT,
-        channel TEXT NOT NULL,
-        delivered INTEGER NOT NULL
-    );
+    Args:
+        path: chemin SQLite (`:memory:` par défaut). Ignoré si `engine` ou
+            `Settings.database_url` est fourni.
+        engine: Engine SQLAlchemy partagé (override total).
     """
 
-    def __init__(self, path: str | Path = ":memory:") -> None:
-        self._path = str(path)
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        if self._path != ":memory:":
-            self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(self.SCHEMA)
-        self._conn.commit()
+    def __init__(
+        self,
+        path: str | Path = ":memory:",
+        *,
+        engine: Engine | None = None,
+    ) -> None:
+        self._engine = engine or make_engine(db_path=path)
+        Base.metadata.create_all(self._engine, checkfirst=True)
 
     def record(self, alert: Alert, channel: str, delivered: bool) -> None:
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO alert_history "
-            "(triggered_at, rule_name, severity, title, body, metadata, "
-            "finding_invoice_id, finding_rule_id, channel, delivered) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                alert.triggered_at.isoformat(),
-                alert.rule_name,
-                alert.severity,
-                alert.title,
-                alert.body,
-                json.dumps(alert.metadata, sort_keys=True),
-                alert.finding_invoice_id,
-                alert.finding_rule_id,
-                channel,
-                int(delivered),
-            ),
-        )
-        self._conn.commit()
+        with self._engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO alert_history "
+                    "(triggered_at, rule_name, severity, title, body, metadata, "
+                    "finding_invoice_id, finding_rule_id, channel, delivered) "
+                    "VALUES (:triggered_at, :rule_name, :severity, :title, :body, "
+                    ":metadata, :finding_invoice_id, :finding_rule_id, :channel, :delivered)"
+                ),
+                {
+                    "triggered_at": alert.triggered_at.isoformat(),
+                    "rule_name": alert.rule_name,
+                    "severity": alert.severity,
+                    "title": alert.title,
+                    "body": alert.body,
+                    "metadata": json.dumps(alert.metadata, sort_keys=True),
+                    "finding_invoice_id": alert.finding_invoice_id,
+                    "finding_rule_id": alert.finding_rule_id,
+                    "channel": channel,
+                    "delivered": int(delivered),
+                },
+            )
 
     def all(self, limit: int = 200) -> list[AlertHistoryEntry]:
-        cur = self._conn.cursor()
-        cur.execute(
-            "SELECT seq, triggered_at, rule_name, severity, title, body, metadata, "
-            "finding_invoice_id, finding_rule_id, channel, delivered "
-            "FROM alert_history ORDER BY seq DESC LIMIT ?",
-            (limit,),
-        )
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT seq, triggered_at, rule_name, severity, title, body, metadata, "
+                    "finding_invoice_id, finding_rule_id, channel, delivered "
+                    "FROM alert_history ORDER BY seq DESC LIMIT :lim"
+                ),
+                {"lim": limit},
+            ).all()
         return [
             AlertHistoryEntry(
                 seq=row[0],
@@ -100,23 +99,30 @@ class AlertStore:
                 channel=row[9],
                 delivered=bool(row[10]),
             )
-            for row in cur.fetchall()
+            for row in rows
         ]
 
     def __len__(self) -> int:
-        cur = self._conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM alert_history")
-        return int(cur.fetchone()[0])
+        with self._engine.connect() as conn:
+            return int(conn.execute(text("SELECT COUNT(*) FROM alert_history")).scalar() or 0)
 
     def stats(self) -> dict:
-        cur = self._conn.cursor()
-        cur.execute("SELECT severity, COUNT(*) FROM alert_history GROUP BY severity")
-        by_severity = dict(cur.fetchall())
-        cur.execute(
-            "SELECT channel, SUM(delivered), SUM(1-delivered) FROM alert_history GROUP BY channel"
-        )
+        with self._engine.connect() as conn:
+            by_severity = dict(
+                conn.execute(
+                    text("SELECT severity, COUNT(*) FROM alert_history GROUP BY severity")
+                ).all()
+            )
+            by_channel_rows = conn.execute(
+                text(
+                    "SELECT channel, SUM(delivered) AS delivered_n, "
+                    "SUM(1 - delivered) AS failed_n "
+                    "FROM alert_history GROUP BY channel"
+                )
+            ).all()
         by_channel = {
-            row[0]: {"delivered": int(row[1]), "failed": int(row[2])} for row in cur.fetchall()
+            row[0]: {"delivered": int(row[1] or 0), "failed": int(row[2] or 0)}
+            for row in by_channel_rows
         }
         return {
             "total": len(self),
@@ -129,4 +135,4 @@ class AlertStore:
         return [json.dumps(asdict(e), sort_keys=True) for e in self.all(limit)]
 
     def close(self) -> None:
-        self._conn.close()
+        self._engine.dispose()

@@ -16,6 +16,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from p2p_fraud.persistence import Base
 
 config = context.config
 
@@ -26,7 +27,9 @@ db_url = os.environ.get("DATABASE_URL")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 
-target_metadata = None
+# Phase 4 / PR P4-2 : binding sur la metadata partagée — déverrouille
+# `alembic revision --autogenerate` pour les futures évolutions de schéma.
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

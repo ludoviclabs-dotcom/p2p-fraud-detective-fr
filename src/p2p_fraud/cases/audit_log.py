@@ -3,8 +3,8 @@
 Modèle :
 - chaque entrée stocke un hash de son contenu canonique + le hash de l'entrée
   précédente, ce qui rend toute altération a posteriori détectable ;
-- les entrées sont écrites en mode append dans SQLite (pragma `journal_mode=WAL`,
-  table `audit_log` sans clé primaire INTEGER mutable) ;
+- les entrées sont écrites en mode append via SQLAlchemy (backend SQLite ou
+  PostgreSQL) avec une clé primaire `seq` séquentielle ;
 - un export JSON Lines est disponible pour archivage WORM.
 
 Ce n'est pas une blockchain (pas de consensus, pas de PoW). C'est un Merkle log
@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+
+from sqlalchemy import Engine, text
+
+from p2p_fraud.persistence import Base, make_engine
 
 GENESIS_HASH = "0" * 64
 
@@ -51,50 +54,44 @@ class AuditLogEntry:
 
 
 class AuditLog:
-    """Journal append-only avec vérification d'intégrité.
+    """Journal append-only avec vérification d'intégrité."""
 
-    Pour les déploiements en mémoire (tests, démo), passer `path=":memory:"`.
-    """
-
-    SCHEMA = """
-    CREATE TABLE IF NOT EXISTS audit_log (
-        seq         INTEGER NOT NULL,
-        at          TEXT    NOT NULL,
-        actor       TEXT    NOT NULL,
-        kind        TEXT    NOT NULL,
-        payload     TEXT    NOT NULL,
-        prev_hash   TEXT    NOT NULL,
-        hash        TEXT    NOT NULL,
-        PRIMARY KEY (seq)
-    );
-    """
-
-    def __init__(self, path: str | Path = ":memory:") -> None:
-        self._path = str(path)
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        if self._path != ":memory:":
-            self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(self.SCHEMA)
-        self._conn.commit()
+    def __init__(
+        self,
+        path: str | Path = ":memory:",
+        *,
+        engine: Engine | None = None,
+    ) -> None:
+        self._engine = engine or make_engine(db_path=path)
+        Base.metadata.create_all(self._engine, checkfirst=True)
 
     # --- API d'écriture ---
 
     def append(self, *, actor: str, kind: str, payload: dict | None = None) -> AuditLogEntry:
         payload = payload or {}
-        cur = self._conn.cursor()
-        cur.execute("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1")
-        last = cur.fetchone()
-        seq = (last[0] + 1) if last else 1
-        prev_hash = last[1] if last else GENESIS_HASH
-        at = datetime.now(UTC).isoformat()
-
-        h = AuditLogEntry.compute_hash(seq, at, actor, kind, payload, prev_hash)
-        cur.execute(
-            "INSERT INTO audit_log (seq, at, actor, kind, payload, prev_hash, hash) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (seq, at, actor, kind, json.dumps(payload, sort_keys=True), prev_hash, h),
-        )
-        self._conn.commit()
+        with self._engine.begin() as conn:
+            last = conn.execute(
+                text("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1")
+            ).first()
+            seq = (last[0] + 1) if last else 1
+            prev_hash = last[1] if last else GENESIS_HASH
+            at = datetime.now(UTC).isoformat()
+            h = AuditLogEntry.compute_hash(seq, at, actor, kind, payload, prev_hash)
+            conn.execute(
+                text(
+                    "INSERT INTO audit_log (seq, at, actor, kind, payload, prev_hash, hash) "
+                    "VALUES (:seq, :at, :actor, :kind, :payload, :prev_hash, :hash)"
+                ),
+                {
+                    "seq": seq,
+                    "at": at,
+                    "actor": actor,
+                    "kind": kind,
+                    "payload": json.dumps(payload, sort_keys=True),
+                    "prev_hash": prev_hash,
+                    "hash": h,
+                },
+            )
         return AuditLogEntry(
             seq=seq, at=at, actor=actor, kind=kind, payload=payload, prev_hash=prev_hash, hash=h
         )
@@ -121,10 +118,13 @@ class AuditLog:
     # --- API de lecture ---
 
     def all(self) -> list[AuditLogEntry]:
-        cur = self._conn.cursor()
-        cur.execute(
-            "SELECT seq, at, actor, kind, payload, prev_hash, hash FROM audit_log ORDER BY seq ASC"
-        )
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT seq, at, actor, kind, payload, prev_hash, hash "
+                    "FROM audit_log ORDER BY seq ASC"
+                )
+            ).all()
         return [
             AuditLogEntry(
                 seq=row[0],
@@ -135,13 +135,12 @@ class AuditLog:
                 prev_hash=row[5],
                 hash=row[6],
             )
-            for row in cur.fetchall()
+            for row in rows
         ]
 
     def __len__(self) -> int:
-        cur = self._conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM audit_log")
-        return int(cur.fetchone()[0])
+        with self._engine.connect() as conn:
+            return int(conn.execute(text("SELECT COUNT(*) FROM audit_log")).scalar() or 0)
 
     # --- Vérification d'intégrité ---
 
@@ -173,4 +172,4 @@ class AuditLog:
             yield json.dumps(asdict(entry), sort_keys=True)
 
     def close(self) -> None:
-        self._conn.close()
+        self._engine.dispose()
