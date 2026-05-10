@@ -65,6 +65,11 @@ pages = {
             title="Sanctions & PEP",
             icon=":material/gavel:",
         ),
+        st.Page(
+            "pages/17_🏛️_DECP_RBE.py",
+            title="DECP & RBE INPI",
+            icon=":material/account_balance:",
+        ),
     ],
     "🤖 Détection ML": [
         st.Page(
