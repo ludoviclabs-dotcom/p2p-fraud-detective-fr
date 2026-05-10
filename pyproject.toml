@@ -88,7 +88,10 @@ p2p_fraud = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -m 'not integration'"
+markers = [
+    "integration: tests requiring an external service (e.g. PostgreSQL via INTEGRATION_DATABASE_URL)",
+]
 filterwarnings = [
     "ignore::DeprecationWarning:benford.*",
     "ignore::FutureWarning:pandas.*",

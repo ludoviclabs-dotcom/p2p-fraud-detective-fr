@@ -5,19 +5,25 @@ Garde-fous explicites :
 - Un case clos n'est plus modifiable (statut, assignation, commentaire OK
   refusé sauf en mode `reopen` futur). On ajoute uniquement des événements.
 - Clôture obligatoirement avec `reason` non vide.
+
+Backend agnostique : SQLite (`:memory:` ou fichier) en démo, PostgreSQL en prod
+via `Settings.database_url`. La couche persistance utilise SQLAlchemy 2.0.
 """
 
 from __future__ import annotations
 
-import sqlite3
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+
+from sqlalchemy import Engine, text
 
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.mentions import MentionStore, build_mentions
 from p2p_fraud.cases.models import Case, CaseEvent, CaseStatus
 from p2p_fraud.cases.sla import DEFAULT_SLA, SLAConfig
+from p2p_fraud.persistence import Base, make_engine
 from p2p_fraud.schema import Finding
 
 
@@ -33,40 +39,24 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:12]}"
 
 
+_CASE_COLUMNS = (
+    "case_id, finding_ids, invoice_id, vendor_id, title, severity, "
+    "exposure_eur, status, assignee, sla_deadline, created_by, created_at, "
+    "closed_at, closure_reason, closure_evidence_path"
+)
+
+
 class CaseService:
-    """Persistence SQLite des cases + journal d'événements + audit log chaîné.
+    """Persistence des cases + journal d'événements + audit log chaîné.
 
-    Le store SQLite et l'audit log peuvent partager la même base de fichier ou
-    être séparés (intéressant pour archiver l'audit log en WORM séparément).
-    """
-
-    SCHEMA = """
-    CREATE TABLE IF NOT EXISTS cases (
-        case_id TEXT PRIMARY KEY,
-        finding_ids TEXT NOT NULL,
-        invoice_id TEXT,
-        vendor_id TEXT,
-        title TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        exposure_eur REAL,
-        status TEXT NOT NULL,
-        assignee TEXT,
-        sla_deadline TEXT,
-        created_by TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        closed_at TEXT,
-        closure_reason TEXT,
-        closure_evidence_path TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS case_events (
-        event_id TEXT PRIMARY KEY,
-        case_id TEXT NOT NULL,
-        kind TEXT NOT NULL,
-        actor TEXT NOT NULL,
-        payload TEXT NOT NULL,
-        at TEXT NOT NULL
-    );
+    Args:
+        db_path: chemin SQLite (`:memory:` par défaut). Ignoré si `engine` ou
+            `Settings.database_url` est fourni.
+        audit_log: instance partagée (par défaut, instance `:memory:` indépendante).
+        sla_hours_default: legacy, conservé pour rétrocompat (utilisez `sla_config`).
+        sla_config: configuration SLA par sévérité (par défaut `DEFAULT_SLA`).
+        mention_store: instance partagée (par défaut, instance `:memory:` indépendante).
+        engine: Engine SQLAlchemy partagé (override total).
     """
 
     def __init__(
@@ -74,14 +64,13 @@ class CaseService:
         db_path: str | Path = ":memory:",
         audit_log: AuditLog | None = None,
         *,
-        sla_hours_default: int = 5 * 24,  # 5 jours ouvrés ≈ approximation simple
+        sla_hours_default: int = 5 * 24,
         sla_config: SLAConfig | None = None,
         mention_store: MentionStore | None = None,
+        engine: Engine | None = None,
     ) -> None:
-        self._path = str(db_path)
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        self._conn.executescript(self.SCHEMA)
-        self._conn.commit()
+        self._engine = engine or make_engine(db_path=db_path)
+        Base.metadata.create_all(self._engine, checkfirst=True)
         self._audit = audit_log or AuditLog(":memory:")
         self._sla_default = timedelta(hours=sla_hours_default)
         self._sla = sla_config or DEFAULT_SLA
@@ -95,13 +84,13 @@ class CaseService:
     def mentions(self) -> MentionStore:
         return self._mentions
 
-    def _sla_deadline_for(self, severity: str) -> datetime:
-        """Calcule la deadline SLA en utilisant la config par sévérité."""
-        return self._sla.deadline_for(severity)
-
     @property
     def audit_log(self) -> AuditLog:
         return self._audit
+
+    def _sla_deadline_for(self, severity: str) -> datetime:
+        """Calcule la deadline SLA en utilisant la config par sévérité."""
+        return self._sla.deadline_for(severity)
 
     # --- Création ---
 
@@ -261,24 +250,27 @@ class CaseService:
         return self._fetch_or_raise(case_id)
 
     def list_cases(self, *, status: CaseStatus | None = None) -> list[Case]:
-        cur = self._conn.cursor()
         if status:
-            cur.execute(
-                "SELECT * FROM cases WHERE status = ? ORDER BY created_at DESC", (status.value,)
+            sql = (
+                f"SELECT {_CASE_COLUMNS} FROM cases WHERE status = :status ORDER BY created_at DESC"
             )
+            params = {"status": status.value}
         else:
-            cur.execute("SELECT * FROM cases ORDER BY created_at DESC")
-        return [self._row_to_case(row) for row in cur.fetchall()]
+            sql = f"SELECT {_CASE_COLUMNS} FROM cases ORDER BY created_at DESC"
+            params = {}
+        with self._engine.connect() as conn:
+            rows = conn.execute(text(sql), params).all()
+        return [self._row_to_case(row) for row in rows]
 
     def list_events(self, case_id: str) -> list[CaseEvent]:
-        cur = self._conn.cursor()
-        cur.execute(
-            "SELECT event_id, case_id, kind, actor, payload, at FROM case_events "
-            "WHERE case_id = ? ORDER BY at ASC",
-            (case_id,),
-        )
-        import json
-
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT event_id, case_id, kind, actor, payload, at "
+                    "FROM case_events WHERE case_id = :case_id ORDER BY at ASC"
+                ),
+                {"case_id": case_id},
+            ).all()
         return [
             CaseEvent(
                 event_id=row[0],
@@ -288,68 +280,66 @@ class CaseService:
                 payload=json.loads(row[4]),
                 at=datetime.fromisoformat(row[5]),
             )
-            for row in cur.fetchall()
+            for row in rows
         ]
 
     # --- Helpers privés ---
 
     def _persist(self, case: Case) -> None:
-        import json
-
-        cur = self._conn.cursor()
-        cur.execute(
-            """
-            INSERT INTO cases (case_id, finding_ids, invoice_id, vendor_id, title, severity,
-                               exposure_eur, status, assignee, sla_deadline,
-                               created_by, created_at, closed_at, closure_reason,
-                               closure_evidence_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(case_id) DO UPDATE SET
-                finding_ids=excluded.finding_ids,
-                invoice_id=excluded.invoice_id,
-                vendor_id=excluded.vendor_id,
-                title=excluded.title,
-                severity=excluded.severity,
-                exposure_eur=excluded.exposure_eur,
-                status=excluded.status,
-                assignee=excluded.assignee,
-                sla_deadline=excluded.sla_deadline,
-                closed_at=excluded.closed_at,
-                closure_reason=excluded.closure_reason,
-                closure_evidence_path=excluded.closure_evidence_path
-            """,
-            (
-                case.case_id,
-                json.dumps(case.finding_ids),
-                case.invoice_id,
-                case.vendor_id,
-                case.title,
-                case.severity,
-                case.exposure_eur,
-                case.status.value,
-                case.assignee,
-                case.sla_deadline.isoformat() if case.sla_deadline else None,
-                case.created_by,
-                case.created_at.isoformat(),
-                case.closed_at.isoformat() if case.closed_at else None,
-                case.closure_reason,
-                case.closure_evidence_path,
-            ),
-        )
-        self._conn.commit()
+        params = {
+            "case_id": case.case_id,
+            "finding_ids": json.dumps(case.finding_ids),
+            "invoice_id": case.invoice_id,
+            "vendor_id": case.vendor_id,
+            "title": case.title,
+            "severity": case.severity,
+            "exposure_eur": case.exposure_eur,
+            "status": case.status.value,
+            "assignee": case.assignee,
+            "sla_deadline": case.sla_deadline.isoformat() if case.sla_deadline else None,
+            "created_by": case.created_by,
+            "created_at": case.created_at.isoformat(),
+            "closed_at": case.closed_at.isoformat() if case.closed_at else None,
+            "closure_reason": case.closure_reason,
+            "closure_evidence_path": case.closure_evidence_path,
+        }
+        with self._engine.begin() as conn:
+            conn.execute(
+                text(
+                    f"INSERT INTO cases ({_CASE_COLUMNS}) "
+                    "VALUES (:case_id, :finding_ids, :invoice_id, :vendor_id, :title, "
+                    ":severity, :exposure_eur, :status, :assignee, :sla_deadline, "
+                    ":created_by, :created_at, :closed_at, :closure_reason, "
+                    ":closure_evidence_path) "
+                    "ON CONFLICT(case_id) DO UPDATE SET "
+                    "finding_ids=excluded.finding_ids, "
+                    "invoice_id=excluded.invoice_id, "
+                    "vendor_id=excluded.vendor_id, "
+                    "title=excluded.title, "
+                    "severity=excluded.severity, "
+                    "exposure_eur=excluded.exposure_eur, "
+                    "status=excluded.status, "
+                    "assignee=excluded.assignee, "
+                    "sla_deadline=excluded.sla_deadline, "
+                    "closed_at=excluded.closed_at, "
+                    "closure_reason=excluded.closure_reason, "
+                    "closure_evidence_path=excluded.closure_evidence_path"
+                ),
+                params,
+            )
 
     def _fetch_or_raise(self, case_id: str) -> Case:
-        cur = self._conn.cursor()
-        cur.execute("SELECT * FROM cases WHERE case_id = ?", (case_id,))
-        row = cur.fetchone()
+        with self._engine.connect() as conn:
+            row = conn.execute(
+                text(f"SELECT {_CASE_COLUMNS} FROM cases WHERE case_id = :case_id"),
+                {"case_id": case_id},
+            ).first()
         if not row:
             raise CaseNotFoundError(case_id)
         return self._row_to_case(row)
 
     @staticmethod
-    def _row_to_case(row: tuple) -> Case:
-        import json
-
+    def _row_to_case(row) -> Case:
         (
             case_id,
             finding_ids_json,
@@ -386,8 +376,6 @@ class CaseService:
         )
 
     def _record_event(self, case_id: str, kind: str, actor: str, payload: dict) -> CaseEvent:
-        import json
-
         event = CaseEvent(
             event_id=_new_id("EV"),
             case_id=case_id,
@@ -396,20 +384,21 @@ class CaseService:
             payload=payload,
             at=datetime.now(UTC),
         )
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO case_events (event_id, case_id, kind, actor, payload, at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                event.event_id,
-                case_id,
-                kind,
-                actor,
-                json.dumps(payload, sort_keys=True),
-                event.at.isoformat(),
-            ),
-        )
-        self._conn.commit()
+        with self._engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO case_events (event_id, case_id, kind, actor, payload, at) "
+                    "VALUES (:event_id, :case_id, :kind, :actor, :payload, :at)"
+                ),
+                {
+                    "event_id": event.event_id,
+                    "case_id": case_id,
+                    "kind": kind,
+                    "actor": actor,
+                    "payload": json.dumps(payload, sort_keys=True),
+                    "at": event.at.isoformat(),
+                },
+            )
         # Audit log immutable
         self._audit.append(
             actor=actor,
