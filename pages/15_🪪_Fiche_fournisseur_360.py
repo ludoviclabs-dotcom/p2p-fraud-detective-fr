@@ -7,6 +7,7 @@ import plotly.express as px
 import streamlit as st
 from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
+from p2p_fraud.llm.narrative_generator import generate_vendor_narrative
 from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
 from p2p_fraud.streamlit_theme import init_page
@@ -201,3 +202,70 @@ with tabs[3]:
             for f in summary.findings
         ]
         _aggrid_simple(pd.DataFrame(rows), height=320)
+
+    st.divider()
+    st.markdown("#### 📝 Narration d'audit automatique (Claude AI)")
+    st.caption(
+        "Génère un paragraphe de travail d'audit en français, structuré selon **ISA 240**, "
+        "à partir des findings ci-dessus. Nécessite une clé API Anthropic."
+    )
+
+    api_key_input = st.text_input(
+        "Clé API Anthropic (ANTHROPIC_API_KEY)",
+        type="password",
+        value=st.session_state.get("anthropic_api_key", ""),
+        help="Configurez ANTHROPIC_API_KEY dans .env ou les secrets Streamlit Cloud pour éviter de saisir la clé manuellement.",
+        key="anthropic_key_field",
+    )
+    if api_key_input:
+        st.session_state["anthropic_api_key"] = api_key_input
+
+    if st.button("📝 Générer narration audit (Claude)", type="primary", key="gen_narrative"):
+        _api_key = st.session_state.get("anthropic_api_key") or ""
+        if not _api_key:
+            st.error(
+                "Clé API Anthropic manquante. Saisissez-la ci-dessus ou configurez ANTHROPIC_API_KEY."
+            )
+        else:
+            with st.spinner("Génération de la narration d'audit (Claude claude-sonnet-4-6)…"):
+                try:
+                    _findings_dicts = [
+                        {
+                            "rule_id": f.rule_id,
+                            "severity": f.severity.value,
+                            "signal": f.signal,
+                            "exposure_eur": f.evidence.get("exposure_eur"),
+                        }
+                        for f in summary.findings
+                    ]
+                    result = generate_vendor_narrative(
+                        vendor_id=summary.vendor_id,
+                        vendor_name=summary.vendor_name,
+                        siren=summary.siren,
+                        total_paid_eur=summary.total_paid_eur,
+                        n_invoices=summary.n_invoices,
+                        is_sanctioned=summary.is_sanctioned,
+                        is_pep=summary.is_pep,
+                        findings=_findings_dicts,
+                        api_key=_api_key,
+                    )
+                    st.session_state[f"narrative_{summary.vendor_id}"] = result
+                except (ImportError, ValueError, Exception) as exc:
+                    st.error(f"Erreur lors de la génération : {exc}")
+
+    _cached_narrative = st.session_state.get(f"narrative_{summary.vendor_id}")
+    if _cached_narrative:
+        st.markdown("**Narration générée :**")
+        st.markdown(_cached_narrative.narrative)
+        st.caption(
+            f"Modèle : `{_cached_narrative.model}` · "
+            f"Tokens entrée : {_cached_narrative.input_tokens} "
+            f"(dont {_cached_narrative.cached_tokens} en cache) · "
+            f"Tokens sortie : {_cached_narrative.output_tokens}"
+        )
+        st.download_button(
+            "⬇️ Télécharger la narration (.txt)",
+            data=_cached_narrative.narrative,
+            file_name=f"narration_audit_{summary.vendor_id}.txt",
+            mime="text/plain",
+        )
