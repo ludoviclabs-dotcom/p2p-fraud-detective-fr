@@ -26,6 +26,11 @@ pages = {
             title="File d'investigation",
             icon=":material/inbox:",
         ),
+        st.Page(
+            "pages/18_🔔_Alertes.py",
+            title="Alertes & monitoring",
+            icon=":material/notifications_active:",
+        ),
     ],
     "🗂️ Données": [
         st.Page(
