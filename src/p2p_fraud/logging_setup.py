@@ -23,7 +23,7 @@ def configure_logging(settings: Settings | None = None) -> None:
     cfg = settings or get_settings()
     level = getattr(logging, cfg.log_level.upper(), logging.INFO)
 
-    handler = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(_make_formatter(cfg.log_format))
 
     root = logging.getLogger()

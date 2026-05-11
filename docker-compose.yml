@@ -43,6 +43,26 @@ services:
       api:
         condition: service_healthy
 
+  # ─── Scheduler (worker container) ────────────────────────────────────────────
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    image: p2p-fraud-detective-scheduler:0.4.0
+    container_name: p2pfd_scheduler
+    restart: always
+    command: ["--daily", "06:00", "--invoices", "/app/data/invoices.parquet"]
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - LOG_FORMAT=json
+      - LOG_LEVEL=INFO
+    volumes:
+      - cases_data:/app/data
+    depends_on:
+      - api
+
 volumes:
   cases_data:
     driver: local
