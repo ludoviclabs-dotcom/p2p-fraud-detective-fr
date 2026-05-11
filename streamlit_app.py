@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import streamlit as st
 
+from p2p_fraud.logging_setup import configure_logging
 from p2p_fraud.streamlit_theme import init_app
 
+configure_logging()
 init_app()
 
 

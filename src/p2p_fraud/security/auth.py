@@ -16,13 +16,14 @@ import functools
 import hashlib
 import json
 import logging
-import os
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
+
+from ..config import get_settings
 
 log = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ class AuthService:
         if users is not None:
             self._users = {u.username: u for u in users}
             return
-        path = users_path or Path(os.environ.get("P2P_FRAUD_USERS_PATH", str(DEFAULT_USERS_PATH)))
+        path = users_path or Path(get_settings().p2p_fraud_users_path or str(DEFAULT_USERS_PATH))
         if path.exists():
             with path.open(encoding="utf-8") as f:
                 raw = json.load(f)
@@ -150,7 +151,7 @@ def requires_role(required: Role) -> Callable:
             user: User | None = kwargs.get("current_user")
             if user is None:
                 # Tolère l'absence si pas d'auth configurée (legacy)
-                if os.environ.get("P2P_FRAUD_AUTH_REQUIRED", "0") == "1":
+                if get_settings().p2p_fraud_auth_required:
                     raise AuthError(f"current_user requis pour {func.__name__}.")
                 return func(*args, **kwargs)
             if int(user.role) < int(required):

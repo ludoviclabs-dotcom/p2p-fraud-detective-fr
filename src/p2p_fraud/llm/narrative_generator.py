@@ -11,9 +11,10 @@ Nécessite la variable d'environnement ANTHROPIC_API_KEY.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from ..config import get_settings
 
 if TYPE_CHECKING:
     pass
@@ -105,7 +106,7 @@ def generate_vendor_narrative(
             "Installez-le avec : pip install anthropic>=0.25"
         ) from exc
 
-    key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+    key = api_key or get_settings().anthropic_api_key
     if not key:
         raise ValueError(
             "Variable d'environnement ANTHROPIC_API_KEY manquante. "

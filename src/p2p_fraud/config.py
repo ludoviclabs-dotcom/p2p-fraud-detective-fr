@@ -1,0 +1,87 @@
+"""Centralised application settings via pydantic-settings.
+
+Lit les variables d'environnement (et `.env`) au boot. Conserve les noms
+historiques sans préfixe pour rétrocompat avec la Phase 3 et les tests
+existants (e.g. `SIRENE_API_TOKEN`, `OIDC_*`, `FRAUD_*`, `P2P_FRAUD_*`).
+
+Usage :
+
+    from p2p_fraud.config import get_settings
+
+    s = get_settings()
+    token = s.sirene_api_token
+"""
+
+from __future__ import annotations
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Singleton de configuration applicative.
+
+    Tous les champs ont une valeur par défaut sûre (chaîne vide ou booléen
+    `False`) afin que `Settings()` n'échoue jamais en environnement minimal
+    (Streamlit Cloud, tests). Les modules consommateurs valident la présence
+    avant utilisation effective (e.g. `OIDCConfig.from_env()` retourne `None`
+    si l'issuer est vide).
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # ─── Sirene (INSEE) ──────────────────────────────────────────────────────
+    sirene_api_token: str = ""
+
+    # ─── Anthropic Claude ────────────────────────────────────────────────────
+    anthropic_api_key: str = ""
+
+    # ─── FastAPI ─────────────────────────────────────────────────────────────
+    fraud_api_secret: str = ""
+    fraud_cases_db: str = "cases.db"
+
+    # ─── OIDC (Microsoft Entra ID / Auth0 / Keycloak) ────────────────────────
+    oidc_issuer: str = ""
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_redirect_uri: str = ""
+    oidc_scopes: str = "openid email profile"
+    oidc_role_map: str = ""
+
+    # ─── Crypto (chiffrement IBAN au repos) ──────────────────────────────────
+    p2p_fraud_data_key: str = ""
+
+    # ─── Auth applicative ────────────────────────────────────────────────────
+    p2p_fraud_users_path: str = ""
+    p2p_fraud_auth_required: bool = False
+
+    # ─── Persistance (P4-2) ──────────────────────────────────────────────────
+    database_url: str = ""
+
+    # ─── Alertes monitoring (P3.4) ───────────────────────────────────────────
+    slack_webhook_url: str = ""
+    teams_webhook_url: str = ""
+
+    # ─── Observabilité (P4-6) ────────────────────────────────────────────────
+    sentry_dsn: str = ""
+
+    # ─── DECP ────────────────────────────────────────────────────────────────
+    decp_parquet_path: str = ""
+
+    # ─── Logging ─────────────────────────────────────────────────────────────
+    log_level: str = "INFO"
+    log_format: str = "text"  # "text" | "json"
+
+
+def get_settings() -> Settings:
+    """Renvoie une instance fraîche de `Settings`.
+
+    Pas de cache global : chaque appel relit l'environnement, ce qui simplifie
+    les tests qui utilisent `monkeypatch.setenv`. Le coût est négligeable
+    (validation Pydantic d'une vingtaine de champs scalaires).
+    """
+    return Settings()
