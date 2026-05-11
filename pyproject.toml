@@ -71,6 +71,7 @@ dev = [
     "jupyter>=1.0",
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
+    "psycopg2-binary>=2.9",
 ]
 
 [project.urls]
