@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     oidc_redirect_uri: str = ""
     oidc_scopes: str = "openid email profile"
     oidc_role_map: str = ""
+    # Clé HMAC pour signer les cookies de session OIDC (itsdangerous)
+    oidc_session_secret: str = ""
+    # URL de redirection après login OIDC (relative ou absolue)
+    oidc_post_login_url: str = "/"
+    # Durée maximale d'une session signée (secondes)
+    oidc_session_max_age: int = 8 * 3600
 
     # ─── Crypto (chiffrement IBAN au repos) ──────────────────────────────────
     p2p_fraud_data_key: str = ""
