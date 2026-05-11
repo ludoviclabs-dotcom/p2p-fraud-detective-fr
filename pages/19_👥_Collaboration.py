@@ -5,11 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pandas as pd
+import requests
 import streamlit as st
 
 from p2p_fraud.cases.mentions import extract_mentions
 from p2p_fraud.cases.sla import SLAConfig
-from p2p_fraud.security.oidc import OIDCConfig, build_authorization_url, make_pkce_challenge
+from p2p_fraud.config import get_settings
+from p2p_fraud.security.oidc import OIDCConfig
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
@@ -29,18 +31,64 @@ service = get_case_service()
 st.divider()
 st.subheader("👤 Identité utilisateur")
 
-current_user = st.session_state.get("current_user", "")
-new_user = st.text_input(
-    "Nom d'utilisateur (utilisé dans les @mentions et l'audit log)",
-    value=current_user,
-    placeholder="ex: jdupont, sbernard, audit.senior",
-    help="Format alphanumérique + tirets/underscores. Sera utilisé pour tracer "
-    "l'auteur des commentaires et alimenter les notifications @mention.",
-    max_chars=40,
+_settings = get_settings()
+_oidc_active = bool(
+    _settings.oidc_issuer and _settings.oidc_client_id and _settings.oidc_redirect_uri
 )
-if new_user and new_user != current_user:
-    st.session_state["current_user"] = new_user.strip().lower()
-    st.success(f"✅ Utilisateur courant : `{new_user.strip().lower()}`")
+
+
+def _fetch_oidc_identity() -> dict | None:
+    """Interroge `GET /oidc/me` via le reverse proxy local (cookie de session partagé)."""
+    if not _oidc_active:
+        return None
+    base = _settings.oidc_redirect_uri.rsplit("/oidc/", 1)[0]
+    try:
+        r = requests.get(f"{base}/oidc/me", timeout=2.0)
+    except requests.RequestException:
+        return None
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
+_oidc_identity = _fetch_oidc_identity()
+if _oidc_identity:
+    st.session_state["current_user"] = _oidc_identity.get("username", "").lower()
+    st.success(
+        f"✅ **Identité OIDC active** — `{_oidc_identity.get('username')}` "
+        f"({_oidc_identity.get('email')}) · rôle RBAC : `{_oidc_identity.get('role')}`"
+    )
+    with st.expander("Claims OIDC reçus"):
+        st.json(_oidc_identity)
+    st.caption(
+        "Identité fournie par votre IdP (Entra ID / Auth0 / Keycloak). "
+        "Le champ ci-dessous est verrouillé en lecture seule."
+    )
+    st.text_input(
+        "Nom d'utilisateur (verrouillé OIDC)",
+        value=_oidc_identity.get("username", ""),
+        disabled=True,
+    )
+else:
+    _saved_user = st.session_state.get("current_user", "")
+    new_user = st.text_input(
+        "Nom d'utilisateur (utilisé dans les @mentions et l'audit log)",
+        value=_saved_user,
+        placeholder="ex: jdupont, sbernard, audit.senior",
+        help="Format alphanumérique + tirets/underscores. Sera utilisé pour tracer "
+        "l'auteur des commentaires et alimenter les notifications @mention.",
+        max_chars=40,
+    )
+    if new_user and new_user != _saved_user:
+        st.session_state["current_user"] = new_user.strip().lower()
+        st.success(f"✅ Utilisateur courant : `{new_user.strip().lower()}`")
+    if _oidc_active:
+        st.info(
+            "OIDC est configuré côté serveur mais aucune session n'est ouverte. "
+            "Cliquez sur **🔑 Se connecter (OIDC)** dans la sidebar pour vous authentifier."
+        )
+
+current_user = st.session_state.get("current_user", "")
 
 # ─── SLA configurable ─────────────────────────────────────────────────────────
 st.divider()
@@ -185,31 +233,40 @@ if oidc_cfg is None:
         """
 OIDC_ISSUER=https://login.microsoftonline.com/{tenant_id}/v2.0
 OIDC_CLIENT_ID=<application_id>
+OIDC_CLIENT_SECRET=<application_secret>
 OIDC_REDIRECT_URI=https://yourapp.com/oidc/callback
 OIDC_SCOPES=openid email profile
 OIDC_ROLE_MAP={"DG-Audit":"admin","Audit-Senior":"manager","Audit-Junior":"analyst"}
+OIDC_SESSION_SECRET=$(python -c 'import secrets; print(secrets.token_urlsafe(48))')
         """,
         language="bash",
     )
     st.markdown(
         "**Configuration recommandée** : créer une application dans Microsoft Entra ID "
-        "avec un redirect URI vers votre déploiement, configurer les scopes `openid email "
-        "profile groups`, et mapper les groupes Entra ID vers les rôles RBAC via "
-        "`OIDC_ROLE_MAP`."
+        "avec un redirect URI vers `/oidc/callback` de votre déploiement, configurer les "
+        "scopes `openid email profile groups`, et mapper les groupes Entra ID vers les "
+        "rôles RBAC via `OIDC_ROLE_MAP`. Le service FastAPI doit être joignable derrière "
+        "le même domaine que Streamlit (cookies partagés via reverse proxy)."
     )
 else:
     st.success(f"✅ OIDC configuré — issuer : `{oidc_cfg.issuer}`")
-    if st.button("🔑 Tester l'URL d'autorisation OIDC"):
-        pkce = make_pkce_challenge()
-        url = build_authorization_url(oidc_cfg, pkce=pkce)
-        st.markdown(f"[Authentification OIDC]({url})")
-        with st.expander("PKCE challenge généré"):
-            st.code(
-                f"code_verifier: {pkce.code_verifier}\n"
-                f"code_challenge: {pkce.code_challenge}\n"
-                f"state: {pkce.state}\n"
-                f"nonce: {pkce.nonce}"
-            )
+    if not _settings.oidc_session_secret:
+        st.error(
+            "⚠️ `OIDC_SESSION_SECRET` manquant — les endpoints `/oidc/login` et "
+            "`/oidc/callback` retourneront 503. Générez un secret de ≥ 32 octets."
+        )
+    elif _oidc_identity:
+        if st.button("🔓 Se déconnecter (OIDC)"):
+            base = _settings.oidc_redirect_uri.rsplit("/oidc/", 1)[0]
+            try:
+                requests.post(f"{base}/oidc/logout", timeout=2.0)
+                st.success("Session OIDC fermée. Rechargez la page.")
+            except requests.RequestException as exc:
+                st.error(f"Logout impossible : {exc}")
+    else:
+        st.info(
+            "OIDC prêt. Cliquez sur **🔑 Se connecter (OIDC)** dans la sidebar pour démarrer le flow."
+        )
 
 # ─── Backend persistant ───────────────────────────────────────────────────────
 st.divider()

@@ -28,14 +28,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
+from p2p_fraud.api.oidc_router import router as oidc_router
 from p2p_fraud.cases.service import CaseService
 from p2p_fraud.config import get_settings
 from p2p_fraud.detectors.duplicates import detect_duplicates
 from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
-from p2p_fraud.detectors.thresholds import detect_threshold_splits
+from p2p_fraud.detectors.thresholds import detect_under_threshold
 from p2p_fraud.logging_setup import configure_logging
 from p2p_fraud.schema import Finding
-from p2p_fraud.scoring.engine import aggregate_findings_with_explanations
+from p2p_fraud.scoring.risk_engine import aggregate_findings_with_explanations
 
 configure_logging()
 
@@ -60,6 +61,8 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+app.include_router(oidc_router)
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -191,7 +194,7 @@ def _run_detectors(df: pd.DataFrame, detectors: list[str]) -> list[Finding]:
     if "duplicates" in detectors:
         findings.extend(detect_duplicates(df))
     if "thresholds" in detectors:
-        findings.extend(detect_threshold_splits(df))
+        findings.extend(detect_under_threshold(df))
     if "sanctions" in detectors:
         findings.extend(detect_sanctioned_vendors(df))
     if "decp_rbe" in detectors:

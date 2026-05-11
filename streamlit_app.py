@@ -8,11 +8,27 @@ from __future__ import annotations
 
 import streamlit as st
 
+from p2p_fraud.config import get_settings
 from p2p_fraud.logging_setup import configure_logging
 from p2p_fraud.streamlit_theme import init_app
 
 configure_logging()
 init_app()
+
+
+def _oidc_login_url() -> str | None:
+    """Renvoie l'URL absolue du endpoint /oidc/login si l'API est joignable.
+
+    Le déploiement pilote ETI hébérge FastAPI et Streamlit derrière le même
+    reverse proxy (cookies partagés). En démo Streamlit Cloud, OIDC reste
+    inactif (variables d'env absentes) → le bouton ne s'affiche pas.
+    """
+    s = get_settings()
+    if not (s.oidc_issuer and s.oidc_client_id and s.oidc_redirect_uri):
+        return None
+    # On déduit l'URL de login en remplaçant le path du redirect_uri par /oidc/login
+    base = s.oidc_redirect_uri.rsplit("/oidc/", 1)[0]
+    return f"{base}/oidc/login"
 
 
 pages = {
@@ -135,6 +151,14 @@ pg = st.navigation(pages, position="sidebar", expanded=True)
 
 with st.sidebar:
     st.divider()
+    _login_url = _oidc_login_url()
+    if _login_url:
+        st.link_button(
+            "🔑 Se connecter (OIDC)",
+            url=_login_url,
+            use_container_width=True,
+            help="Authentification fédérée Microsoft Entra ID / Auth0 / Keycloak.",
+        )
     if st.button(
         "🗑️ Purger la session",
         help="RGPD — droit à l'effacement. Supprime toutes les données chargées en mémoire.",
