@@ -3,16 +3,22 @@
 Convention : un commentaire peut contenir `@username` (alphanumérique + underscore + tiret).
 Lors de l'enregistrement, le parser extrait les mentions et émet des notifications
 via les canaux configurés (alertes Slack/Teams/SMTP de P3.4).
+
+Backend agnostique : SQLite (`:memory:` ou fichier) en démo, PostgreSQL en prod
+via `Settings.database_url`.
 """
 
 from __future__ import annotations
 
 import re
-import sqlite3
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+
+from sqlalchemy import Engine, text
+
+from p2p_fraud.persistence import Base, make_engine
 
 _MENTION_RE = re.compile(r"@([A-Za-z0-9_\-\.]{2,40})\b")
 
@@ -43,59 +49,49 @@ def extract_mentions(text: str) -> list[str]:
 
 
 class MentionStore:
-    """Persistance SQLite des mentions et de leur statut de notification."""
+    """Persistance des mentions et de leur statut de notification."""
 
-    SCHEMA = """
-    CREATE TABLE IF NOT EXISTS mentions (
-        seq INTEGER PRIMARY KEY AUTOINCREMENT,
-        case_id TEXT NOT NULL,
-        mentioned_user TEXT NOT NULL,
-        mentioned_by TEXT NOT NULL,
-        text TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        notified INTEGER NOT NULL DEFAULT 0,
-        read_at TEXT
-    );
-    CREATE INDEX IF NOT EXISTS idx_mentions_user ON mentions(mentioned_user);
-    CREATE INDEX IF NOT EXISTS idx_mentions_case ON mentions(case_id);
-    """
-
-    def __init__(self, path: str | Path = ":memory:") -> None:
-        self._path = str(path)
-        self._conn = sqlite3.connect(self._path, check_same_thread=False)
-        if self._path != ":memory:":
-            self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.executescript(self.SCHEMA)
-        self._conn.commit()
+    def __init__(
+        self,
+        path: str | Path = ":memory:",
+        *,
+        engine: Engine | None = None,
+    ) -> None:
+        self._engine = engine or make_engine(db_path=path)
+        Base.metadata.create_all(self._engine, checkfirst=True)
 
     def record(self, mentions: Iterable[Mention]) -> int:
-        cur = self._conn.cursor()
         n = 0
-        for m in mentions:
-            cur.execute(
-                "INSERT INTO mentions (case_id, mentioned_user, mentioned_by, text, created_at) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (m.case_id, m.mentioned_user, m.mentioned_by, m.text, m.created_at),
-            )
-            n += 1
-        self._conn.commit()
+        with self._engine.begin() as conn:
+            for m in mentions:
+                conn.execute(
+                    text(
+                        "INSERT INTO mentions "
+                        "(case_id, mentioned_user, mentioned_by, text, created_at) "
+                        "VALUES (:case_id, :user, :by, :text, :created_at)"
+                    ),
+                    {
+                        "case_id": m.case_id,
+                        "user": m.mentioned_user,
+                        "by": m.mentioned_by,
+                        "text": m.text,
+                        "created_at": m.created_at,
+                    },
+                )
+                n += 1
         return n
 
     def for_user(self, username: str, *, only_unread: bool = False) -> list[Mention]:
-        cur = self._conn.cursor()
+        sql = (
+            "SELECT case_id, mentioned_user, mentioned_by, text, created_at "
+            "FROM mentions WHERE mentioned_user = :user "
+        )
         if only_unread:
-            cur.execute(
-                "SELECT case_id, mentioned_user, mentioned_by, text, created_at "
-                "FROM mentions WHERE mentioned_user = ? AND read_at IS NULL "
-                "ORDER BY seq DESC",
-                (username.lower(),),
-            )
-        else:
-            cur.execute(
-                "SELECT case_id, mentioned_user, mentioned_by, text, created_at "
-                "FROM mentions WHERE mentioned_user = ? ORDER BY seq DESC",
-                (username.lower(),),
-            )
+            sql += "AND read_at IS NULL "
+        sql += "ORDER BY seq DESC"
+
+        with self._engine.connect() as conn:
+            rows = conn.execute(text(sql), {"user": username.lower()}).all()
         return [
             Mention(
                 case_id=row[0],
@@ -104,38 +100,41 @@ class MentionStore:
                 text=row[3],
                 created_at=row[4],
             )
-            for row in cur.fetchall()
+            for row in rows
         ]
 
     def mark_read(self, *, username: str, case_id: str | None = None) -> int:
-        cur = self._conn.cursor()
         now = datetime.now(UTC).isoformat()
         if case_id:
-            cur.execute(
-                "UPDATE mentions SET read_at = ? "
-                "WHERE mentioned_user = ? AND case_id = ? AND read_at IS NULL",
-                (now, username.lower(), case_id),
+            sql = (
+                "UPDATE mentions SET read_at = :now "
+                "WHERE mentioned_user = :user AND case_id = :case_id AND read_at IS NULL"
             )
+            params = {"now": now, "user": username.lower(), "case_id": case_id}
         else:
-            cur.execute(
-                "UPDATE mentions SET read_at = ? WHERE mentioned_user = ? AND read_at IS NULL",
-                (now, username.lower()),
+            sql = (
+                "UPDATE mentions SET read_at = :now "
+                "WHERE mentioned_user = :user AND read_at IS NULL"
             )
-        self._conn.commit()
-        return cur.rowcount
+            params = {"now": now, "user": username.lower()}
+
+        with self._engine.begin() as conn:
+            result = conn.execute(text(sql), params)
+            return int(result.rowcount)
 
     def all_users_mentioned(self) -> list[str]:
-        cur = self._conn.cursor()
-        cur.execute("SELECT DISTINCT mentioned_user FROM mentions ORDER BY mentioned_user")
-        return [row[0] for row in cur.fetchall()]
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text("SELECT DISTINCT mentioned_user FROM mentions ORDER BY mentioned_user")
+            ).all()
+        return [row[0] for row in rows]
 
     def __len__(self) -> int:
-        cur = self._conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM mentions")
-        return int(cur.fetchone()[0])
+        with self._engine.connect() as conn:
+            return int(conn.execute(text("SELECT COUNT(*) FROM mentions")).scalar() or 0)
 
     def close(self) -> None:
-        self._conn.close()
+        self._engine.dispose()
 
 
 def build_mentions(*, case_id: str, text: str, mentioned_by: str) -> list[Mention]:

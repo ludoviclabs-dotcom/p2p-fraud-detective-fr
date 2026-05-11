@@ -29,6 +29,38 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 - Champs `Settings.database_url`, `slack_webhook_url`, `teams_webhook_url`,
   `sentry_dsn` exposés en amont des PRs P4-2 / P4-6.
 
+### Ajouté — Phase 4 / PR P4-2 (SQLAlchemy + PostgreSQL switch)
+- `src/p2p_fraud/persistence/` — couche persistance SQLAlchemy 2.0 :
+  - `models.py` : ORM `CaseRow`, `CaseEventRow`, `AuditLogRow`, `MentionRow`,
+    `AlertHistoryRow` partagés sur `Base.metadata` unique. Colonnes + index
+    alignés sur la migration Alembic existante.
+  - `engine.py` : `make_engine(database_url, db_path, echo)` factory qui
+    bascule sur SQLite (`:memory:` / fichier) ou PostgreSQL via `DATABASE_URL`.
+    `StaticPool` pour les tests in-memory.
+- `tests/integration/` — suite PostgreSQL :
+  - `conftest.py` : fixture `pg_engine` skippée si `INTEGRATION_DATABASE_URL`
+    absent ; reset de schéma + truncate per-test pour isolation.
+  - `test_postgres.py` : 4 scénarios (cycle complet `CaseService`, intégrité
+    chaîne audit log, `MentionStore.for_user`, validation metadata Alembic).
+- Marker pytest `integration` enregistré dans `pyproject.toml` ; addopts
+  `-m 'not integration'` par défaut → unit suite reste rapide.
+- Job CI `integration` (`.github/workflows/ci.yml`) avec service Postgres 16.
+
+### Modifié — Phase 4 / PR P4-2
+- `src/p2p_fraud/cases/service.py`, `cases/audit_log.py`, `cases/mentions.py`,
+  `alerts/store.py` — remplacement de `sqlite3.connect` par SQLAlchemy
+  `Engine` + `text()` avec named params. API publique des stores **inchangée**
+  (rétrocompat des 232 tests existants, zéro régression).
+- Tous les stores acceptent désormais un kwarg `engine: Engine | None = None`
+  pour partager une connexion (utile pour tests d'intégration et déploiement
+  multi-store sur la même base).
+- `alembic/env.py` — bind `target_metadata = Base.metadata`. Déverrouille
+  `alembic revision --autogenerate` pour les futures évolutions de schéma.
+
+### Dépendances
+- `sqlalchemy>=2.0` (déjà présent depuis P3.7) — promu dépendance
+  fonctionnelle des stores.
+
 ## [0.3.0] - 2026-05-09
 
 Refonte UX/UI institutionnelle (H1 Quick Wins + H2 Refonte intermédiaire).
