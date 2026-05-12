@@ -68,6 +68,7 @@ class CaseService:
         sla_config: SLAConfig | None = None,
         mention_store: MentionStore | None = None,
         engine: Engine | None = None,
+        webhook_dispatcher: object | None = None,
     ) -> None:
         self._engine = engine or make_engine(db_path=db_path)
         Base.metadata.create_all(self._engine, checkfirst=True)
@@ -75,6 +76,8 @@ class CaseService:
         self._sla_default = timedelta(hours=sla_hours_default)
         self._sla = sla_config or DEFAULT_SLA
         self._mentions = mention_store or MentionStore(":memory:")
+        # P5-3 : webhook sortant optionnel (no-op silencieux si non fourni)
+        self.webhook_dispatcher = webhook_dispatcher
 
     @property
     def sla(self) -> SLAConfig:
@@ -445,7 +448,33 @@ class CaseService:
             kind=f"case.{kind}",
             payload={"case_id": case_id, **payload},
         )
+        # Webhook sortant P5-3 (no-op si dispatcher absent ou désactivé).
+        # Tout échec est silencieusement loggé pour ne PAS casser la chaîne
+        # d'audit — l'audit log local fait foi en cas d'incident webhook.
+        self._dispatch_webhook(kind=kind, case_id=case_id, actor=actor, payload=payload)
         return event
+
+    def _dispatch_webhook(self, *, kind: str, case_id: str, actor: str, payload: dict) -> None:
+        """Envoie l'event au dispatcher si configuré. Catch-all defensive."""
+        dispatcher = self.webhook_dispatcher
+        if dispatcher is None or not getattr(dispatcher, "enabled", False):
+            return
+        try:
+            from p2p_fraud.webhooks.events import build_event
+
+            evt = build_event(kind=kind, case_id=case_id, actor=actor, payload=payload)
+            if evt is None:
+                return
+            dispatcher.dispatch(evt)  # type: ignore[attr-defined]
+        except Exception:
+            import logging as _logging
+
+            _logging.getLogger(__name__).warning(
+                "webhook dispatch failed for case=%s kind=%s",
+                case_id,
+                kind,
+                exc_info=True,
+            )
 
     @staticmethod
     def _assert_not_closed(case: Case) -> None:

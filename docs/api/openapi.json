@@ -1,0 +1,1020 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "P2P Fraud Detective FR \u2014 API",
+    "description": "API REST pour la d\u00e9tection de fraude dans les cycles Procure-to-Pay. Conforme ISA 240, Sapin 2, LCB-FT, DORA art. 28.",
+    "version": "0.4.0"
+  },
+  "paths": {
+    "/oidc/login": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "description": "D\u00e9marre le flow authorization code + PKCE.",
+        "operationId": "login_oidc_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oidc/callback": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Callback",
+        "description": "Callback OIDC \u2014 valide le state, \u00e9change le code, ouvre la session.",
+        "operationId": "callback_oidc_callback_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          },
+          {
+            "name": "error_description",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error Description"
+            }
+          },
+          {
+            "name": "p2pfd_oidc_state",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "P2Pfd Oidc State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oidc/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout",
+        "description": "Efface le cookie de session \u2014 ne contacte pas l'IdP.",
+        "operationId": "logout_oidc_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oidc/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Me",
+        "description": "Renvoie l'identit\u00e9 courante depuis la session, 401 sinon.",
+        "operationId": "me_oidc_me_get",
+        "parameters": [
+          {
+            "name": "p2pfd_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "P2Pfd Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Me Oidc Me Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Ops"
+        ],
+        "summary": "Health",
+        "description": "Liveness probe \u2014 retourne 200 si l'API est op\u00e9rationnelle.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhook/test": {
+      "post": {
+        "tags": [
+          "Ops"
+        ],
+        "summary": "Webhook Test",
+        "description": "Envoie un \u00e9v\u00e9nement factice `webhook.test` vers `Settings.webhook_url`.\n\nPermet de valider la configuration c\u00f4t\u00e9 pilote en bout-en-bout\n(signature HMAC, retry tenacity, format CloudEvents simplifi\u00e9).\nRenvoie un objet `{ok, status, duration_ms, event_id, type}`.\n\nEn l'absence de configuration (`webhook_url` vide), renvoie\n`{ok: false, skipped: true, reason: \"disabled\"}`.",
+        "operationId": "webhook_test_webhook_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Webhook Test Webhook Test Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/detect": {
+      "post": {
+        "tags": [
+          "D\u00e9tection"
+        ],
+        "summary": "Detect",
+        "description": "Ex\u00e9cute les d\u00e9tecteurs s\u00e9lectionn\u00e9s sur le dataset de factures fourni.\n\nRetourne la liste compl\u00e8te des findings avec leur s\u00e9v\u00e9rit\u00e9, signal et evidence.",
+        "operationId": "detect_detect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/detect/csv": {
+      "post": {
+        "tags": [
+          "D\u00e9tection"
+        ],
+        "summary": "Detect Csv",
+        "description": "Accepte un fichier CSV de factures et ex\u00e9cute les d\u00e9tecteurs par d\u00e9faut.",
+        "operationId": "detect_csv_detect_csv_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_detect_csv_detect_csv_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/score": {
+      "post": {
+        "tags": [
+          "Scoring"
+        ],
+        "summary": "Score",
+        "description": "Calcule le score de risque consolid\u00e9 (0-100) par facture.\n\nUtilise les poids configur\u00e9s dans `weights.yaml` par d\u00e9faut.\nPassez `detector_weights` pour surcharger \u00e0 la vol\u00e9e.",
+        "operationId": "score_score_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/cases": {
+      "get": {
+        "tags": [
+          "Case management"
+        ],
+        "summary": "List Cases",
+        "description": "Liste les cases depuis la base de donn\u00e9es (SQLite persistante).\n\nFiltres optionnels : `status_filter` (open/closed) et `severity` (critical/high/medium/low).",
+        "operationId": "list_cases_cases_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status Filter"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseOut"
+                  },
+                  "title": "Response List Cases Cases Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/close": {
+      "post": {
+        "tags": [
+          "Case management"
+        ],
+        "summary": "Close Case",
+        "description": "Cl\u00f4ture motiv\u00e9e d'un case.\n\nLa raison de cl\u00f4ture doit \u00eatre non vide (\u2265 10 caract\u00e8res).\nL'\u00e9v\u00e9nement est journalis\u00e9 dans la piste d'audit SHA-256.",
+        "operationId": "close_case_cases__case_id__close_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Close Case Cases  Case Id  Close Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_detect_csv_detect_csv_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_detect_csv_detect_csv_post"
+      },
+      "CaseOut": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "exposure_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Eur"
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "invoice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "vendor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "title",
+          "severity",
+          "status",
+          "exposure_eur",
+          "assignee",
+          "created_at",
+          "invoice_id",
+          "vendor_id"
+        ],
+        "title": "CaseOut"
+      },
+      "CloseRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Reason"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "api"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "CloseRequest"
+      },
+      "DetectRequest": {
+        "properties": {
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceRow"
+            },
+            "type": "array",
+            "title": "Invoices"
+          },
+          "detectors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Detectors",
+            "description": "D\u00e9tecteurs \u00e0 activer parmi : duplicates, thresholds, sanctions, decp_rbe"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoices"
+        ],
+        "title": "DetectRequest"
+      },
+      "DetectResponse": {
+        "properties": {
+          "n_invoices": {
+            "type": "integer",
+            "title": "N Invoices"
+          },
+          "n_findings": {
+            "type": "integer",
+            "title": "N Findings"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "run_at": {
+            "type": "string",
+            "title": "Run At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_invoices",
+          "n_findings",
+          "findings",
+          "run_at"
+        ],
+        "title": "DetectResponse"
+      },
+      "FindingOut": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "detector": {
+            "type": "string",
+            "title": "Detector"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "detected_at": {
+            "type": "string",
+            "title": "Detected At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "detector",
+          "rule_id",
+          "severity",
+          "signal",
+          "evidence",
+          "detected_at"
+        ],
+        "title": "FindingOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InvoiceRow": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "vendor_name": {
+            "type": "string",
+            "title": "Vendor Name"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount"
+          },
+          "invoice_date": {
+            "type": "string",
+            "title": "Invoice Date"
+          },
+          "siren": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siren"
+          },
+          "iban": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iban"
+          },
+          "po_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Po Number"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "gl_account": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Account"
+          },
+          "cost_center": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Center"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "EUR"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "vendor_name",
+          "amount",
+          "invoice_date"
+        ],
+        "title": "InvoiceRow"
+      },
+      "ScoreRequest": {
+        "properties": {
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceRow"
+            },
+            "type": "array",
+            "title": "Invoices"
+          },
+          "detector_weights": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detector Weights"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoices"
+        ],
+        "title": "ScoreRequest"
+      },
+      "ScoreResponse": {
+        "properties": {
+          "n_invoices": {
+            "type": "integer",
+            "title": "N Invoices"
+          },
+          "scores": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreRow"
+            },
+            "type": "array",
+            "title": "Scores"
+          },
+          "run_at": {
+            "type": "string",
+            "title": "Run At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_invoices",
+          "scores",
+          "run_at"
+        ],
+        "title": "ScoreResponse"
+      },
+      "ScoreRow": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "findings_count": {
+            "type": "integer",
+            "title": "Findings Count"
+          },
+          "reason_codes_fr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reason Codes Fr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "score",
+          "findings_count",
+          "reason_codes_fr"
+        ],
+        "title": "ScoreRow"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
