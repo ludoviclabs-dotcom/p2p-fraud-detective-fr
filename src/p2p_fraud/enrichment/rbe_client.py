@@ -87,14 +87,36 @@ _HIGH_RISK_NATIONALITIES = {"AE", "RU", "CN", "IR", "KP", "BY", "CU", "SY", "VE"
 
 @dataclass
 class RBEClient:
-    """Interroge le registre RBE pour un ensemble de fournisseurs."""
+    """Interroge le registre RBE pour un ensemble de fournisseurs.
+
+    En mode "live" (`Settings.enrichment_mode == "live"`), un `PappersLiveClient`
+    est branché et les lookups interrogent `api.pappers.fr`. Fallback transparent
+    sur le snapshot démo si l'API échoue (graceful degradation).
+    """
 
     demo_mode: bool = True
+    live_client: object | None = None  # PappersLiveClient | None
     _owners: list[BeneficialOwner] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:
         if self.demo_mode:
             self._owners = [BeneficialOwner(**d) for d in _DEMO_OWNERS]
+
+    @classmethod
+    def from_settings(cls, settings=None) -> RBEClient:
+        """Construit un client en respectant `Settings.enrichment_mode`."""
+        from p2p_fraud.config import get_settings
+
+        s = settings or get_settings()
+        client = cls(demo_mode=True)
+        if s.enrichment_mode == "live" and s.pappers_api_key:
+            from p2p_fraud.enrichment.pappers_live import PappersLiveClient
+
+            client.live_client = PappersLiveClient(
+                api_key=s.pappers_api_key,
+                base_url=s.pappers_base_url,
+            )
+        return client
 
     @staticmethod
     def _normalize(s: str) -> str:
@@ -104,6 +126,13 @@ class RBEClient:
     def lookup_by_siren(self, siren: str) -> list[BeneficialOwner]:
         """Retourne les bénéficiaires effectifs pour un SIREN donné."""
         clean = siren.strip()[:9]
+        if self.live_client is not None:
+            try:
+                live_hits = self.live_client.lookup_by_siren(clean)  # type: ignore[attr-defined]
+                if live_hits:
+                    return live_hits
+            except Exception as exc:
+                log.warning("Pappers live failed, falling back to demo: %s", exc)
         return [o for o in self._owners if o.siren == clean]
 
     def is_opaque_structure(self, siren: str) -> bool:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from p2p_fraud.config import get_settings
 from p2p_fraud.detectors.decp import detect_decp_rbe
 from p2p_fraud.enrichment.decp_client import DECPClient
 from p2p_fraud.enrichment.rbe_client import RBEClient
@@ -49,6 +50,25 @@ with st.expander("ℹ️ Sources et réglementation"):
         """
     )
 
+_settings = get_settings()
+_live_active = _settings.enrichment_mode == "live"
+if _live_active:
+    st.success(
+        "🟢 **Mode LIVE actif** — appels réels à `data.economie.gouv.fr` (DECP) "
+        f"et `{_settings.yente_base_url}` (OpenSanctions). "
+        + (
+            "Pappers RBE activé."
+            if _settings.pappers_api_key
+            else "Pappers RBE désactivé (clé absente — fallback démo sur les BO)."
+        )
+    )
+else:
+    st.info(
+        "🔬 **Mode DÉMO actif** — données synthétiques embarquées. "
+        "Pour activer les sources live, définir `ENRICHMENT_MODE=live` "
+        "(voir [`docs/sources_de_donnees.md`](https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/docs/sources_de_donnees.md))."
+    )
+
 if "df_invoices" not in st.session_state:
     st.warning("Aucun dataset chargé. Direction la page **📤 Upload**.")
     st.stop()
@@ -66,8 +86,12 @@ with col_settings:
     min_score = st.slider("Seuil matching nom fournisseur (RapidFuzz)", 60, 99, 80, 1)
 
 with col_info:
-    decp_client = DECPClient(demo_mode=demo_mode)
-    rbe_client = RBEClient(demo_mode=demo_mode)
+    if _live_active and not demo_mode:
+        decp_client = DECPClient.from_settings(_settings)
+        rbe_client = RBEClient.from_settings(_settings)
+    else:
+        decp_client = DECPClient(demo_mode=demo_mode)
+        rbe_client = RBEClient(demo_mode=demo_mode)
     st.metric("Contrats DECP", f"{decp_client.n_contracts:,}")
     st.metric("Fournisseurs DECP uniques", f"{decp_client.n_unique_vendors:,}")
     st.metric("Bénéficiaires effectifs (RBE)", f"{rbe_client.n_records:,}")

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from p2p_fraud.config import get_settings
 from p2p_fraud.streamlit_theme import init_page
 
 init_page(
@@ -70,6 +71,27 @@ st.markdown(
       très récente peut ne pas encore être reflétée.
     """
 )
+
+# ── 2b. Mode live vs démo (P5-1) ──────────────────────────────────────────────
+_settings = get_settings()
+_is_live = _settings.enrichment_mode == "live"
+st.markdown("#### 🟢 Mode live vs 🔬 mode démo")
+if _is_live:
+    st.success(
+        "**Mode live actif.** Les adapters DECP / Pappers / OpenSanctions Yente "
+        f"interrogent les sources réelles. Pappers : "
+        f"{'configuré ✅' if _settings.pappers_api_key else 'non configuré (fallback démo sur RBE)'}. "
+        "Cache HTTP 7 jours via `requests-cache`. Fallback automatique sur les snapshots embarqués "
+        "en cas de coupure réseau (graceful degradation, jamais d'exception remontée à l'UI)."
+    )
+else:
+    st.info(
+        "**Mode démo actif.** Tous les enrichissements proviennent de snapshots synthétiques "
+        "embarqués (`data/sanctions/snapshot_*.csv`, `_DEMO_VENDORS` DECP, `_DEMO_OWNERS` RBE). "
+        "Pour activer les sources live : définir `ENRICHMENT_MODE=live` (et optionnellement "
+        "`PAPPERS_API_KEY` pour le RBE). Voir [`docs/sources_de_donnees.md`]"
+        "(https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/docs/sources_de_donnees.md)."
+    )
 
 st.divider()
 

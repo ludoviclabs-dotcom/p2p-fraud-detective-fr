@@ -81,10 +81,28 @@ class SanctionsClient:
         snapshot_path: Path | None = None,
         *,
         min_score: int = DEFAULT_MIN_SCORE,
+        live_client: object | None = None,
     ) -> None:
         self._path = snapshot_path or DEFAULT_SNAPSHOT
         self._min_score = min_score
         self._df = self._load()
+        # Quand `live_client` (YenteClient) est fourni, `search()` interroge
+        # d'abord OpenSanctions Yente, puis retombe sur le snapshot CSV si
+        # l'appel échoue (graceful degradation, jamais d'exception remontée).
+        self.live_client = live_client
+
+    @classmethod
+    def from_settings(cls, settings=None) -> SanctionsClient:
+        """Construit un client en respectant `Settings.enrichment_mode`."""
+        from p2p_fraud.config import get_settings  # local pour éviter cycles
+
+        s = settings or get_settings()
+        live = None
+        if s.enrichment_mode == "live":
+            from p2p_fraud.enrichment.yente_client import YenteClient
+
+            live = YenteClient(base_url=s.yente_base_url)
+        return cls(live_client=live)
 
     def _load(self) -> pd.DataFrame:
         if not self._path.exists():
@@ -119,7 +137,17 @@ class SanctionsClient:
 
     def search(self, query: str, *, country: str | None = None) -> list[SanctionMatch]:
         """Recherche un nom/raison sociale dans le snapshot. Retourne tous les matches >= min_score."""
-        if self._df.empty or not query:
+        if not query:
+            return []
+        if self.live_client is not None:
+            try:
+                live_hits = self.live_client.match_entity(query)  # type: ignore[attr-defined]
+                if live_hits:
+                    threshold = self._min_score
+                    return [m for m in live_hits if m.score >= threshold]
+            except Exception as exc:
+                log.warning("Yente live match failed, falling back to snapshot: %s", exc)
+        if self._df.empty:
             return []
         norm_q = _normalize(query)
         if not norm_q:

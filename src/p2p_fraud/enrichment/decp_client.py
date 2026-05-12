@@ -67,10 +67,19 @@ class DECPContract:
 
 @dataclass
 class DECPClient:
-    """Interroge le référentiel DECP pour un ensemble de fournisseurs."""
+    """Interroge le référentiel DECP pour un ensemble de fournisseurs.
+
+    En mode "live" (`Settings.enrichment_mode == "live"`), un `DECPLiveClient`
+    est branché et les `lookup_*` interrogent l'API `data.economie.gouv.fr`.
+    En cas d'échec réseau, un `log.warning` est émis et la méthode retombe
+    sur la base démo locale (graceful degradation, jamais d'exception remontée).
+    """
 
     demo_mode: bool = True
     cache_path: Path | None = None
+    live_client: object | None = (
+        None  # DECPLiveClient | None ; typed `object` pour éviter cycle d'import
+    )
     _contracts: list[DECPContract] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:
@@ -78,6 +87,23 @@ class DECPClient:
             self._contracts = self._generate_demo_contracts()
         elif self.cache_path and self.cache_path.exists():
             self._contracts = self._load_from_cache()
+
+    @classmethod
+    def from_settings(cls, settings=None) -> DECPClient:
+        """Construit un client en respectant `Settings.enrichment_mode`."""
+        from p2p_fraud.config import get_settings  # import local pour éviter cycles
+
+        s = settings or get_settings()
+        if s.enrichment_mode == "live":
+            from p2p_fraud.enrichment.decp_live import DECPLiveClient
+
+            live = DECPLiveClient(base_url=s.decp_live_base_url)
+            # Le mode démo reste activé en repli (les `_contracts` synthétiques
+            # restent disponibles si l'API live échoue).
+            client = cls(demo_mode=True)
+            client.live_client = live
+            return client
+        return cls(demo_mode=True)
 
     def _generate_demo_contracts(self) -> list[DECPContract]:
         import random
@@ -117,10 +143,24 @@ class DECPClient:
     def lookup_by_siren(self, siren: str) -> list[DECPContract]:
         """Retourne les contrats DECP pour un SIREN donné."""
         clean = siren.strip()[:9]
+        if self.live_client is not None:
+            try:
+                live_hits = self.live_client.lookup_by_siren(clean)  # type: ignore[attr-defined]
+                if live_hits:
+                    return live_hits
+            except Exception as exc:
+                log.warning("DECP live failed, falling back to demo: %s", exc)
         return [c for c in self._contracts if c.siren == clean]
 
     def lookup_by_name(self, name: str, min_score: int = 80) -> list[DECPContract]:
         """Retourne les contrats DECP pour un nom de fournisseur (fuzzy match)."""
+        if self.live_client is not None:
+            try:
+                live_hits = self.live_client.lookup_by_name(name)  # type: ignore[attr-defined]
+                if live_hits:
+                    return live_hits
+            except Exception as exc:
+                log.warning("DECP live search failed, falling back to demo: %s", exc)
         try:
             from rapidfuzz import fuzz
         except ImportError:
