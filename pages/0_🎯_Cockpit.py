@@ -12,7 +12,11 @@ Triée par € exposition financière (pas par score brut). Sections :
 
 from __future__ import annotations
 
+from collections import Counter
+from datetime import UTC, datetime, timedelta
+
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from p2p_fraud.services.exposure import (
@@ -121,6 +125,124 @@ col4.metric(
     delta=f"{n_cases_unassigned_critical} non assignés" if n_cases_unassigned_critical else None,
     delta_color="inverse",
 )
+
+
+# ─── 2bis. Sparklines tendances 30 jours ─────────────────────────────────────
+
+
+def _daily_series(events: list, days: int = 30) -> pd.Series:
+    """Renvoie une Series indexée jour → count sur les `days` derniers jours.
+
+    Bornes inclusives, jours sans événement = 0 (sparkline continue).
+    """
+    today = datetime.now(UTC).date()
+    idx = pd.date_range(end=today, periods=days, freq="D")
+    counts = Counter(events)
+    series = pd.Series([counts.get(d.date(), 0) for d in idx], index=idx)
+    return series
+
+
+def _sparkline(series: pd.Series, color: str) -> go.Figure:
+    fig = go.Figure(
+        go.Scatter(
+            x=series.index,
+            y=series.values,
+            mode="lines",
+            line={"color": color, "width": 2},
+            fill="tozeroy",
+            fillcolor=color + "33",
+            hovertemplate="%{x|%d %b}<br>%{y:d}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        height=60,
+        xaxis={"visible": False},
+        yaxis={"visible": False},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
+
+
+# Agrégation des événements audit_log + cases sur 30 jours
+audit_log = service.audit_log.all()
+since = (datetime.now(UTC) - timedelta(days=30)).date()
+
+
+def _parse_iso(s: str) -> datetime | None:
+    try:
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
+        return dt
+    except (TypeError, ValueError):
+        return None
+
+
+cases_created_dates = [
+    c.created_at.astimezone(UTC).date()
+    if hasattr(c.created_at, "astimezone")
+    else _parse_iso(str(c.created_at)).date()
+    for c in cases
+    if hasattr(c.created_at, "astimezone") or _parse_iso(str(c.created_at))
+]
+cases_created_dates = [d for d in cases_created_dates if d >= since]
+
+cases_closed_dates = [
+    c.closed_at.astimezone(UTC).date()
+    if c.closed_at and hasattr(c.closed_at, "astimezone")
+    else None
+    for c in cases
+    if c.closed_at
+]
+cases_closed_dates = [d for d in cases_closed_dates if d and d >= since]
+
+critical_events_dates = [e.payload.get("severity") for e in audit_log if e.kind.startswith("case.")]
+# Plutôt : les events case.created avec severity=critical
+critical_events_dates = [
+    _parse_iso(e.at).date()
+    for e in audit_log
+    if e.kind == "case.created"
+    and e.payload.get("severity") == "critical"
+    and _parse_iso(e.at)
+    and _parse_iso(e.at).date() >= since
+]
+
+all_audit_dates = [_parse_iso(e.at).date() for e in audit_log if _parse_iso(e.at)]
+all_audit_dates = [d for d in all_audit_dates if d >= since]
+
+st.caption("📈 **Tendance sur 30 jours**")
+s1, s2, s3, s4 = st.columns(4)
+with s1:
+    st.markdown("**Cases créés**")
+    st.plotly_chart(
+        _sparkline(_daily_series(cases_created_dates), "#1F3A6E"),
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
+with s2:
+    st.markdown("**Cases clôturés**")
+    st.plotly_chart(
+        _sparkline(_daily_series(cases_closed_dates), "#3E7C5A"),
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
+with s3:
+    st.markdown("**Alertes critiques**")
+    st.plotly_chart(
+        _sparkline(_daily_series(critical_events_dates), "#A23E48"),
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
+with s4:
+    st.markdown("**Activité audit trail**")
+    st.plotly_chart(
+        _sparkline(_daily_series(all_audit_dates), "#E5A93A"),
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
 
 st.divider()
 

@@ -17,7 +17,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, bindparam, text
 
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.mentions import MentionStore, build_mentions
@@ -243,6 +243,46 @@ class CaseService:
             },
         )
         return case
+
+    # --- RGPD art. 17 — droit à l'effacement ---
+
+    def purge_user_data(self, target_user: str, *, actor: str) -> int:
+        """Supprime tous les cases créés par `target_user` + leurs événements.
+
+        Action **destructive et persistante** — destinée à l'admin RGPD,
+        protégée côté UI par une double confirmation. L'audit log conserve
+        une trace `rgpd.erasure` avec le nombre de cases supprimés.
+
+        Args:
+            target_user: valeur exacte de `cases.created_by` à purger.
+            actor: utilisateur courant exécutant la purge (pour l'audit log).
+
+        Returns:
+            Nombre de cases effectivement supprimés.
+        """
+        with self._engine.begin() as conn:
+            rows = conn.execute(
+                text("SELECT case_id FROM cases WHERE created_by = :u"),
+                {"u": target_user},
+            ).all()
+            case_ids = [r[0] for r in rows]
+            if case_ids:
+                conn.execute(
+                    text("DELETE FROM case_events WHERE case_id IN :ids").bindparams(
+                        bindparam("ids", expanding=True)
+                    ),
+                    {"ids": case_ids},
+                )
+                conn.execute(
+                    text("DELETE FROM cases WHERE created_by = :u"),
+                    {"u": target_user},
+                )
+        self._audit.append(
+            actor=actor,
+            kind="rgpd.erasure",
+            payload={"target_user": target_user, "n_cases_deleted": len(case_ids)},
+        )
+        return len(case_ids)
 
     # --- Lecture ---
 
