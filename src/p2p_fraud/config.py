@@ -78,6 +78,17 @@ class Settings(BaseSettings):
     # ─── DECP ────────────────────────────────────────────────────────────────
     decp_parquet_path: str = ""
 
+    # ─── Enrichissement live (P5-1) ──────────────────────────────────────────
+    # Mode "demo" : adapters synthétiques embarqués (par défaut, démo publique).
+    # Mode "live" : appels HTTP réels aux sources ouvertes (data.economie.gouv.fr,
+    # api.pappers.fr, api.opensanctions.org). Fallback automatique sur "demo"
+    # en cas d'échec réseau (log.warning émis).
+    enrichment_mode: str = "demo"  # "demo" | "live"
+    decp_live_base_url: str = "https://data.economie.gouv.fr/api/explore/v2.1"
+    pappers_api_key: str = ""
+    pappers_base_url: str = "https://api.pappers.fr/v2"
+    yente_base_url: str = "https://api.opensanctions.org"
+
     # ─── Logging ─────────────────────────────────────────────────────────────
     log_level: str = "INFO"
     log_format: str = "text"  # "text" | "json"
