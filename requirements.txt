@@ -33,4 +33,6 @@ alembic>=1.13
 python-jose[cryptography]>=3.3
 itsdangerous>=2.2
 tenacity>=8.0
+sentry-sdk[fastapi]>=2.0
+prometheus-fastapi-instrumentator>=7.0
 -e .
