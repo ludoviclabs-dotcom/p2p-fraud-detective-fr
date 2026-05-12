@@ -40,6 +40,11 @@ pages = {
             default=True,
         ),
         st.Page(
+            "pages/20_🎮_Sandbox.py",
+            title="Sandbox commerciale",
+            icon=":material/play_circle:",
+        ),
+        st.Page(
             "pages/10_🗂️_File_d_investigation.py",
             title="File d'investigation",
             icon=":material/inbox:",

@@ -86,6 +86,22 @@ findings = _collect_session_findings()
 invoices = st.session_state.get("df_invoices_with_vid") or st.session_state.get("df_invoices")
 cases = service.list_cases()
 
+# Bouton sandbox visible quand aucune donnée n'est encore chargée (P5-2).
+if invoices is None and not findings:
+    with st.container():
+        c1, c2 = st.columns([3, 1])
+        with c1:
+            st.info(
+                "🎮 **Pas de données chargées.** Découvrez la plateforme en 60 secondes "
+                "avec un scénario pré-chargé (BEC, fractionnement, doublons, anneaux, sanctions)."
+            )
+        with c2:
+            st.page_link(
+                "pages/20_🎮_Sandbox.py",
+                label="🎮 Ouvrir la Sandbox",
+                icon="▶️",
+            )
+
 # Si aucun finding en session, on prend une exposition "démo" depuis les cases seedés.
 if findings:
     summary = cockpit_summary(findings, cases=cases, invoices=invoices)
