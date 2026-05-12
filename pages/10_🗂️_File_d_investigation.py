@@ -103,9 +103,14 @@ else:
         ]
     ).sort_values("exposure_eur", ascending=False, na_position="last")
 
-    # AgGrid avec sélection de ligne persistée
+    # AgGrid : sélection multiple (checkbox) — bulk ops P5-3
     gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_selection("single", use_checkbox=False, pre_selected_rows=[0])
+    gb.configure_selection(
+        "multiple",
+        use_checkbox=True,
+        header_checkbox=True,
+        pre_selected_rows=[0],
+    )
     gb.configure_column(
         "exposure_eur",
         header_name="Exposition €",
@@ -135,15 +140,90 @@ else:
     case_ids = [c.case_id for c in cases]
     qp_case = st.query_params.get("case_id", "")
 
+    # Extraction de la liste complète des sélections (bulk ops P5-3)
+    selected_ids: list[str] = []
     if selected_rows is not None and len(selected_rows) > 0:
         if isinstance(selected_rows, pd.DataFrame):
-            selected_case_id = selected_rows.iloc[0]["case_id"]
+            selected_ids = [str(c) for c in selected_rows["case_id"].tolist()]
         else:
-            selected_case_id = selected_rows[0]["case_id"]
+            selected_ids = [str(r["case_id"]) for r in selected_rows]
+
+    if selected_ids:
+        selected_case_id = selected_ids[0]
     elif qp_case in case_ids:
         selected_case_id = qp_case
     else:
         selected_case_id = case_ids[0]
+
+    # ─── Bulk operations (P5-3) ──────────────────────────────────────────
+    if len(selected_ids) >= 2:
+        st.markdown(f"#### 🧰 Actions groupées sur **{len(selected_ids)} cases** sélectionnés")
+        bc1, bc2, bc3 = st.columns(3)
+        with bc1:
+            bulk_assignee = st.text_input(
+                "Assigner à",
+                value=actor,
+                key="bulk_assignee",
+                placeholder="email ou identifiant",
+            )
+            if st.button(
+                f"👥 Assigner {len(selected_ids)} cases",
+                key="bulk_assign",
+                use_container_width=True,
+            ):
+                done = 0
+                errors = 0
+                for cid in selected_ids:
+                    try:
+                        service.assign(cid, bulk_assignee, actor=actor)
+                        done += 1
+                    except Exception:
+                        errors += 1
+                st.success(f"Bulk assign : {done} OK, {errors} erreurs")
+                st.rerun()
+        with bc2:
+            bulk_reason = st.text_input(
+                "Motif de clôture commun",
+                key="bulk_close_reason",
+                placeholder="ex. faux positif — qualifié.",
+            )
+            if st.button(
+                f"✅ Clôturer {len(selected_ids)} cases (false positive)",
+                key="bulk_close",
+                use_container_width=True,
+            ):
+                if not bulk_reason.strip():
+                    st.error("Motif obligatoire pour clôturer plusieurs cases.")
+                else:
+                    done = 0
+                    errors = 0
+                    for cid in selected_ids:
+                        try:
+                            service.close(
+                                cid,
+                                CaseStatus.CLOSED_FALSE_POSITIVE,
+                                actor=actor,
+                                reason=bulk_reason.strip(),
+                            )
+                            done += 1
+                        except Exception:
+                            errors += 1
+                    st.success(f"Bulk close : {done} OK, {errors} erreurs")
+                    st.rerun()
+        with bc3:
+            if st.button(
+                f"📥 Exporter {len(selected_ids)} cases (CSV)",
+                key="bulk_export",
+                use_container_width=True,
+            ):
+                subset = df[df["case_id"].isin(selected_ids)]
+                st.download_button(
+                    "⬇️ Télécharger la sélection",
+                    data=subset.to_csv(index=False).encode("utf-8"),
+                    file_name=f"cases_selection_{len(selected_ids)}.csv",
+                    mime="text/csv",
+                    key="bulk_export_dl",
+                )
 
     default_idx = case_ids.index(selected_case_id) if selected_case_id in case_ids else 0
     selected = st.selectbox(

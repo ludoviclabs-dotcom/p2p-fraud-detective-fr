@@ -79,7 +79,9 @@ if "alert_channels" not in st.session_state:
 st.divider()
 st.subheader("📡 Canaux d'alerte")
 
-tab_slack, tab_teams, tab_smtp = st.tabs(["Slack Webhook", "Microsoft Teams", "SMTP (email)"])
+tab_slack, tab_teams, tab_smtp, tab_webhook = st.tabs(
+    ["Slack Webhook", "Microsoft Teams", "SMTP (email)", "🔗 Webhook B2B (CloudEvents)"]
+)
 
 with tab_slack:
     slack_url = st.text_input(
@@ -157,6 +159,74 @@ with tab_smtp:
             use_tls=smtp_tls,
         )
         st.success("✅ Canal SMTP configuré.")
+
+# ─── Webhook B2B sortant (P5-3) ───────────────────────────────────────────────
+with tab_webhook:
+    from p2p_fraud.config import get_settings
+    from p2p_fraud.webhooks.dispatcher import (
+        WebhookDeliveryError,
+        WebhookDispatcher,
+    )
+    from p2p_fraud.webhooks.events import WebhookEventKind, build_test_event
+
+    _settings_wh = get_settings()
+    st.markdown(
+        """
+        **Webhook sortant CloudEvents v1.0 simplifié** — émet automatiquement
+        un POST signé HMAC-SHA256 vers votre SIEM / ERP / SOC à chaque événement
+        `case.created`, `case.assigned`, `case.commented`, `case.evidence_attached`,
+        `case.escalated`, `case.status_changed`, `case.closed`.
+
+        En-tête de signature : `X-P2PFD-Signature: sha256=<hex>`. Le récepteur
+        valide via la fonction `verify_signature()` documentée dans
+        [`src/p2p_fraud/webhooks/dispatcher.py`](https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/src/p2p_fraud/webhooks/dispatcher.py).
+
+        Retry exponentiel via `tenacity` : 3 tentatives, backoff 1s → 2s → 4s,
+        retryable uniquement sur erreurs réseau (timeout, 5xx). Les 4xx
+        signalent une erreur de configuration côté destinataire et ne sont
+        pas re-tentés.
+        """
+    )
+    if _settings_wh.webhook_url:
+        st.success(
+            f"✅ Webhook configuré : `{_settings_wh.webhook_url}` "
+            f"(timeout {_settings_wh.webhook_timeout}s, "
+            f"secret {'défini' if _settings_wh.webhook_secret else 'non défini (signatures désactivées)'})."
+        )
+    else:
+        st.info(
+            "🔬 Webhook désactivé. Pour activer en pilote, définir "
+            "`WEBHOOK_URL=https://siem.votre-domaine.fr/p2pfd` "
+            "et `WEBHOOK_SECRET=...` côté FastAPI."
+        )
+
+    st.markdown("#### 🧪 Tester la configuration")
+    if st.button("Envoyer un événement `webhook.test`", type="primary"):
+        if not _settings_wh.webhook_url:
+            st.warning("Aucun `WEBHOOK_URL` configuré — rien à tester.")
+        else:
+            dispatcher_test = WebhookDispatcher(
+                url=_settings_wh.webhook_url,
+                secret=_settings_wh.webhook_secret,
+                timeout=_settings_wh.webhook_timeout,
+            )
+            try:
+                result = dispatcher_test.dispatch(build_test_event(actor="streamlit-ui"))
+                if result.get("ok"):
+                    st.success(
+                        f"✅ Reçu : HTTP {result['status']} en {result.get('duration_ms', '?')} ms."
+                    )
+                else:
+                    st.error(f"❌ Échec : {result}")
+            except WebhookDeliveryError as exc:
+                st.error(f"❌ Livraison échouée après retries : {exc}")
+
+    st.markdown("#### 📜 8 événements émis automatiquement")
+    st.dataframe(
+        [{"type": ev.value} for ev in WebhookEventKind],
+        hide_index=True,
+        use_container_width=True,
+    )
 
 st.divider()
 st.subheader("📋 Règles d'alerte")

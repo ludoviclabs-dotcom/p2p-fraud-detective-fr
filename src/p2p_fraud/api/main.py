@@ -261,6 +261,31 @@ def health() -> dict[str, str]:
     return {"status": "ok", "version": _VERSION, "at": datetime.now(UTC).isoformat()}
 
 
+@app.post("/webhook/test", tags=["Ops"])
+def webhook_test(_: Annotated[str, Depends(_require_auth)]) -> dict[str, object]:
+    """Envoie un événement factice `webhook.test` vers `Settings.webhook_url`.
+
+    Permet de valider la configuration côté pilote en bout-en-bout
+    (signature HMAC, retry tenacity, format CloudEvents simplifié).
+    Renvoie un objet `{ok, status, duration_ms, event_id, type}`.
+
+    En l'absence de configuration (`webhook_url` vide), renvoie
+    `{ok: false, skipped: true, reason: "disabled"}`.
+    """
+    from p2p_fraud.webhooks.dispatcher import (
+        WebhookDeliveryError,
+        make_dispatcher_from_settings,
+    )
+    from p2p_fraud.webhooks.events import build_test_event
+
+    dispatcher = make_dispatcher_from_settings()
+    evt = build_test_event(actor="api/webhook-test")
+    try:
+        return dispatcher.dispatch(evt)
+    except WebhookDeliveryError as exc:
+        return {"ok": False, "error": str(exc), "event_id": evt.id}
+
+
 @app.post("/detect", response_model=DetectResponse, tags=["Détection"])
 def detect(
     req: DetectRequest,

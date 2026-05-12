@@ -72,6 +72,15 @@ class Settings(BaseSettings):
     slack_webhook_url: str = ""
     teams_webhook_url: str = ""
 
+    # ─── Webhook sortant B2B (P5-3) ──────────────────────────────────────────
+    # Quand `webhook_url` est défini, chaque event `case.*` émis par
+    # `CaseService._record_event` est POSTé en JSON signé HMAC-SHA256
+    # (header `X-P2PFD-Signature: sha256=<hex>`). Retry exponentiel via
+    # tenacity (3 tentatives, 1s → 2s → 4s) sur erreurs réseau uniquement.
+    webhook_url: str = ""
+    webhook_secret: str = ""  # secret HMAC partagé avec le SIEM destinataire
+    webhook_timeout: float = 5.0  # seconds (connect + read combinés)
+
     # ─── Observabilité (P4-6) ────────────────────────────────────────────────
     sentry_dsn: str = ""
 
