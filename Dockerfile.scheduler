@@ -1,0 +1,59 @@
+# P2P Fraud Detective FR — image scheduler dédiée
+# Build : docker build -f Dockerfile.scheduler -t p2pfd-scheduler .
+# Run (single-shot)  : docker run --rm -e SLACK_WEBHOOK_URL=... p2pfd-scheduler --once
+# Run (long-running) : docker run -d -e SLACK_WEBHOOK_URL=... p2pfd-scheduler --daily 06:00
+#
+# Image minimaliste — sans Streamlit ni FastAPI ni weasyprint.
+
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+# Pas de libs lourdes (weasyprint absent) — seulement les wheels Python
+COPY requirements.txt .
+# Sous-ensemble nécessaire au scheduler — exclut streamlit, fastapi, weasyprint
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        "pandas>=2.2" "numpy>=1.26" \
+        "pydantic>=2.7" "pydantic-settings>=2.0" \
+        "python-json-logger>=2.0" \
+        "scikit-learn>=1.5" "benford-py>=0.1.7" "rapidfuzz>=3.9" \
+        "networkx>=3.3" "duckdb>=1.0" \
+        "openpyxl>=3.1" "pyarrow>=16.0" \
+        "requests>=2.32" "requests-cache>=1.2" \
+        "python-dotenv>=1.0" "pyyaml>=6.0" "faker>=26.0" \
+        "joblib>=1.4" "cryptography>=43.0" \
+        "sqlalchemy>=2.0" "alembic>=1.13" \
+        "apscheduler>=3.10" "tenacity>=8.0"
+
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY src/ /app/src/
+COPY data/ /app/data/
+COPY pyproject.toml /app/
+
+RUN pip install --no-cache-dir -e /app
+
+# Utilisateur non-root
+RUN useradd -m -u 1000 scheduler && chown -R scheduler:scheduler /app
+USER scheduler
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TZ=Europe/Paris \
+    LOG_FORMAT=json
+
+# Healthcheck — un --health avant chaque démarrage long-running
+HEALTHCHECK --interval=5m --timeout=10s --start-period=10s --retries=2 \
+    CMD python -m p2p_fraud.scheduler --health || exit 1
+
+# Entrypoint = le module ; les arguments sont passés via CMD (override Docker)
+ENTRYPOINT ["python", "-m", "p2p_fraud.scheduler"]
+
+# Par défaut : single-shot, healthy si la config se charge
+CMD ["--once"]

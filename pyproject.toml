@@ -59,6 +59,7 @@ dependencies = [
     "alembic>=1.13",
     "python-jose[cryptography]>=3.3",
     "itsdangerous>=2.2",
+    "tenacity>=8.0",
 ]
 
 [project.optional-dependencies]
