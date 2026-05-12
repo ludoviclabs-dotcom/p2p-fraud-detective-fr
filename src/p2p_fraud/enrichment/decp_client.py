@@ -77,7 +77,9 @@ class DECPClient:
 
     demo_mode: bool = True
     cache_path: Path | None = None
-    live_client: object | None = None  # DECPLiveClient | None ; typed `object` pour éviter cycle d'import
+    live_client: object | None = (
+        None  # DECPLiveClient | None ; typed `object` pour éviter cycle d'import
+    )
     _contracts: list[DECPContract] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:

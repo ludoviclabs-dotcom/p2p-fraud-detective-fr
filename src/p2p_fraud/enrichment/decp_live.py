@@ -91,7 +91,7 @@ class DECPLiveClient:
             return []
         params = {
             "q": name,
-            "where": 'titulaire_id IS NOT NULL',
+            "where": "titulaire_id IS NOT NULL",
             "limit": str(min(limit, 100)),
             "order_by": "datenotification DESC",
         }
@@ -115,11 +115,15 @@ def _to_contract(record: dict[str, Any]) -> DECPContract:
         montant = 0.0
     return DECPContract(
         siret_titulaire=siret,
-        nom_titulaire=str(record.get("titulaire_denomination") or record.get("titulairedenomination") or ""),
+        nom_titulaire=str(
+            record.get("titulaire_denomination") or record.get("titulairedenomination") or ""
+        ),
         siren_titulaire=siren,
         acheteur=str(record.get("acheteur_nom") or record.get("acheteurnom") or ""),
         montant_eur=montant,
-        date_notification=str(record.get("datenotification") or record.get("date_notification") or ""),
+        date_notification=str(
+            record.get("datenotification") or record.get("date_notification") or ""
+        ),
         objet=str(record.get("objet") or ""),
         nature=str(record.get("nature") or "Marché"),
         code_postal=str(record.get("lieuexecution_code") or record.get("code_postal") or "")[:5],
