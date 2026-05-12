@@ -142,6 +142,13 @@ def _daily_series(events: list, days: int = 30) -> pd.Series:
     return series
 
 
+def _hex_to_rgba(hex_color: str, alpha: float = 0.2) -> str:
+    """Convertit `#RRGGBB` en `rgba(r, g, b, a)` (Plotly n'accepte pas `#RRGGBBAA`)."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
 def _sparkline(series: pd.Series, color: str) -> go.Figure:
     fig = go.Figure(
         go.Scatter(
@@ -150,7 +157,7 @@ def _sparkline(series: pd.Series, color: str) -> go.Figure:
             mode="lines",
             line={"color": color, "width": 2},
             fill="tozeroy",
-            fillcolor=color + "33",
+            fillcolor=_hex_to_rgba(color, 0.2),
             hovertemplate="%{x|%d %b}<br>%{y:d}<extra></extra>",
         )
     )
