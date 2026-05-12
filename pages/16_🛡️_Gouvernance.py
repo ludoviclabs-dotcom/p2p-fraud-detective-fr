@@ -381,3 +381,101 @@ if "df_invoices" in st.session_state:
         )
 else:
     st.info("Chargez un dataset via **📤 Import des données** pour générer l'export CSRD.")
+
+
+# ── ⚖️ Pondérations (live editor) ─────────────────────────────────────────────
+st.divider()
+st.subheader("⚖️ Pondérations du scoring (édition live)")
+
+st.caption(
+    "Éditeur YAML pour `scoring/weights.yaml`. La validation est appliquée à la "
+    "sauvegarde (clés autorisées, types, sévérités complètes). Chaque modification "
+    "est journalisée dans l'audit log avec l'auteur et le diff."
+)
+
+from p2p_fraud.scoring.risk_engine import DEFAULT_WEIGHTS_PATH  # noqa: E402
+from p2p_fraud.scoring.weights_editor import validate_weights_yaml, write_weights  # noqa: E402
+
+try:
+    _current_weights_text = DEFAULT_WEIGHTS_PATH.read_text(encoding="utf-8")
+except (OSError, FileNotFoundError):
+    _current_weights_text = "# Fichier introuvable — état initial chargé depuis les défauts.\n"
+
+_edited_weights = st.text_area(
+    "Édition `weights.yaml`",
+    value=st.session_state.get("weights_yaml_draft", _current_weights_text),
+    height=380,
+    key="weights_editor",
+    help="Format YAML — détecteurs autorisés : duplicates, thresholds, benford, sirene, "
+    "isolation_forest, graph, master_data, sanctions.",
+)
+
+c_v, c_s = st.columns([1, 1])
+if c_v.button("✅ Valider sans enregistrer"):
+    result = validate_weights_yaml(_edited_weights)
+    (st.success if result.ok else st.error)(result.message)
+    st.session_state["weights_yaml_draft"] = _edited_weights
+
+if c_s.button("💾 Enregistrer + journaliser", type="primary"):
+    result = write_weights(DEFAULT_WEIGHTS_PATH, _edited_weights)
+    if not result.ok:
+        st.error(f"Sauvegarde refusée — {result.message}")
+    else:
+        audit.append(
+            actor=st.session_state.get("current_user", "anonymous"),
+            kind="weights.updated",
+            payload={
+                "detector_weights": result.parsed.get("detector_weights"),
+                "severity_multiplier": result.parsed.get("severity_multiplier"),
+                "path": str(DEFAULT_WEIGHTS_PATH),
+            },
+        )
+        st.cache_data.clear()
+        st.success(f"✅ Pondérations enregistrées dans `{DEFAULT_WEIGHTS_PATH.name}`.")
+        st.session_state.pop("weights_yaml_draft", None)
+
+
+# ── 🗑️ Droit à l'effacement RGPD art. 17 (purge persistante) ──────────────────
+st.divider()
+st.subheader("🗑️ Droit à l'effacement RGPD (art. 17 — purge persistante)")
+
+st.warning(
+    "Cette action **supprime définitivement** tous les cases créés par un utilisateur "
+    "dans la base de cases ainsi que leurs événements. Distinct du bouton « Purger la "
+    "session » de la sidebar (qui ne vide que la session Streamlit en mémoire)."
+)
+
+from pages._helpers import get_case_service as _get_case_service_purge  # noqa: E402
+
+_purge_service = _get_case_service_purge()
+
+_all_cases = _purge_service.list_cases()
+_all_actors = sorted({c.created_by for c in _all_cases if c.created_by})
+
+c_user, c_confirm = st.columns([2, 1])
+_target_user = c_user.selectbox(
+    "Utilisateur à purger (created_by)",
+    options=["(choisir)", *_all_actors] if _all_actors else ["(aucun utilisateur)"],
+    key="rgpd_purge_user",
+)
+_confirm_text = c_confirm.text_input(
+    "Tapez `PURGER` pour confirmer",
+    key="rgpd_purge_confirm",
+    placeholder="PURGER",
+)
+
+if st.button("🗑️ Purger les cases de cet utilisateur", type="primary", key="rgpd_purge_btn"):
+    if _target_user in ("(choisir)", "(aucun utilisateur)"):
+        st.error("Sélectionnez un utilisateur valide.")
+    elif _confirm_text != "PURGER":
+        st.error("Confirmation manquante — tapez exactement `PURGER`.")
+    else:
+        n_deleted = _purge_service.purge_user_data(
+            _target_user,
+            actor=st.session_state.get("current_user", "anonymous"),
+        )
+        st.success(
+            f"✅ {n_deleted} case(s) de `{_target_user}` supprimé(s). "
+            "Action journalisée dans l'audit log."
+        )
+        st.session_state.pop("rgpd_purge_confirm", None)
