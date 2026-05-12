@@ -44,16 +44,64 @@ log = logging.getLogger(__name__)
 
 _CASE_SERVICE: CaseService | None = None
 
+
+def _init_sentry() -> None:
+    """Active Sentry si `SENTRY_DSN` est défini. Idempotent et silencieux sinon."""
+    dsn = get_settings().sentry_dsn
+    if not dsn:
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
+    except ImportError:
+        log.warning("sentry-sdk non installé — observability désactivée")
+        return
+    sentry_sdk.init(
+        dsn=dsn,
+        traces_sample_rate=0.1,
+        profiles_sample_rate=0.0,
+        send_default_pii=False,  # pas de PII (RGPD)
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+        ],
+        release=f"p2p-fraud-detective-fr@{_VERSION}",
+    )
+    log.info("Sentry initialisé")
+
+
+_VERSION = "0.4.0"
+
+_init_sentry()
+
 app = FastAPI(
     title="P2P Fraud Detective FR — API",
     description=(
         "API REST pour la détection de fraude dans les cycles Procure-to-Pay. "
         "Conforme ISA 240, Sapin 2, LCB-FT, DORA art. 28."
     ),
-    version="0.3.0",
+    version=_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+
+def _init_prometheus(application: FastAPI) -> None:
+    """Expose `/metrics` (format Prometheus) si la lib est installée."""
+    try:
+        from prometheus_fastapi_instrumentator import Instrumentator
+    except ImportError:
+        log.info("prometheus_fastapi_instrumentator absent — /metrics indisponible")
+        return
+    Instrumentator(
+        should_group_status_codes=True,
+        excluded_handlers=["/health", "/metrics"],
+    ).instrument(application).expose(application, endpoint="/metrics", include_in_schema=False)
+    log.info("Prometheus instrumentator monté sur /metrics")
+
+
+_init_prometheus(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -210,7 +258,7 @@ def _run_detectors(df: pd.DataFrame, detectors: list[str]) -> list[Finding]:
 @app.get("/health", tags=["Ops"])
 def health() -> dict[str, str]:
     """Liveness probe — retourne 200 si l'API est opérationnelle."""
-    return {"status": "ok", "version": "0.3.0", "at": datetime.now(UTC).isoformat()}
+    return {"status": "ok", "version": _VERSION, "at": datetime.now(UTC).isoformat()}
 
 
 @app.post("/detect", response_model=DetectResponse, tags=["Détection"])

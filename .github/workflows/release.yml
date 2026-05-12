@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - { dockerfile: "Dockerfile", suffix: "api" }
+          - { dockerfile: "Dockerfile.streamlit", suffix: "streamlit" }
+          - { dockerfile: "Dockerfile.scheduler", suffix: "scheduler" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push ${{ matrix.image.suffix }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.image.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-${{ matrix.image.suffix }}:${{ steps.version.outputs.tag }}
+            ghcr.io/${{ github.repository }}-${{ matrix.image.suffix }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.tag }}
+            org.opencontainers.image.title=p2p-fraud-detective-fr-${{ matrix.image.suffix }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          TAG=${GITHUB_REF#refs/tags/v}
+          # Extrait la section [TAG] du CHANGELOG entre cette version et la suivante
+          awk "/^## \\[${TAG}\\]/{flag=1; next} /^## \\[/{flag=0} flag" CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Section [${TAG}] introuvable dans CHANGELOG.md — fallback générique"
+            echo "Release ${TAG}" > release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') }}

@@ -6,6 +6,91 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-31
+
+Phase 4 — Hardening foundation : 6 PRs livrées (P4-1 → P4-6) pour passer de
+démonstrateur à pilote ETI déployable. Settings centralisés, SQLAlchemy multi-
+backend, OIDC end-to-end, scheduler externalisé, observabilité Sentry +
+Prometheus, release workflow GHCR.
+
+### Migration guide v0.3 → v0.4
+
+**Variables d'environnement** (nouvelles, optionnelles sauf mention) :
+- `DATABASE_URL` — bascule en PostgreSQL en production (SQLite reste défaut).
+- `OIDC_SESSION_SECRET` — **obligatoire si OIDC est actif** (≥ 32 octets aléatoires).
+- `OIDC_POST_LOGIN_URL` — URL absolue de redirection post-login (défaut `/`).
+- `SENTRY_DSN` — observabilité erreurs (opt-in).
+- `LOG_FORMAT=json` recommandé en prod (Cloud Logging / Loki compatible).
+
+**Schéma DB** : `alembic upgrade head` recommandé avant promotion v0.4 (aucune
+nouvelle migration mais autogenerate est désormais bindé sur `Base.metadata`).
+
+**Logs** : sortie sur `stderr` (12-factor canonique) au lieu de stdout. Ajuster
+les pipelines de collecte si nécessaire.
+
+**API FastAPI** : nouveaux endpoints `/oidc/login`, `/oidc/callback`,
+`/oidc/logout`, `/oidc/me`, `/metrics`. `/health` retourne désormais `version=0.4.0`.
+
+### Ajouté — Phase 4 / PR P4-6 (Observabilité + release)
+- `sentry-sdk[fastapi]>=2.0` activé conditionnellement via `SENTRY_DSN`
+  (`traces_sample_rate=0.1`, `send_default_pii=False`, release tag automatique).
+- `prometheus-fastapi-instrumentator>=7.0` expose `/metrics` (latency p50/p95/p99,
+  request rate, status codes par endpoint). Exclu de l'OpenAPI public.
+- `.github/workflows/release.yml` — déclenché sur tag `v*.*.*` :
+  - Build matrix des 3 images (api / streamlit / scheduler) avec OCI labels.
+  - Push sur GHCR (`ghcr.io/<owner>/<repo>-{api,streamlit,scheduler}:<tag>`).
+  - GitHub Release auto avec extraction de la section CHANGELOG.
+- `tests/load/api_smoke.js` — k6 sur `/health`, `/detect`, `/score` ; SLO p95 < 500ms,
+  error rate < 1% @ 50 VUs / 60s.
+- `tests/load/k6.dockerfile` — image k6 reproductible (`grafana/k6:0.55.0`).
+- `docs/runbook.md` — incidents communs (API 5xx, OIDC outage, scheduler stuck,
+  alertes non livrées, latence dégradée, JWKS rotation).
+- `docs/oidc-setup.md` — guide pas-à-pas Entra ID + Auth0 + Keycloak.
+
+### Modifié — Phase 4 / PR P4-6
+- `__init__.py`, `pyproject.toml`, `api/main.py` : bump 0.3.0 → 0.4.0.
+
+### Ajouté — Phase 4 / PR P4-5 (Cockpit + governance)
+- Cockpit : 4 sparklines tendance 30 jours (cases créés/clôturés/critiques,
+  activité audit trail), Plotly minimaliste fill="tozeroy".
+- Page Gouvernance — section "⚖️ Pondérations" : éditeur YAML inline pour
+  `scoring/weights.yaml` avec validation atomique + audit log `weights.updated`.
+- Page Gouvernance — section "🗑️ RGPD art. 17" : purge persistante par
+  `created_by` avec double confirmation + audit log `rgpd.erasure`.
+- `scoring/weights_editor.py` — `validate_weights_yaml`, `write_weights`
+  (sans dep Streamlit, testable).
+- `CaseService.purge_user_data(target_user, *, actor) -> int`.
+- 18 tests (13 weights validator + 5 RGPD purge).
+
+### Ajouté — Phase 4 / PR P4-4 (Scheduler externalisé)
+- `scheduler/__main__.py` — CLI 3 modes : `--once`, `--daily HH:MM`, `--health`.
+  Provider de factures pluggable (CSV/Parquet/Excel via `--invoices`).
+- `scheduler/runner.py` — `run_detection_once()` réentrante + `DetectionRunResult`.
+- Retry tenacity sur les canaux (3 essais, 1s→2s→4s, erreurs réseau uniquement).
+- `Dockerfile.scheduler` — image ~120 MB sans Streamlit/FastAPI/weasyprint.
+- `docs/deployment-cloud-run.md` — runbook pilote ETI < 1h.
+- `docker-compose.yml` : service `scheduler` ajouté.
+- 15 tests CLI/runner.
+
+### Modifié — Phase 4 / PR P4-4
+- `logging_setup.py` : handlers vers `stderr` (12-factor).
+- Fix import cassé pré-existant `detect_threshold_splits` → `detect_under_threshold`.
+
+### Ajouté — Phase 4 / PR P4-3 (OIDC end-to-end)
+- `security/jwt_validator.py` — `JWKSCache` TTL 1h + `validate_id_token` via
+  python-jose (signature RS256, iss/aud/exp/nonce, leeway NTP).
+- `security/session_store.py` — sessions HMAC-SHA256 itsdangerous, cookies
+  httponly/samesite=lax/secure (compatible scale-out, pas de state serveur).
+- `security/oidc_client.py` — `DiscoveryCache` + `exchange_code_for_tokens()`.
+- `api/oidc_router.py` — 4 endpoints (`/oidc/login`, `/callback`, `/logout`, `/me`).
+- 9 tests (login redirect, callback succès, state mismatch CSRF, nonce replay,
+  signature invalide, /me 401/200, logout, 503).
+
+### Modifié — Phase 4 / PR P4-3
+- `streamlit_app.py` : bouton sidebar **🔑 Se connecter (OIDC)**.
+- `pages/19_Collaboration.py` : interroge `/oidc/me`, affiche claims + rôle RBAC.
+- `api/main.py` : monte `oidc_router`. Fix imports cassés pré-existants.
+
 ### Ajouté — Phase 4 / PR P4-1 (Hardening foundation)
 - `p2p_fraud.config.Settings` (pydantic-settings) — singleton de configuration
   applicative qui centralise les 13 variables d'environnement précédemment
