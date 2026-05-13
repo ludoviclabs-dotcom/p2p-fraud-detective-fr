@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* Design tokens P2P Fraud Detective FR — repris de Streamlit v0.5
+   (palette navy/charcoal/or institutionnelle). */
+@theme {
+  --color-navy-900: #0f1b33;
+  --color-navy-700: #1f3a6e;
+  --color-navy-500: #3e7cb1;
+  --color-charcoal: #1a1f2c;
+  --color-slate-fr: #5a6478;
+  --color-slate-200-fr: #e1e5ee;
+  --color-bg-muted: #f4f6fa;
+  --color-gold: #e5a93a;
+  --color-alert: #a23e48;
+  --color-ok: #3e7c5a;
+  --color-warn: #c97b1f;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: var(--color-charcoal);
+    --primary: var(--color-navy-700);
+    --muted: var(--color-bg-muted);
+    --border: var(--color-slate-200-fr);
+  }
+
+  .dark {
+    --background: 222 18% 10%;
+    --foreground: 0 0% 95%;
+    --primary: var(--color-gold);
+    --muted: 222 16% 18%;
+    --border: 222 18% 24%;
+  }
+
+  body {
+    @apply bg-white text-[color:var(--color-charcoal)] antialiased dark:bg-[#0f1b33];
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Ribbon DÉMONSTRATEUR — repris de Streamlit v0.5 */
+.ribbon-demo {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  font-weight: 600;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom-left-radius: 4px;
+  letter-spacing: 0.04em;
+}

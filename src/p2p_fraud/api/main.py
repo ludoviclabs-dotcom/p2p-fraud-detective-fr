@@ -112,6 +112,19 @@ app.add_middleware(
 
 app.include_router(oidc_router)
 
+# Router v1 (Next.js Migration v2 Phase 0) — endpoints typés Pydantic
+from p2p_fraud.api.v1 import (  # noqa: E402
+    _get_service as _v1_get_service_stub,
+)
+from p2p_fraud.api.v1 import (  # noqa: E402
+    _require_auth_v1,
+)
+from p2p_fraud.api.v1 import (  # noqa: E402
+    router as v1_router,
+)
+
+app.include_router(v1_router)
+
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -139,6 +152,13 @@ def _case_service() -> CaseService:
     if _CASE_SERVICE is None:
         _CASE_SERVICE = CaseService(db_path=get_settings().fraud_cases_db)
     return _CASE_SERVICE
+
+
+# ─── Injection des dépendances v1 ────────────────────────────────────────────
+# Override les stubs `_require_auth_v1` et `_get_service` du router v1 avec
+# les vraies implémentations du main app (auth bearer + CaseService).
+app.dependency_overrides[_require_auth_v1] = _require_auth
+app.dependency_overrides[_v1_get_service_stub] = _case_service
 
 
 # ─── Request / Response models ────────────────────────────────────────────────
