@@ -265,6 +265,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rings Graph
+         * @description Charge un scénario synthétique et retourne le graphe vendor↔IBAN.
+         *
+         *     Phase 3b — alimente la visualisation sigma.js côté Next.js sans nécessiter
+         *     qu'un dataset soit uploadé en session. Réutilise les scénarios P5-2 +
+         *     `detect_fraud_rings` (NetworkX).
+         */
+        get: operations["rings_graph_api_v1_rings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -742,6 +766,22 @@ export interface components {
             /** Run At */
             run_at: string;
         };
+        /** GraphEdge */
+        GraphEdge: {
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+        };
+        /** GraphNode */
+        GraphNode: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -806,6 +846,21 @@ export interface components {
             }[];
             /** Api Key */
             api_key?: string | null;
+        };
+        /** RingsGraph */
+        RingsGraph: {
+            /** Nodes */
+            nodes: components["schemas"]["GraphNode"][];
+            /** Edges */
+            edges: components["schemas"]["GraphEdge"][];
+            /** N Shared Iban Rings */
+            n_shared_iban_rings: number;
+            /** N Vendor Clusters */
+            n_vendor_clusters: number;
+            /** Largest Cluster Size */
+            largest_cluster_size: number;
+            /** Scenario */
+            scenario: string;
         };
         /** ScoreRequest */
         ScoreRequest: {
@@ -1329,6 +1384,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rings_graph_api_v1_rings_get: {
+        parameters: {
+            query?: {
+                scenario?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RingsGraph"];
                 };
             };
             /** @description Validation Error */

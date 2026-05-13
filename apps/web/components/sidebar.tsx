@@ -139,7 +139,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-[#1f3a6e] px-4 py-3 text-[0.7rem] text-[#9aa3b2]">
-        v0.5.0 · Migration v2 Phase 3a
+        v0.5.0 · Migration v2 Phase 3b
       </div>
     </aside>
   );
