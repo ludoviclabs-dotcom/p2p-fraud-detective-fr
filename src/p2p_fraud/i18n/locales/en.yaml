@@ -43,6 +43,7 @@ nav:
   page_vendor_360: Vendor 360°
   page_synthese: Summary export
   page_audit_trail: Audit trail
+  page_tour: Guided tour
   page_methodologie: Methodology
   page_gouvernance: Governance
   # Kickers (short description under title, P5-4.1)
@@ -131,6 +132,84 @@ methodo:
   section_live_demo: 🟢 Live mode vs 🔬 demo mode
   live_active: Live mode active
   demo_active: Demo mode active
+
+tour:
+  title: Guided tour — welcome
+  surtitle: Steering
+  kicker: Guided discovery — 5 steps in under 3 minutes
+  progress: Step {current} of {total}
+  btn_next: Next
+  btn_prev: Previous
+  btn_skip: Skip tour
+  btn_restart: Restart
+  btn_done: Finish
+  step1_title: 🎯 What is P2P Fraud Detective FR?
+  step1_body: |
+    A **Procure-to-Pay** audit demonstrator focused on fraud detection
+    (BEC, structuring, duplicates, sanctions, fraud rings). Aligned with
+    AML/CFT methodologies and P2P audit controls **ISA 240**, **Sapin 2**,
+    **LCB-FT**, **DORA**, **AMLD6**.
+
+    Designed for mid-cap companies, audit firms, public functions, and
+    oversight bodies (French DGFiP, Tracfin, IGF, Court of Auditors, CRC).
+
+    **100% synthetic data** (Faker `fr_FR`) or public open sources (Sirene,
+    DECP, OpenSanctions). GDPR-compliant by design.
+  step2_title: 🎮 The commercial Sandbox
+  step2_body: |
+    The Sandbox provides **5 pre-loaded clickable scenarios**:
+    - 🔴 BEC — vendor IBAN swap
+    - 🟠 Structuring under COSI thresholds
+    - 🟡 Vendor duplicates (fuzzy + shared IBAN)
+    - 🔴 Fraud ring (5 vendors, 3 shared IBANs)
+    - 🔴 EU sanctions — vendor listed
+
+    Each scenario generates ~2,000 invoices and 150 vendors deterministically
+    in under 2 seconds. No file upload needed — you can explore the platform
+    in 60 seconds.
+  step3_title: 🎯 The Cockpit — financial exposure steering
+  step3_body: |
+    The Cockpit shows **4 main KPIs** (total exposure, critical exposure,
+    open cases, SLA overdue) with **30-day trend sparklines**.
+
+    A **global search** in an expander instantly retrieves a vendor, case, or
+    invoice — with deep-links to the relevant page.
+
+    The **Top 10 vendors by € exposure** sorts by financial risk, not raw
+    score — the metric a CFO actually cares about.
+  step4_title: 🪪 Vendor 360° + LLM narrative
+  step4_body: |
+    For each suspect vendor, the 360° card aggregates **profile + payments +
+    master data history + findings** with a **30-day trend sparkline**.
+
+    If you have an Anthropic API key (`ANTHROPIC_API_KEY`), the **"📝 Generate
+    audit narrative"** button produces a streaming audit paragraph via
+    **Claude Sonnet 4.6**. The narrative follows ISA 240 + AMLD6 doctrine and
+    can be copy-pasted directly into the audit file.
+  step5_title: 📜 Cryptographic audit trail
+  step5_body: |
+    All mutations are logged in a **SHA-256 hash-chained audit log**, signed
+    by default in **Ed25519** when `P2PFD_ED25519_PRIVATE_KEY` is set.
+
+    The public key is exposed by `GET /security/public-key` — any third party
+    (CAC, ACPR, Court of Auditors) can verify each entry independently
+    without backend access.
+
+    On output, you can generate an **investigation PDF dossier** (weasyprint)
+    or an **Excel/Parquet summary** for legal archival (Sapin 2 = 10 years).
+  cta_done_title: 🎉 Tour complete!
+  cta_done_body: |
+    You now know the 5 pillars of the platform. Some paths to explore further:
+  cta_explore_sandbox: Load a scenario via the Sandbox
+  cta_open_cockpit: Open the Cockpit
+  cta_open_governance: View Governance (RBAC + GDPR + AI Act)
+  cta_view_repo: View source code on GitHub
+
+llm:
+  no_key: "No Anthropic key configured. Set `ANTHROPIC_API_KEY` to enable generation."
+  generating: Generating via Claude Sonnet…
+  error_generic: Claude call failed — check API key and connectivity.
+  tokens_summary: "Tokens used: input {input}, output {output}, cached {cached}."
 
 search:
   title: Global search

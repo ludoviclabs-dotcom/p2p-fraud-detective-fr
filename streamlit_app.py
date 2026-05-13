@@ -40,6 +40,11 @@ pages = {
             default=True,
         ),
         st.Page(
+            "pages/00_🎓_Tour_guidé.py",
+            title="Tour guidé",
+            icon=":material/school:",
+        ),
+        st.Page(
             "pages/20_🎮_Sandbox.py",
             title="Sandbox commerciale",
             icon=":material/play_circle:",
