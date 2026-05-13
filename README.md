@@ -34,9 +34,25 @@
 
 ## Démo en ligne
 
-🚀 **[Lien Streamlit Cloud — à venir]**
+🚀 **Streamlit Cloud** (legacy, v0.5) : [https://p2p-fraud-detective-fr-3tyfcy7dbwiyaaqcrhk5x7.streamlit.app/](https://p2p-fraud-detective-fr-3tyfcy7dbwiyaaqcrhk5x7.streamlit.app/)
+
+🚀 **Next.js v2** (Migration livrée mai 2026, 26 routes) : à déployer par l'utilisateur sur Vercel — voir [`docs/migration-v2-recap.md`](docs/migration-v2-recap.md)
 
 📽️ **[Vidéo Loom 5 min — à venir]** ([script](docs/demo-script.md))
+
+### Architecture monorepo (depuis v0.6.0)
+
+```
+p2p-fraud-detective-fr/
+├── streamlit_app.py          # Frontend legacy v0.5 (Streamlit Cloud)
+├── pages/                    # 21 pages Streamlit
+├── src/p2p_fraud/            # Backend Python (FastAPI + détecteurs)
+├── apps/web/                 # Frontend v2 Next.js 15 (26 routes)
+├── packages/shared-types/    # Types TypeScript auto-générés depuis OpenAPI
+└── docs/                     # Méthodologie + conformité + migration v2
+```
+
+Les deux frontends (Streamlit + Next.js) partagent le **même backend FastAPI** — aucune duplication de logique métier.
 
 ## Performance mesurée (ground truth synthétique 10k factures)
 

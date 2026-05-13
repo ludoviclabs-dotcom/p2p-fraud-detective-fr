@@ -6,6 +6,83 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-13
+
+Migration v2 — frontend Next.js 15 livré en 8 phases sur une session de
+travail. Le code Streamlit (legacy v0.5.0) reste intact et fonctionnel ;
+le nouveau frontend Next.js sur Vercel + FastAPI étendu sur HF Spaces
+constitue la cible v2 sans dette de migration.
+
+### Added
+
+- **Monorepo pnpm workspace** : `apps/web/` (Next.js 15) + `packages/shared-types/` (TS depuis OpenAPI) + backend Python inchangé
+- **Frontend Next.js 15** App Router + Tailwind v4 + React 19 + Turbopack — **26 routes** :
+  - Pilotage : `/`, `/dashboard`, `/tour` (5 étapes), `/sandbox` (5 scénarios), `/cases` (bulk ops), `/alerts` (polling 5s), `/collab`
+  - Données : `/upload` (drag-drop streaming), `/master-history` (timeline), `/sirene`
+  - Contrôles : `/benford`, `/duplicates`, `/structuring`, `/sanctions`, `/decp-rbe`
+  - ML : `/anomalies` (Recharts scatter), `/rings` (sigma.js WebGL), `/score` (waterfall), `/findings`
+  - Investigation : `/vendors`, `/vendors/[id]` (sparkline + LLM streaming), `/exports` (PDF + CSV), `/audit` (Ed25519 verify)
+  - Gouvernance : `/methodology`, `/governance`
+- **i18n FR/EN** : `LocaleProvider` + sélecteur 🇫🇷/🇬🇧 sidebar + persistance localStorage
+- **15 nouveaux endpoints API v1** typés Pydantic (`/api/v1/*`) :
+  - Cockpit : `/cockpit/kpis`, `/cockpit/top-vendors`
+  - Findings/Vendors : `/findings`, `/vendors/{id}`, `/vendors/{id}/timeline`
+  - Cases : `/cases`, `/cases/{id}/comment`, `/cases/bulk/assign`, `/cases/bulk/close`
+  - Audit : `/audit`, `/audit/verify`
+  - Exports : `/exports/dossier.pdf` (weasyprint streaming)
+  - LLM : `/llm/narrative` (SSE streaming Claude)
+  - Graph : `/rings` (NetworkX → JSON nodes/edges)
+  - Sandbox : `/scenarios` (5 scénarios métadonnées)
+- **Composants UI** : `<Button>` (5 variants × 3 sizes via cva), `<Card>`, `<Badge>` + `<SeverityBadge>`, `<Input>`, `<ControlPage>` (réutilisable pour 5 contrôles statistiques)
+- **OIDC proxy** Next.js `/api/auth/[...slug]` → FastAPI `/oidc/*`
+- **Multipart streaming proxy** `/api/uploads` (Route Handler `runtime: "nodejs"`, body streamé via `duplex: "half"`)
+- **TypeScript types auto-générés** depuis OpenAPI (1900+ lignes) — garde-fou contractuel bout-en-bout
+- **Visualisations** : Recharts (sparklines, scatter, waterfall) + sigma.js + graphology + ForceAtlas2 (anneaux WebGL) + composants SVG custom
+- **LLM streaming** : SSE bout-en-bout `POST /api/v1/llm/narrative` → React state → UI live (cursor pulsant)
+- 8 docs/migration-v2-phase-{0-8}.md détaillant chaque phase
+
+### Changed
+
+- README et docs/ enrichis pour la coexistence Streamlit (legacy) + Next.js (v2)
+- Backend FastAPI : versions des SDKs ajustées, OpenAPI exporté à 27 endpoints
+
+### Backward compatibility
+
+- Streamlit Cloud (`streamlit_app.py` + `pages/*.py`) **inchangé et toujours fonctionnel**.
+- 274 → 370 tests Python verts (+96 sur Phase 5 + nouveaux endpoints v1).
+- Tous les endpoints API existants (`/detect`, `/score`, `/cases`, `/oidc/*`) conservés sans rupture.
+
+### Migration v0.5 → v0.6
+
+```bash
+# 1. Pas de breaking change sur le backend Python — pas d'action requise
+pip install -e .
+
+# 2. Pour utiliser le nouveau frontend Next.js (optionnel)
+pnpm install
+cd apps/web
+cp .env.example .env.local
+# Définir NEXT_PUBLIC_API_URL = URL FastAPI
+pnpm dev
+
+# 3. Déploiement production
+# - Backend : Hugging Face Spaces (Docker, gratuit, 16 GB RAM)
+# - Frontend : Vercel (root: apps/web/, env: NEXT_PUBLIC_API_URL)
+# - DB : Neon free (Postgres 0.5 GB scale-to-zero)
+```
+
+### État cible (production pilote ETI)
+
+```
+Vercel (Next.js v2) → REST → HF Spaces (FastAPI Python)
+                              → Neon (PostgreSQL)
+                              → OpenSanctions Yente / DECP / Pappers
+Streamlit Cloud (legacy v0.5) reste en service sur sous-domaine
+                                 distinct jusqu'à confirmation pilote
+```
+
+
+
 ## [0.5.0] - 2026-10-31
 
 Phase 5 — Commercialisation B2B : 5 PRs livrées (P5-1 → P5-5). Sources live
