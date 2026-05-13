@@ -11,14 +11,17 @@ import streamlit as st
 from p2p_fraud.cases.mentions import extract_mentions
 from p2p_fraud.cases.sla import SLAConfig
 from p2p_fraud.config import get_settings
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.security.oidc import OIDCConfig
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
+init_locale_from_session()
+
 init_page(
-    title="Collaboration multi-user",
-    surtitle="Pilotage",
-    kicker="Multi-user · @mentions · SLA configurable · OIDC (Microsoft Entra ID)",
+    title=_("nav.page_collab"),
+    surtitle=_("nav.surtitle_pilotage"),
+    kicker=_("nav.kicker_collab"),
 )
 st.caption(
     "Configuration de l'équipe d'auditeurs, gestion des @mentions dans les commentaires, "

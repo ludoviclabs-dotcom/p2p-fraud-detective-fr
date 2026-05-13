@@ -7,12 +7,15 @@ import streamlit as st
 
 from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
 from p2p_fraud.enrichment.sanctions_client import DEFAULT_SNAPSHOT, SanctionsClient
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Sanctions & PEP",
-    surtitle="Contrôles statistiques",
-    kicker=("OFAC, Trésor FR, UE consolidée"),
+    title=_("nav.page_sanctions"),
+    surtitle=_("nav.surtitle_controles"),
+    kicker=_("nav.kicker_sanctions"),
 )
 st.caption(
     "Cross-check fournisseurs vs OFAC SDN, listes consolidées UE, Trésor FR et "

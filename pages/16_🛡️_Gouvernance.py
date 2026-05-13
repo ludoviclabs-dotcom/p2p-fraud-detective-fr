@@ -16,12 +16,15 @@ import streamlit as st
 
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.service import CaseService
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Gouvernance",
-    surtitle="Gouvernance & méthode",
-    kicker=("AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD"),
+    title=_("nav.page_gouvernance"),
+    surtitle=_("nav.surtitle_gouvernance"),
+    kicker=_("nav.kicker_gouvernance"),
 )
 st.caption(
     "Registre AI Act (UE 2024/1689), DPIA (CNIL art. 35), registre de traitements "

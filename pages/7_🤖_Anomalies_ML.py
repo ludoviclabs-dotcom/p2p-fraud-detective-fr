@@ -7,12 +7,15 @@ import plotly.express as px
 import streamlit as st
 
 from p2p_fraud.detectors.isolation_forest import detect_anomalies
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Anomalies (ML)",
-    surtitle="Détection ML",
-    kicker=("Isolation Forest + perturbation locale"),
+    title=_("nav.page_anomalies_ml"),
+    surtitle=_("nav.surtitle_ml"),
+    kicker=_("nav.kicker_anomalies_ml"),
 )
 st.caption(
     "Pipeline scikit-learn (StandardScaler → IsolationForest) sur features "

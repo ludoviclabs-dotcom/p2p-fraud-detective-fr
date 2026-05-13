@@ -10,13 +10,16 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
+init_locale_from_session()
+
 init_page(
-    title="Piste d'audit",
-    surtitle="Investigation",
-    kicker=("Journal immutable hash-chaîné SHA-256"),
+    title=_("nav.page_audit_trail"),
+    surtitle=_("nav.surtitle_investigation"),
+    kicker=_("nav.kicker_audit_trail"),
 )
 st.caption(
     "Journal immutable chaîné par hash SHA-256. Toute altération est détectable. "

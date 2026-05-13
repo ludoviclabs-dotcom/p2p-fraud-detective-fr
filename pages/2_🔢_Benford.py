@@ -7,12 +7,15 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from p2p_fraud.detectors.benford import detect_outlier_invoices, run_benford_tests
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Loi de Benford",
-    surtitle="Contrôles statistiques",
-    kicker=("Scoping orienté risque (Newcomb-Benford F1D/F2D/LD)"),
+    title=_("nav.page_benford"),
+    surtitle=_("nav.surtitle_controles"),
+    kicker=_("nav.kicker_benford"),
 )
 st.caption(
     "Tests F1D (1er chiffre), F2D (2 premiers chiffres) et LD (dernier chiffre) — chi² + MAD (Nigrini)."

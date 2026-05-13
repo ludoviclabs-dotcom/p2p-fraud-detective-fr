@@ -14,14 +14,17 @@ import streamlit as st
 from p2p_fraud.export.excel_findings import build_workbook
 from p2p_fraud.export.parquet_for_powerbi import export_to_parquet
 from p2p_fraud.export.pdf_synthese import build_pdf
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.scoring.risk_engine import aggregate_findings, severity_band, to_dataframe
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
+init_locale_from_session()
+
 init_page(
-    title="Synthèse — export",
-    surtitle="Investigation",
-    kicker=("Risk score consolidé · Excel · Parquet"),
+    title=_("nav.page_synthese"),
+    surtitle=_("nav.surtitle_investigation"),
+    kicker=_("nav.kicker_synthese"),
 )
 st.caption(
     "Combine les Findings produits par tous les détecteurs en un score unique par facture, "

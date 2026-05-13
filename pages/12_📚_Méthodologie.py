@@ -9,12 +9,15 @@ from __future__ import annotations
 import streamlit as st
 
 from p2p_fraud.config import get_settings
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Méthodologie",
-    surtitle="Gouvernance & méthode",
-    kicker=("Sources · seuils · métriques · limites · architecture"),
+    title=_("nav.page_methodologie"),
+    surtitle=_("nav.surtitle_gouvernance"),
+    kicker=_("nav.kicker_methodologie"),
 )
 st.caption(
     "Documentation transparente de l'approche analytique, des seuils de détection, "

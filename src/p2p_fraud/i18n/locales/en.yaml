@@ -45,6 +45,35 @@ nav:
   page_audit_trail: Audit trail
   page_methodologie: Methodology
   page_gouvernance: Governance
+  # Kickers (short description under title, P5-4.1)
+  kicker_cockpit: Consolidated P2P risk overview
+  kicker_sandbox: 5 clickable scenarios — institutional demos in 60 seconds
+  kicker_file: Case management + immutable audit log
+  kicker_alertes: Slack · Teams · SMTP · B2B webhook — rules dispatch and history
+  kicker_collab: Multi-user · @mentions · configurable SLA · Microsoft Entra ID OIDC
+  kicker_upload: CSV/Excel + ERP auto-detection
+  kicker_master_data: BEC detection + 4-eyes missing
+  kicker_sirene: Real-time INSEE validation
+  kicker_benford: Risk-oriented scoping Newcomb-Benford F1D/F2D/LD
+  kicker_doublons: Amount ± 0.01 € bucketing + parametrable date window + RapidFuzz token_set_ratio
+  kicker_sous_seuils: Intentional cluster detection
+  kicker_sanctions: OFAC · FR Treasury · EU consolidated
+  kicker_decp: Public procurement DECP · Beneficial owners RBE/INPI · Sapin 2 art. 17
+  kicker_anomalies_ml: Isolation Forest + local perturbation
+  kicker_anneaux: NetworkX ego-network · drill-down Vendor 360°
+  kicker_score_explorer: Waterfall + FR reason codes
+  kicker_vendor_360: Profile · payments · master data · findings
+  kicker_synthese: Consolidated risk score · Excel · Parquet
+  kicker_audit_trail: Immutable SHA-256 hash-chained log + Ed25519 signatures
+  kicker_methodologie: Sources · thresholds · metrics · limits · architecture
+  kicker_gouvernance: AI Act · GDPR · RGAA 4.1 · RBAC · AMLD6 · CSRD
+  # Surtitles (= section name, P5-4.1)
+  surtitle_pilotage: Steering
+  surtitle_donnees: Data
+  surtitle_controles: Statistical controls
+  surtitle_ml: ML detection
+  surtitle_investigation: Investigation
+  surtitle_gouvernance: Governance
 
 cockpit:
   title: Cockpit
