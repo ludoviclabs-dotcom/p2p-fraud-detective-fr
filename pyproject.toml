@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "p2p-fraud-detective-fr"
-version = "0.4.0"
+version = "0.5.0"
 description = "Mini-MindBridge open-source pour détection de fraude P2P sur ETI françaises (Benford, Isolation Forest, NetworkX, Sirene v3, DECP)"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
@@ -46,6 +46,7 @@ dependencies = [
     "plotly>=5.22",
     "joblib>=1.4",
     "cryptography>=43.0",
+    "pynacl>=1.5",
     "streamlit-aggrid>=1.2.1",
     "streamlit-agraph>=0.0.45",
     "weasyprint>=62.0",
@@ -110,6 +111,9 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+# P5-5 : seuil minimal de couverture renforcé pour les releases v0.5.x.
+# Brancher en CI : `pytest --cov=src/p2p_fraud --cov-fail-under=75`
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",

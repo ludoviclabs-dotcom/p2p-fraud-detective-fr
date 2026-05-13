@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     slack_webhook_url: str = ""
     teams_webhook_url: str = ""
 
+    # ─── Signatures Ed25519 audit log (P5-5) ─────────────────────────────────
+    # Clé privée Ed25519 (base64, 32 octets bruts). Générer hors ligne :
+    #     python -c "from p2p_fraud.security.signing import Ed25519Signer; \\
+    #                kp = Ed25519Signer.generate(); print(kp.private_key_b64)"
+    # Stocker en coffre-fort (Vault / KMS / fichier 0600 root-only).
+    # Si vide → mode démo, audit log uniquement hash-chaîné SHA-256.
+    p2pfd_ed25519_private_key: str = ""
+
     # ─── Webhook sortant B2B (P5-3) ──────────────────────────────────────────
     # Quand `webhook_url` est défini, chaque event `case.*` émis par
     # `CaseService._record_event` est POSTé en JSON signé HMAC-SHA256

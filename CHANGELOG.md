@@ -6,6 +6,76 @@ Toutes les évolutions notables sont documentées ici. Format inspiré de
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
+Phase 5 — Commercialisation B2B : 5 PRs livrées (P5-1 → P5-5). Sources live
+réglementaires, sandbox interactive, intégration B2B (webhook + SDK),
+bilinguisme FR/EN, conformité prouvée par signatures Ed25519.
+
+### Added
+
+- **P5-1 — Sources live DECP / Pappers / OpenSanctions Yente**
+  - `enrichment/decp_live.py` adapter `data.economie.gouv.fr/decp-v3` (ODbL, cache 7j)
+  - `enrichment/pappers_live.py` RBE via `api.pappers.fr`
+  - `enrichment/yente_client.py` sanctions consolidées
+  - `Settings.enrichment_mode = "demo" | "live"` + fallback graceful
+  - `docs/sources_de_donnees.md`
+- **P5-2 — Sandbox + comparatif SOTA + 3 cas clients**
+  - `pages/20_🎮_Sandbox.py` (5 scénarios déterministes)
+  - `synthetic/scenarios.py` (`load_scenario(name)`)
+  - `docs/comparatif_sota.md` vs MindBridge / PwC / KPMG / Deloitte / SAS / NICE / Quantexa
+  - `docs/cas_clients/` (ETI 800M€, foncière 1.2Md€, CRC Auvergne)
+- **P5-3 — Webhook CloudEvents + SDK Makefile + bulk ops**
+  - `webhooks/dispatcher.py` HMAC-SHA256 + tenacity retry
+  - `webhooks/events.py` 8 events (`case.*` + `webhook.test`)
+  - Endpoint `POST /webhook/test`
+  - Bulk ops AgGrid (assign / close / export)
+  - Makefile `openapi-export` + `sdk-python` + `sdk-typescript`
+- **P5-4 — i18n FR/EN + recherche globale + sparkline**
+  - `i18n/__init__.py` + `locales/{fr,en}.yaml` (~80 clés parité parfaite)
+  - Sélecteur 🇫🇷 FR / 🇬🇧 EN sidebar
+  - Recherche globale Cockpit
+  - Sparkline trend 30j Vendor 360°
+- **P5-5 — Ed25519 + tests E2E AppTest + coverage gate**
+  - `security/signing.py` (PyNaCl, génération + sign + verify)
+  - Audit log colonne `signature` nullable (backward-compat v0.4)
+  - Endpoint `GET /security/public-key`
+  - `tests/e2e/test_pages_apptest.py` (6 smoke AppTest)
+  - `pyproject.toml` `[tool.coverage.report] fail_under = 75`
+  - `docs/conformite_signatures.md`
+
+### Changed
+
+- `Settings` étendu : `enrichment_mode`, `pappers_api_key`, `yente_base_url`, `webhook_url`, `webhook_secret`, `webhook_timeout`, `p2pfd_ed25519_private_key`
+- `CaseService.__init__(webhook_dispatcher=...)` optionnel
+- `AuditLog.__init__(signer=...)` optionnel
+- `AuditLog.verify_chain(public_key_b64=...)` vérifie aussi les signatures
+- Sandbox = 2e entrée de la section 🧭 Pilotage
+
+### Hors scope volontaire (reportés v0.6)
+
+- WORM S3 archivage 10 ans (nécessite budget AWS — documenté roadmap)
+- Backup PostgreSQL automatique Glacier (idem)
+- Landing Astro statique GitHub Pages
+- 8 vidéos Loom (scripts texte dans `docs/cas_clients/`)
+
+### Migration v0.4 → v0.5
+
+```bash
+# 1. Nouvelle dépendance obligatoire
+pip install "pynacl>=1.5"
+
+# 2. Variables d'env optionnelles (mode démo conservé si non définies)
+export ENRICHMENT_MODE=live
+export PAPPERS_API_KEY=pk_live_xxx
+export WEBHOOK_URL=https://siem.entreprise.fr/p2pfd
+export WEBHOOK_SECRET=shared-hmac-secret
+export P2PFD_ED25519_PRIVATE_KEY=$(python -c "from p2p_fraud.security.signing import Ed25519Signer; print(Ed25519Signer.generate().private_key_b64)")
+```
+
+- Colonne `audit_log.signature` ajoutée automatiquement au boot (ALTER TABLE défensif).
+- Pas de breaking change API : tous les endpoints v0.4 restent compatibles.
+
 ## [0.4.0] - 2026-08-31
 
 Phase 4 — Hardening foundation : 6 PRs livrées (P4-1 → P4-6) pour passer de

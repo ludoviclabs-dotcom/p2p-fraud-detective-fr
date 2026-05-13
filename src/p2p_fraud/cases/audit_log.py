@@ -36,6 +36,9 @@ class AuditLogEntry:
     payload: dict
     prev_hash: str
     hash: str
+    # P5-5 : signature Ed25519 hex (128 chars). Vide pour les entrées
+    # historiques antérieures à v0.5.0 ou en mode démo (pas de clé privée).
+    signature: str = ""
 
     @classmethod
     def compute_hash(
@@ -54,16 +57,42 @@ class AuditLogEntry:
 
 
 class AuditLog:
-    """Journal append-only avec vérification d'intégrité."""
+    """Journal append-only avec vérification d'intégrité.
+
+    Quand un `signer` Ed25519 est fourni (P5-5), chaque entrée est
+    cryptographiquement signée sur son `hash`. La signature est stockée
+    dans la colonne `signature` et vérifiable via `verify_chain()` ou
+    `verify_signature()` du module `security/signing.py` à partir de
+    la clé publique exposée par `GET /security/public-key`.
+    """
 
     def __init__(
         self,
         path: str | Path = ":memory:",
         *,
         engine: Engine | None = None,
+        signer: object | None = None,
     ) -> None:
         self._engine = engine or make_engine(db_path=path)
         Base.metadata.create_all(self._engine, checkfirst=True)
+        self._signer = signer
+        # Migration SQLite legacy : ajouter colonne `signature` si absente
+        # (les bases :memory: créées avec checkfirst=True ont déjà la colonne
+        # grâce à `Base.metadata.create_all`, mais on défensif les fichiers
+        # SQLite préexistants d'une instance v0.4 réutilisée en v0.5).
+        self._ensure_signature_column()
+
+    def _ensure_signature_column(self) -> None:
+        """Ajoute la colonne `signature` si elle manque (migration legacy)."""
+        try:
+            with self._engine.begin() as conn:
+                conn.execute(text("SELECT signature FROM audit_log LIMIT 1"))
+        except Exception:
+            try:
+                with self._engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE audit_log ADD COLUMN signature TEXT"))
+            except Exception:
+                pass  # déjà présente (cas race) ou backend qui le supporte mal
 
     # --- API d'écriture ---
 
@@ -77,10 +106,18 @@ class AuditLog:
             prev_hash = last[1] if last else GENESIS_HASH
             at = datetime.now(UTC).isoformat()
             h = AuditLogEntry.compute_hash(seq, at, actor, kind, payload, prev_hash)
+            # P5-5 : signe le hash si signer Ed25519 est configuré
+            sig = ""
+            if self._signer is not None and getattr(self._signer, "enabled", False):
+                try:
+                    sig = self._signer.sign(h)
+                except Exception:
+                    sig = ""
             conn.execute(
                 text(
-                    "INSERT INTO audit_log (seq, at, actor, kind, payload, prev_hash, hash) "
-                    "VALUES (:seq, :at, :actor, :kind, :payload, :prev_hash, :hash)"
+                    "INSERT INTO audit_log "
+                    "(seq, at, actor, kind, payload, prev_hash, hash, signature) "
+                    "VALUES (:seq, :at, :actor, :kind, :payload, :prev_hash, :hash, :signature)"
                 ),
                 {
                     "seq": seq,
@@ -90,10 +127,18 @@ class AuditLog:
                     "payload": json.dumps(payload, sort_keys=True),
                     "prev_hash": prev_hash,
                     "hash": h,
+                    "signature": sig or None,
                 },
             )
         return AuditLogEntry(
-            seq=seq, at=at, actor=actor, kind=kind, payload=payload, prev_hash=prev_hash, hash=h
+            seq=seq,
+            at=at,
+            actor=actor,
+            kind=kind,
+            payload=payload,
+            prev_hash=prev_hash,
+            hash=h,
+            signature=sig,
         )
 
     def append_file_import(
@@ -121,7 +166,7 @@ class AuditLog:
         with self._engine.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT seq, at, actor, kind, payload, prev_hash, hash "
+                    "SELECT seq, at, actor, kind, payload, prev_hash, hash, signature "
                     "FROM audit_log ORDER BY seq ASC"
                 )
             ).all()
@@ -134,6 +179,7 @@ class AuditLog:
                 payload=json.loads(row[4]),
                 prev_hash=row[5],
                 hash=row[6],
+                signature=row[7] or "",
             )
             for row in rows
         ]
@@ -144,11 +190,17 @@ class AuditLog:
 
     # --- Vérification d'intégrité ---
 
-    def verify_chain(self) -> tuple[bool, list[int]]:
+    def verify_chain(self, *, public_key_b64: str = "") -> tuple[bool, list[int]]:
         """Recalcule le hash de chaque entrée et compare au stocké.
+
+        Si `public_key_b64` est fourni, vérifie aussi les signatures Ed25519
+        présentes (les entrées sans signature restent valides — backward
+        compatible avec les versions antérieures à v0.5.0).
 
         Retourne (chaîne_valide, liste_des_séquences_invalides).
         """
+        from p2p_fraud.security.signing import verify_signature as _vsig
+
         entries = self.all()
         invalid: list[int] = []
         prev = GENESIS_HASH
@@ -161,6 +213,20 @@ class AuditLog:
                 e.seq, e.at, e.actor, e.kind, e.payload, e.prev_hash
             )
             if recomputed != e.hash:
+                invalid.append(e.seq)
+                prev = e.hash
+                continue
+            # P5-5 : vérification signature Ed25519 (uniquement si clé publique
+            # fournie ET signature présente — entrées historiques v0.4 OK).
+            if (
+                public_key_b64
+                and e.signature
+                and not _vsig(
+                    message=e.hash,
+                    signature_hex=e.signature,
+                    public_key_b64=public_key_b64,
+                )
+            ):
                 invalid.append(e.seq)
             prev = e.hash
         return (not invalid, invalid)

@@ -19,6 +19,7 @@ faker>=26.0
 plotly>=5.22
 joblib>=1.4
 cryptography>=43.0
+pynacl>=1.5
 streamlit-aggrid>=1.2.1
 streamlit-agraph>=0.0.45
 weasyprint>=62.0

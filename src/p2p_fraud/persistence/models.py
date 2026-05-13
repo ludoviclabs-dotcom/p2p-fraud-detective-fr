@@ -71,6 +71,9 @@ class AuditLogRow(Base):
     payload: Mapped[str] = mapped_column(Text, nullable=False)
     prev_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    # P5-5 : signature Ed25519 hex 128 chars. Nullable pour rétrocompat avec
+    # les entrées antérieures à v0.5.0 (verify_chain les accepte sans signature).
+    signature: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
 
 
 class MentionRow(Base):
