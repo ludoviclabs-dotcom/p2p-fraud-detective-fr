@@ -8,7 +8,10 @@ import streamlit as st
 from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
 from p2p_fraud.i18n import _, init_locale_from_session
-from p2p_fraud.llm.narrative_generator import generate_vendor_narrative
+from p2p_fraud.llm.narrative_generator import (
+    generate_vendor_narrative,
+    generate_vendor_narrative_stream,
+)
 from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
 from p2p_fraud.streamlit_theme import init_page
@@ -272,38 +275,57 @@ with tabs[3]:
     if api_key_input:
         st.session_state["anthropic_api_key"] = api_key_input
 
-    if st.button("📝 Générer narration audit (Claude)", type="primary", key="gen_narrative"):
+    col_btn_stream, col_btn_block = st.columns(2)
+    _stream_clicked = col_btn_stream.button(
+        "📝 Générer narration (streaming)",
+        type="primary",
+        key="gen_narrative_stream",
+        help="Affichage progressif via st.write_stream — UX type ChatGPT.",
+    )
+    _block_clicked = col_btn_block.button(
+        "📝 Générer narration (bloquant)",
+        key="gen_narrative_block",
+        help="Variante bloquante avec métriques tokens en fin.",
+    )
+
+    if _stream_clicked or _block_clicked:
         _api_key = st.session_state.get("anthropic_api_key") or ""
         if not _api_key:
-            st.error(
-                "Clé API Anthropic manquante. Saisissez-la ci-dessus ou configurez ANTHROPIC_API_KEY."
-            )
+            st.error(_("llm.no_key"))
         else:
-            with st.spinner("Génération de la narration d'audit (Claude claude-sonnet-4-6)…"):
-                try:
-                    _findings_dicts = [
-                        {
-                            "rule_id": f.rule_id,
-                            "severity": f.severity.value,
-                            "signal": f.signal,
-                            "exposure_eur": f.evidence.get("exposure_eur"),
-                        }
-                        for f in summary.findings
-                    ]
-                    result = generate_vendor_narrative(
-                        vendor_id=summary.vendor_id,
-                        vendor_name=summary.vendor_name,
-                        siren=summary.siren,
-                        total_paid_eur=summary.total_paid_eur,
-                        n_invoices=summary.n_invoices,
-                        is_sanctioned=summary.is_sanctioned,
-                        is_pep=summary.is_pep,
-                        findings=_findings_dicts,
-                        api_key=_api_key,
-                    )
+            _findings_dicts = [
+                {
+                    "rule_id": f.rule_id,
+                    "severity": f.severity.value,
+                    "signal": f.signal,
+                    "exposure_eur": f.evidence.get("exposure_eur"),
+                }
+                for f in summary.findings
+            ]
+            _common_kwargs = dict(
+                vendor_id=summary.vendor_id,
+                vendor_name=summary.vendor_name,
+                siren=summary.siren,
+                total_paid_eur=summary.total_paid_eur,
+                n_invoices=summary.n_invoices,
+                is_sanctioned=summary.is_sanctioned,
+                is_pep=summary.is_pep,
+                findings=_findings_dicts,
+                api_key=_api_key,
+            )
+            try:
+                if _stream_clicked:
+                    st.markdown("**Narration en cours…**")
+                    streamed = st.write_stream(generate_vendor_narrative_stream(**_common_kwargs))
+                    st.session_state[f"narrative_stream_{summary.vendor_id}"] = streamed
+                else:
+                    with st.spinner(_("llm.generating")):
+                        result = generate_vendor_narrative(**_common_kwargs)
                     st.session_state[f"narrative_{summary.vendor_id}"] = result
-                except (ImportError, ValueError, Exception) as exc:
-                    st.error(f"Erreur lors de la génération : {exc}")
+            except (ImportError, ValueError) as exc:
+                st.error(f"{_('llm.error_generic')} ({exc})")
+            except Exception as exc:
+                st.error(f"{_('llm.error_generic')} ({exc})")
 
     _cached_narrative = st.session_state.get(f"narrative_{summary.vendor_id}")
     if _cached_narrative:

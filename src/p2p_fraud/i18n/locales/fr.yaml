@@ -44,6 +44,7 @@ nav:
   page_vendor_360: Fiche fournisseur 360°
   page_synthese: Synthèse — export
   page_audit_trail: Piste d'audit
+  page_tour: Tour guidé
   page_methodologie: Méthodologie
   page_gouvernance: Gouvernance
   # Kickers (courte description sous le titre, P5-4.1)
@@ -132,6 +133,87 @@ methodo:
   section_live_demo: 🟢 Mode live vs 🔬 mode démo
   live_active: Mode live actif
   demo_active: Mode démo actif
+
+tour:
+  title: Tour guidé — bienvenue
+  surtitle: Pilotage
+  kicker: Découverte guidée — 5 étapes en moins de 3 minutes
+  progress: Étape {current} sur {total}
+  btn_next: Suivant
+  btn_prev: Précédent
+  btn_skip: Passer le tour
+  btn_restart: Recommencer
+  btn_done: Terminer
+  step1_title: 🎯 Qu'est-ce que P2P Fraud Detective FR ?
+  step1_body: |
+    Démonstrateur d'audit du cycle **Procure-to-Pay** orienté détection de fraude
+    (BEC, sous-seuils, doublons, sanctions, anneaux). Aligné sur les méthodologies
+    AML/CFT et les contrôles attendus en audit P2P public **ISA 240**, **Sapin 2**,
+    **LCB-FT**, **DORA**, **AMLD6**.
+
+    Pertinent pour ETI, cabinets d'audit, fonctions publiques et organismes de
+    contrôle (DGFiP, Tracfin, IGF, Cour des comptes, CRC).
+
+    **Données 100 % synthétiques** (Faker `fr_FR`) ou issues de sources ouvertes
+    publiques (Sirene, DECP, OpenSanctions). Conformité RGPD garantie.
+  step2_title: 🎮 La Sandbox commerciale
+  step2_body: |
+    La Sandbox propose **5 scénarios pré-chargés cliquables** :
+    - 🔴 BEC — détournement d'IBAN fournisseur
+    - 🟠 Fractionnement / structuring sous seuils COSI
+    - 🟡 Doublons fournisseurs (fuzzy + IBAN partagé)
+    - 🔴 Anneau de fraude (5 vendors, 3 IBAN partagés)
+    - 🔴 Sanctions UE — fournisseur listé
+
+    Chaque scénario génère ~ 2 000 factures et 150 fournisseurs déterministes
+    en moins de 2 secondes. Pas besoin d'uploader de fichier — vous êtes prêt
+    à explorer la plateforme en 60 secondes.
+  step3_title: 🎯 Le Cockpit — pilotage par exposition financière
+  step3_body: |
+    Le Cockpit affiche **4 KPI principaux** (exposition totale, critique, cases
+    ouverts, retards SLA) avec **sparklines tendances 30 jours**.
+
+    Une **recherche globale** dans un expander permet de retrouver instantanément
+    un fournisseur, un case ou une facture — avec deep-links vers la page
+    pertinente.
+
+    Le **Top 10 fournisseurs par exposition €** trie par risque financier, pas
+    par score brut — c'est la métrique que valorise un DAF / CFO.
+  step4_title: 🪪 La Fiche fournisseur 360° + narration LLM
+  step4_body: |
+    Pour chaque fournisseur suspect, la Fiche 360° agrège **profil + paiements +
+    historique master data + findings** avec une **sparkline trend 30 jours**.
+
+    Si vous disposez d'une clé Anthropic (`ANTHROPIC_API_KEY`), le bouton
+    **« 📝 Générer narration audit »** produit un paragraphe d'audit en
+    streaming via **Claude Sonnet 4.6**. Le narratif suit la doctrine ISA 240 +
+    AMLD6 et peut être copié directement dans le dossier d'audit.
+  step5_title: 📜 Audit trail cryptographique
+  step5_body: |
+    Toutes les mutations sont journalisées dans un **audit log chaîné par hash
+    SHA-256**, signé par défaut en **Ed25519** quand la variable
+    `P2PFD_ED25519_PRIVATE_KEY` est définie.
+
+    La clé publique est exposée par `GET /security/public-key` — n'importe quel
+    tiers (CAC, ACPR, Cour des comptes) peut vérifier indépendamment chaque
+    entrée sans accès au backend.
+
+    En sortie, vous pouvez générer un **dossier d'enquête PDF** (weasyprint) ou
+    une **synthèse Excel/Parquet** pour archivage légal (Sapin 2 = 10 ans).
+  cta_done_title: 🎉 Tour terminé !
+  cta_done_body: |
+    Vous connaissez maintenant les 5 piliers de la plateforme. Quelques pistes
+    pour explorer plus loin :
+  cta_explore_sandbox: Charger un scénario via la Sandbox
+  cta_open_cockpit: Ouvrir le Cockpit
+  cta_open_governance: Voir la Gouvernance (RBAC + RGPD + AI Act)
+  cta_view_repo: Voir le code source sur GitHub
+
+llm:
+  no_key: "Aucune clé Anthropic configurée. Définissez `ANTHROPIC_API_KEY` pour activer la génération."
+  generating: Génération en cours via Claude Sonnet…
+  error_generic: Erreur lors de l'appel Claude — vérifiez la clé API et la connectivité.
+  tokens_summary: "Tokens utilisés : entrée {input}, sortie {output}, cache {cached}."
 
 search:
   title: Recherche globale

@@ -172,3 +172,93 @@ def generate_vendor_narrative(
         output_tokens=usage.output_tokens,
         cached_tokens=cached,
     )
+
+
+def generate_vendor_narrative_stream(
+    *,
+    vendor_id: str,
+    vendor_name: str | None,
+    siren: str | None,
+    total_paid_eur: float | None,
+    n_invoices: int,
+    is_sanctioned: bool,
+    is_pep: bool,
+    findings: list[dict],
+    api_key: str | None = None,
+    model: str = "claude-sonnet-4-6",
+):
+    """Variante streaming de `generate_vendor_narrative` (Phase 6).
+
+    Yield des chunks de texte au fur et à mesure qu'ils sont reçus depuis
+    l'API Anthropic. Compatible avec `st.write_stream()` côté Streamlit pour
+    un rendu incrémental (UX type ChatGPT) sans bloquer le thread principal.
+
+    Le `system` prompt reste cache-able (`cache_control: ephemeral`) — la
+    latence du premier token est ~1-2s, les chunks suivants ~50-200ms.
+
+    Yields:
+        str: portions de la narration. Concaténer pour reconstituer le texte
+        complet. Une dernière yield vide signale la fin.
+
+    Raises:
+        ImportError, ValueError — identiques à `generate_vendor_narrative`.
+    """
+    try:
+        import anthropic
+    except ImportError as exc:
+        raise ImportError(
+            "Le package 'anthropic' est requis pour la génération narrative. "
+            "Installez-le avec : pip install anthropic>=0.25"
+        ) from exc
+
+    key = api_key or get_settings().anthropic_api_key
+    if not key:
+        raise ValueError(
+            "Variable d'environnement ANTHROPIC_API_KEY manquante. "
+            "Configurez-la dans .env ou dans les secrets Streamlit Cloud."
+        )
+
+    client = anthropic.Anthropic(api_key=key)
+
+    findings_lines = []
+    for f in findings[:20]:
+        sev = f.get("severity", "—")
+        rule = f.get("rule_id", "—")
+        signal = f.get("signal", "—")
+        exposure = f.get("exposure_eur")
+        exposure_str = f"{float(exposure):,.0f} €".replace(",", " ") if exposure else "—"
+        findings_lines.append(
+            f"  - [{sev.upper()}] {rule} : {signal} (exposition : {exposure_str})"
+        )
+    findings_block = "\n".join(findings_lines) if findings_lines else "  Aucun finding."
+    total_str = (
+        f"{float(total_paid_eur):,.0f}".replace(",", " ")
+        if total_paid_eur is not None
+        else "inconnu"
+    )
+
+    user_content = _USER_TEMPLATE.format(
+        vendor_name=vendor_name or "Inconnu",
+        vendor_id=vendor_id,
+        siren=siren or "Non renseigné",
+        total_paid_eur=total_str,
+        n_invoices=n_invoices,
+        is_sanctioned="OUI — CRITIQUE" if is_sanctioned else "Non",
+        is_pep="OUI — vigilance renforcée" if is_pep else "Non",
+        n_findings=len(findings),
+        findings_block=findings_block,
+    )
+
+    with client.messages.stream(
+        model=model,
+        max_tokens=1024,
+        system=[
+            {
+                "type": "text",
+                "text": _SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
+        messages=[{"role": "user", "content": user_content}],
+    ) as stream:
+        yield from stream.text_stream
