@@ -1,13 +1,23 @@
 /**
  * Client fetch typé pour FastAPI /api/v1/*.
  *
- * En production : pointe vers le backend FastAPI hébergé sur Hugging Face
- * Spaces (variable d'env `NEXT_PUBLIC_API_URL`), avec un proxy Next.js
- * `rewrites()` configuré dans `next.config.ts` pour éviter les soucis CORS.
- *
- * Phase 0 : types `any` pour le payload. Phase 1 : remplacer par les types
- * générés depuis `packages/shared-types/src/api.ts` (cmd `pnpm sdk:gen-types`).
+ * Phase 1 : types réels via `@p2pfd/shared-types` (générés depuis OpenAPI).
+ * Regénérer après changement backend : `pnpm sdk:gen-types`.
  */
+
+import type {
+  AuditEntryOut,
+  AuditPage,
+  AuditVerifyResult,
+  BulkResult,
+  CockpitKPIs,
+  DailyPoint,
+  FindingOut,
+  TimelineEvent,
+  TopVendor,
+  VendorSummary,
+  Schemas,
+} from "@p2pfd/shared-types";
 
 const _BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 const _SECRET = process.env.FRAUD_API_SECRET ?? "";
@@ -17,9 +27,7 @@ type FetchOpts = Omit<RequestInit, "body"> & { body?: unknown };
 async function _fetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
   const url = path.startsWith("http") ? path : `${_BASE}${path}`;
   const headers = new Headers(opts.headers);
-  if (_SECRET) {
-    headers.set("Authorization", `Bearer ${_SECRET}`);
-  }
+  if (_SECRET) headers.set("Authorization", `Bearer ${_SECRET}`);
   if (opts.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -42,32 +50,90 @@ export const api = {
     _fetch<T>(path, { method: "POST", body }),
 };
 
-// ─── Endpoints typés Phase 0 (Cockpit + Vendor) ─────────────────────────────
-
-export type DailyPoint = { date: string; value: number };
-
-export type CockpitKPIs = {
-  exposure_total_eur: number;
-  exposure_critical_eur: number;
-  n_cases_open: number;
-  n_cases_overdue: number;
-  n_cases_unassigned_critical: number;
-  trend_cases_created: DailyPoint[];
-  trend_cases_closed: DailyPoint[];
-  trend_critical_alerts: DailyPoint[];
-  trend_audit_activity: DailyPoint[];
+// Re-export types pour les pages
+export type {
+  AuditEntryOut,
+  AuditPage,
+  AuditVerifyResult,
+  BulkResult,
+  CockpitKPIs,
+  DailyPoint,
+  FindingOut,
+  TimelineEvent,
+  TopVendor,
+  VendorSummary,
 };
 
-export type TopVendor = {
-  vendor_id: string;
-  vendor_name: string | null;
-  exposure_eur: number;
-  n_findings: number;
-  max_severity: string;
-};
+export type CaseOutV1 = Schemas["CaseOutV1"];
+
+// ─── Endpoints typés ────────────────────────────────────────────────────────
 
 export const getCockpitKpis = () =>
   api.get<CockpitKPIs>("/api/v1/cockpit/kpis");
 
 export const getTopVendors = (limit = 10) =>
   api.get<TopVendor[]>(`/api/v1/cockpit/top-vendors?limit=${limit}`);
+
+export const listCases = (params: {
+  status?: string;
+  severity?: string;
+  assignee?: string;
+  limit?: number;
+} = {}) => {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set("status", params.status);
+  if (params.severity) qs.set("severity", params.severity);
+  if (params.assignee) qs.set("assignee", params.assignee);
+  if (params.limit) qs.set("limit", String(params.limit));
+  const q = qs.toString();
+  return api.get<CaseOutV1[]>(`/api/v1/cases${q ? `?${q}` : ""}`);
+};
+
+export const getVendorSummary = (vendorId: string) =>
+  api.get<VendorSummary>(`/api/v1/vendors/${encodeURIComponent(vendorId)}`);
+
+export const getVendorTimeline = (vendorId: string, days = 30) =>
+  api.get<TimelineEvent[]>(
+    `/api/v1/vendors/${encodeURIComponent(vendorId)}/timeline?days=${days}`,
+  );
+
+export const listFindings = (params: {
+  rule_id?: string;
+  severity?: string;
+  limit?: number;
+} = {}) => {
+  const qs = new URLSearchParams();
+  if (params.rule_id) qs.set("rule_id", params.rule_id);
+  if (params.severity) qs.set("severity", params.severity);
+  if (params.limit) qs.set("limit", String(params.limit));
+  const q = qs.toString();
+  return api.get<FindingOut[]>(`/api/v1/findings${q ? `?${q}` : ""}`);
+};
+
+export const listAudit = (cursor = 0, limit = 100) =>
+  api.get<AuditPage>(`/api/v1/audit?cursor=${cursor}&limit=${limit}`);
+
+export const verifyAudit = () =>
+  api.get<AuditVerifyResult>("/api/v1/audit/verify");
+
+export const bulkAssignCases = (body: {
+  case_ids: string[];
+  assignee: string;
+  actor: string;
+}) => api.post<BulkResult>("/api/v1/cases/bulk/assign", body);
+
+export const bulkCloseCases = (body: {
+  case_ids: string[];
+  status: "confirmed" | "rejected" | "false_positive";
+  reason: string;
+  actor: string;
+}) => api.post<BulkResult>("/api/v1/cases/bulk/close", body);
+
+export const commentCase = (
+  caseId: string,
+  body: { text: string; actor: string },
+) =>
+  api.post<{ ok: boolean; case_id: string }>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/comment`,
+    body,
+  );

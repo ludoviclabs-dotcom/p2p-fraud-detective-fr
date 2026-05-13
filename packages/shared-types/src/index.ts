@@ -1,8 +1,22 @@
-// Types TypeScript auto-générés depuis l'OpenAPI FastAPI.
-// Regénérer avec : pnpm sdk:gen-types
-// (depuis la racine monorepo, après changement du backend)
-//
-// Le fichier `api.ts` n'est pas encore généré dans Phase 0 — il sera
-// produit en Phase 1 quand `apps/web/` consommera le client.
+// Re-export des types depuis l'OpenAPI auto-généré.
+// Regénérer : pnpm sdk:gen-types (depuis la racine monorepo)
 
-export {};
+export * from "./api";
+
+// Helpers utilitaires
+import type { components, paths } from "./api";
+
+export type Schemas = components["schemas"];
+export type Paths = paths;
+
+// Aliases courants
+export type CockpitKPIs = Schemas["CockpitKPIs"];
+export type TopVendor = Schemas["TopVendor"];
+export type FindingOut = Schemas["p2p_fraud__api__v1__FindingOut"];
+export type VendorSummary = Schemas["VendorSummary"];
+export type TimelineEvent = Schemas["TimelineEvent"];
+export type AuditEntryOut = Schemas["AuditEntryOut"];
+export type AuditPage = Schemas["AuditPage"];
+export type AuditVerifyResult = Schemas["AuditVerifyResult"];
+export type BulkResult = Schemas["BulkResult"];
+export type DailyPoint = Schemas["DailyPoint"];
