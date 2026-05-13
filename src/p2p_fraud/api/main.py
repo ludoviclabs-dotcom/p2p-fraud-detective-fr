@@ -261,6 +261,26 @@ def health() -> dict[str, str]:
     return {"status": "ok", "version": _VERSION, "at": datetime.now(UTC).isoformat()}
 
 
+@app.get("/security/public-key", tags=["Ops"])
+def security_public_key() -> dict[str, str]:
+    """Publie la clé publique Ed25519 utilisée pour signer l'audit log (P5-5).
+
+    Permet à un auditeur externe (CAC, ACPR, Cour des comptes) de vérifier
+    indépendamment les signatures du journal d'audit sans accès au backend.
+
+    En l'absence de clé privée configurée (mode démo), renvoie
+    `{"public_key_b64": "", "enabled": false}`.
+    """
+    from p2p_fraud.security.signing import make_signer_from_settings
+
+    signer = make_signer_from_settings()
+    return {
+        "public_key_b64": signer.public_key_b64,
+        "enabled": "true" if signer.enabled else "false",
+        "algorithm": "Ed25519" if signer.enabled else "",
+    }
+
+
 @app.post("/webhook/test", tags=["Ops"])
 def webhook_test(_: Annotated[str, Depends(_require_auth)]) -> dict[str, object]:
     """Envoie un événement factice `webhook.test` vers `Settings.webhook_url`.

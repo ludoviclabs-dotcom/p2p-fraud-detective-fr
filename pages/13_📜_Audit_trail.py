@@ -35,12 +35,46 @@ c3.metric("Dernière (seq)", entries[-1].seq if entries else 0)
 
 st.divider()
 st.subheader("🔐 Vérification d'intégrité")
-if st.button("Recalculer la chaîne de hash", type="primary"):
-    valid, invalid = audit.verify_chain()
-    if valid:
-        st.success(f"✅ Chaîne valide. {len(entries)} entrées vérifiées.")
-    else:
-        st.error(f"❌ Chaîne altérée. Séquences invalides : {invalid}")
+
+from p2p_fraud.security.signing import make_signer_from_settings  # noqa: E402
+
+_signer = make_signer_from_settings()
+if _signer.enabled:
+    st.success(
+        f"🔑 **Signatures Ed25519 actives** — clé publique : "
+        f"`{_signer.public_key_b64[:16]}…{_signer.public_key_b64[-8:]}`. "
+        "Vérification cryptographique disponible côté tiers via "
+        "`GET /security/public-key`."
+    )
+else:
+    st.info(
+        "🔬 Signatures Ed25519 désactivées (mode démo). Pour activer en pilote, "
+        "définir `P2PFD_ED25519_PRIVATE_KEY` côté serveur."
+    )
+
+col_check1, col_check2 = st.columns(2)
+with col_check1:
+    if st.button("Recalculer la chaîne de hash", type="primary"):
+        valid, invalid = audit.verify_chain()
+        if valid:
+            st.success(f"✅ Chaîne valide. {len(entries)} entrées vérifiées.")
+        else:
+            st.error(f"❌ Chaîne altérée. Séquences invalides : {invalid}")
+with col_check2:
+    if st.button(
+        "Vérifier les signatures Ed25519",
+        disabled=not _signer.enabled,
+        help="Valide les signatures cryptographiques en plus du hash chain.",
+    ):
+        valid, invalid = audit.verify_chain(public_key_b64=_signer.public_key_b64)
+        n_signed = sum(1 for e in entries if e.signature)
+        if valid:
+            st.success(
+                f"✅ Chaîne + signatures valides. {len(entries)} entrées, "
+                f"{n_signed} signées Ed25519."
+            )
+        else:
+            st.error(f"❌ Altération détectée. Séquences invalides : {invalid}")
 
 st.divider()
 st.subheader("📋 Entrées")
@@ -66,6 +100,7 @@ if entries:
             "payload": e.payload,
             "prev_hash (8)": e.prev_hash[:8],
             "hash (8)": e.hash[:8],
+            "signature": "✅" if e.signature else "—",  # P5-5
         }
         for e in entries
     ]

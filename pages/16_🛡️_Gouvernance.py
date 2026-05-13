@@ -140,8 +140,35 @@ st.markdown(
     | **Audit log** | Append-only SQLite WAL, chaîné par hash SHA-256, vérifiable |
     | **Hash fichiers uploadés** | SHA-256 du contenu brut, journalisé en `file.imported` |
     | **Mode strict auth** | Variable d'env `P2P_FRAUD_AUTH_REQUIRED=1` |
+    | **Signatures Ed25519 audit log (P5-5)** | Activées via `P2PFD_ED25519_PRIVATE_KEY`, clé publique exposée par `GET /security/public-key` |
     """
 )
+
+# ── Cryptographie Ed25519 (P5-5) ──────────────────────────────────────────────
+st.markdown("#### 🔐 Cryptographie audit trail (Ed25519)")
+
+from p2p_fraud.security.signing import make_signer_from_settings  # noqa: E402
+
+_govsigner = make_signer_from_settings()
+if _govsigner.enabled:
+    st.success(
+        f"**Signatures Ed25519 actives.** Clé publique (base64, 32 octets) :\n\n"
+        f"```\n{_govsigner.public_key_b64}\n```\n"
+        "Tout tiers (CAC, ACPR, Cour des comptes) peut vérifier indépendamment "
+        "les signatures via `GET /security/public-key` + `verify_signature()` "
+        "(documenté dans `docs/conformite_signatures.md`)."
+    )
+else:
+    st.info(
+        "**Mode démo** — signatures cryptographiques désactivées. "
+        "Pour activer en pilote, générer une paire de clés hors ligne :\n\n"
+        "```python\n"
+        "from p2p_fraud.security.signing import Ed25519Signer\n"
+        "kp = Ed25519Signer.generate()\n"
+        'print(f"P2PFD_ED25519_PRIVATE_KEY={kp.private_key_b64}")\n'
+        "```\n"
+        "puis injecter la clé privée en variable d'environnement (Vault/KMS)."
+    )
 
 # ── Kill switch ML ────────────────────────────────────────────────────────────
 st.divider()
