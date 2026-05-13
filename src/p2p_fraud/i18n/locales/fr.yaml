@@ -1,0 +1,113 @@
+# Catalogue FR — locale par défaut (référence).
+# Toute nouvelle clé doit être ajoutée ici puis traduite dans en.yaml.
+# Hiérarchie : nav.* | cockpit.* | file.* | vendor.* | methodo.* | common.* | search.*
+
+common:
+  app_name: P2P Fraud Detective FR
+  demonstrator_banner: Démonstrateur — données synthétiques, hors production
+  no_data_loaded: Aucune donnée chargée
+  load_scenario_cta: Découvrez la plateforme en 60 secondes avec un scénario pré-chargé
+  open_sandbox: Ouvrir la Sandbox
+  open_cockpit: Ouvrir le Cockpit
+  language: Langue
+  toast_session_purged: Session purgée — toutes les données ont été effacées
+  ribbon_demo: DÉMONSTRATEUR
+  loading: Chargement en cours…
+  error_generic: Une erreur est survenue
+  signin_oidc: Se connecter (OIDC)
+  purge_session: Purger la session
+  purge_help: RGPD — droit à l'effacement. Supprime toutes les données chargées en mémoire.
+
+nav:
+  section_pilotage: 🧭 Pilotage
+  section_donnees: 🗂️ Données
+  section_controles: 🧮 Contrôles statistiques
+  section_ml: 🤖 Détection ML
+  section_investigation: 🔎 Investigation & restitution
+  section_gouvernance: 📚 Gouvernance & méthode
+  page_cockpit: Cockpit
+  page_sandbox: Sandbox commerciale
+  page_file: File d'investigation
+  page_alertes: Alertes & monitoring
+  page_collab: Collaboration multi-user
+  page_upload: Import des données
+  page_master_data: Référentiel — historique
+  page_sirene: Contrôle Sirene
+  page_benford: Loi de Benford
+  page_doublons: Doublons
+  page_sous_seuils: Fractionnement / sous-seuils
+  page_sanctions: Sanctions & PEP
+  page_decp: DECP & RBE INPI
+  page_anomalies_ml: Anomalies (ML)
+  page_anneaux: Anneaux de fraude
+  page_score_explorer: Explorateur de score
+  page_vendor_360: Fiche fournisseur 360°
+  page_synthese: Synthèse — export
+  page_audit_trail: Piste d'audit
+  page_methodologie: Méthodologie
+  page_gouvernance: Gouvernance
+
+cockpit:
+  title: Cockpit
+  surtitle: Pilotage
+  kicker: Vue consolidée des risques P2P
+  kpi_exposure_total: Exposition totale
+  kpi_exposure_critical: Exposition CRITICAL
+  kpi_cases_open: Cases ouverts
+  kpi_cases_overdue: Cases en retard SLA
+  trend_subtitle: Tendance sur 30 jours
+  trend_cases_created: Cases créés
+  trend_cases_closed: Cases clôturés
+  trend_critical_alerts: Alertes critiques
+  trend_audit_activity: Activité audit trail
+  quick_access: 🚀 Accès rapide
+  top_vendors_title: 🏆 Top 10 fournisseurs par exposition financière
+  top_vendors_empty: |
+    Top 10 calculé sur les findings de la session. Aucun finding chargé pour le moment — ci-dessous : les cases de démo.
+  search_placeholder: Rechercher un fournisseur, un case ou une facture…
+  search_results: "{count} résultat(s) trouvé(s)"
+  search_no_results: Aucun résultat
+
+file:
+  title: File d'investigation
+  surtitle: Pilotage
+  kicker: Case management + audit log immutable
+  bulk_actions_title: 🧰 Actions groupées sur {count} cases sélectionnés
+  bulk_assign_label: Assigner à
+  bulk_assign_button: 👥 Assigner {count} cases
+  bulk_close_label: Motif de clôture commun
+  bulk_close_button: ✅ Clôturer {count} cases (false positive)
+  bulk_close_motif_required: Motif obligatoire pour clôturer plusieurs cases.
+  bulk_export_button: 📥 Exporter {count} cases (CSV)
+  bulk_download_link: ⬇️ Télécharger la sélection
+  bulk_result: "Bulk {action} : {ok} OK, {errors} erreurs"
+
+vendor:
+  title: Fiche fournisseur 360°
+  surtitle: Investigation
+  kicker: Profil + paiements + master data + findings
+  tab_profile: Profil
+  tab_payments: Paiements
+  tab_master_data: Master data
+  tab_findings: Findings
+  exposure_30d: Exposition 30 derniers jours
+  exposure_trend: Tendance exposition
+  llm_button: 📝 Générer narration audit (Claude)
+  open_in_score_explorer: Ouvrir dans l'explorateur de score
+
+methodo:
+  title: Méthodologie
+  surtitle: Gouvernance
+  kicker: ISA 240, Sapin 2, AI Act, sources, seuils, métriques
+  section_sources: 📡 Sources de données publiques
+  section_live_demo: 🟢 Mode live vs 🔬 mode démo
+  live_active: Mode live actif
+  demo_active: Mode démo actif
+
+search:
+  title: Recherche globale
+  hint: Saisir un nom de fournisseur, un case_id ou un invoice_id
+  match_vendor: Fournisseur
+  match_case: Case
+  match_invoice: Facture
+  open_match: Ouvrir

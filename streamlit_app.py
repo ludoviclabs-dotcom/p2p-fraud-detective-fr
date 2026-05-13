@@ -154,24 +154,44 @@ pages = {
 
 pg = st.navigation(pages, position="sidebar", expanded=True)
 
+# i18n P5-4 : initialise la locale dès le démarrage (lit st.session_state["lang"]).
+from p2p_fraud.i18n import _, init_locale_from_session  # noqa: E402
+
+init_locale_from_session()
+
 with st.sidebar:
+    st.divider()
+    # Sélecteur de langue (P5-4)
+    _lang_choice = st.radio(
+        _("common.language"),
+        options=["🇫🇷 FR", "🇬🇧 EN"],
+        index=0 if st.session_state.get("lang", "fr") == "fr" else 1,
+        horizontal=True,
+        key="lang_radio",
+    )
+    _new_lang = "fr" if _lang_choice.startswith("🇫🇷") else "en"
+    if _new_lang != st.session_state.get("lang", "fr"):
+        st.session_state["lang"] = _new_lang
+        st.rerun()
     st.divider()
     _login_url = _oidc_login_url()
     if _login_url:
         st.link_button(
-            "🔑 Se connecter (OIDC)",
+            f"🔑 {_('common.signin_oidc')}",
             url=_login_url,
             use_container_width=True,
             help="Authentification fédérée Microsoft Entra ID / Auth0 / Keycloak.",
         )
     if st.button(
-        "🗑️ Purger la session",
-        help="RGPD — droit à l'effacement. Supprime toutes les données chargées en mémoire.",
+        f"🗑️ {_('common.purge_session')}",
+        help=_("common.purge_help"),
         use_container_width=True,
     ):
-        keys_to_clear = [k for k in list(st.session_state.keys()) if k != "current_user"]
+        keys_to_clear = [
+            k for k in list(st.session_state.keys()) if k not in ("current_user", "lang")
+        ]
         for k in keys_to_clear:
             del st.session_state[k]
-        st.toast("Session purgée — toutes les données ont été effacées.", icon="🗑️")
+        st.toast(_("common.toast_session_purged"), icon="🗑️")
 
 pg.run()

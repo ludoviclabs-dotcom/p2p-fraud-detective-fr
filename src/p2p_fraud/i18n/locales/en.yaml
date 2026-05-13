@@ -1,0 +1,112 @@
+# EN catalog — must mirror keys from fr.yaml.
+# Run `python -m p2p_fraud.i18n._diagnostics` (or tests/test_i18n.py) to detect missing keys.
+
+common:
+  app_name: P2P Fraud Detective FR
+  demonstrator_banner: Demonstrator — synthetic data, not for production use
+  no_data_loaded: No data loaded
+  load_scenario_cta: Discover the platform in 60 seconds with a pre-loaded scenario
+  open_sandbox: Open Sandbox
+  open_cockpit: Open Cockpit
+  language: Language
+  toast_session_purged: Session purged — all in-memory data has been cleared
+  ribbon_demo: DEMONSTRATOR
+  loading: Loading…
+  error_generic: An error occurred
+  signin_oidc: Sign in (OIDC)
+  purge_session: Purge session
+  purge_help: GDPR — right to erasure. Clears all in-memory data.
+
+nav:
+  section_pilotage: 🧭 Steering
+  section_donnees: 🗂️ Data
+  section_controles: 🧮 Statistical controls
+  section_ml: 🤖 ML detection
+  section_investigation: 🔎 Investigation & reporting
+  section_gouvernance: 📚 Governance & method
+  page_cockpit: Cockpit
+  page_sandbox: Commercial sandbox
+  page_file: Investigation queue
+  page_alertes: Alerts & monitoring
+  page_collab: Multi-user collaboration
+  page_upload: Data import
+  page_master_data: Master data — history
+  page_sirene: Sirene check
+  page_benford: Benford's Law
+  page_doublons: Duplicates
+  page_sous_seuils: Structuring / under-threshold
+  page_sanctions: Sanctions & PEP
+  page_decp: DECP & INPI RBE
+  page_anomalies_ml: Anomalies (ML)
+  page_anneaux: Fraud rings
+  page_score_explorer: Score explorer
+  page_vendor_360: Vendor 360°
+  page_synthese: Summary export
+  page_audit_trail: Audit trail
+  page_methodologie: Methodology
+  page_gouvernance: Governance
+
+cockpit:
+  title: Cockpit
+  surtitle: Steering
+  kicker: Consolidated P2P risk overview
+  kpi_exposure_total: Total exposure
+  kpi_exposure_critical: CRITICAL exposure
+  kpi_cases_open: Open cases
+  kpi_cases_overdue: Overdue SLA cases
+  trend_subtitle: 30-day trend
+  trend_cases_created: Cases created
+  trend_cases_closed: Cases closed
+  trend_critical_alerts: Critical alerts
+  trend_audit_activity: Audit trail activity
+  quick_access: 🚀 Quick access
+  top_vendors_title: 🏆 Top 10 vendors by financial exposure
+  top_vendors_empty: |
+    Top 10 computed from session findings. No finding loaded yet — below: demo cases.
+  search_placeholder: Search for a vendor, case or invoice…
+  search_results: "{count} result(s) found"
+  search_no_results: No results
+
+file:
+  title: Investigation queue
+  surtitle: Steering
+  kicker: Case management + immutable audit log
+  bulk_actions_title: 🧰 Bulk actions on {count} selected cases
+  bulk_assign_label: Assign to
+  bulk_assign_button: 👥 Assign {count} cases
+  bulk_close_label: Common closure reason
+  bulk_close_button: ✅ Close {count} cases (false positive)
+  bulk_close_motif_required: Reason required for closing multiple cases.
+  bulk_export_button: 📥 Export {count} cases (CSV)
+  bulk_download_link: ⬇️ Download selection
+  bulk_result: "Bulk {action}: {ok} OK, {errors} errors"
+
+vendor:
+  title: Vendor 360°
+  surtitle: Investigation
+  kicker: Profile + payments + master data + findings
+  tab_profile: Profile
+  tab_payments: Payments
+  tab_master_data: Master data
+  tab_findings: Findings
+  exposure_30d: Last 30 days exposure
+  exposure_trend: Exposure trend
+  llm_button: 📝 Generate audit narrative (Claude)
+  open_in_score_explorer: Open in score explorer
+
+methodo:
+  title: Methodology
+  surtitle: Governance
+  kicker: ISA 240, Sapin 2, AI Act, sources, thresholds, metrics
+  section_sources: 📡 Public data sources
+  section_live_demo: 🟢 Live mode vs 🔬 demo mode
+  live_active: Live mode active
+  demo_active: Demo mode active
+
+search:
+  title: Global search
+  hint: Enter a vendor name, case_id or invoice_id
+  match_vendor: Vendor
+  match_case: Case
+  match_invoice: Invoice
+  open_match: Open

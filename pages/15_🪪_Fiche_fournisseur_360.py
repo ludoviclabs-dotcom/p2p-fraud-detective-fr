@@ -7,10 +7,13 @@ import plotly.express as px
 import streamlit as st
 from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.llm.narrative_generator import generate_vendor_narrative
 from p2p_fraud.scoring.reason_codes import render_reason
 from p2p_fraud.services.vendor_360 import get_vendor_summary
 from p2p_fraud.streamlit_theme import init_page
+
+init_locale_from_session()
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -119,6 +122,55 @@ col1.metric("Nom", summary.vendor_name or "—")
 col2.metric("SIREN", summary.siren or "—")
 col3.metric("Paiements (€)", _fmt_eur(summary.total_paid_eur))
 col4.metric("Factures", summary.n_invoices)
+
+# Sparkline trend exposition 30 jours (P5-4)
+if not summary.invoices.empty:
+    from datetime import UTC, datetime, timedelta
+
+    import plotly.graph_objects as go
+
+    _sub = summary.invoices.copy()
+    _sub["invoice_date"] = pd.to_datetime(_sub["invoice_date"], errors="coerce")
+    _sub = _sub.dropna(subset=["invoice_date"])
+    _since = pd.Timestamp(datetime.now(UTC).date() - timedelta(days=30), tz="UTC")
+    _recent = _sub[_sub["invoice_date"] >= _since.tz_localize(None)]
+    if not _recent.empty:
+        _daily = _recent.groupby(_recent["invoice_date"].dt.date)["amount"].sum()
+        _idx = pd.date_range(
+            end=datetime.now(UTC).date(),
+            periods=30,
+            freq="D",
+        )
+        _series = pd.Series(
+            [_daily.get(d.date(), 0.0) for d in _idx],
+            index=_idx,
+        )
+        _exp_30d = float(_series.sum())
+        st.caption(
+            f"📈 **{_('vendor.exposure_30d')}** : {_fmt_eur(_exp_30d)} · "
+            f"{_('vendor.exposure_trend')} sur 30 jours"
+        )
+        _fig_spark = go.Figure(
+            go.Scatter(
+                x=_series.index,
+                y=_series.values,
+                mode="lines",
+                line={"color": "#1F3A6E", "width": 2},
+                fill="tozeroy",
+                fillcolor="rgba(31, 58, 110, 0.2)",
+                hovertemplate="%{x|%d %b}<br>%{y:,.0f} €<extra></extra>",
+            )
+        )
+        _fig_spark.update_layout(
+            showlegend=False,
+            margin={"l": 0, "r": 0, "t": 0, "b": 0},
+            height=60,
+            xaxis={"visible": False},
+            yaxis={"visible": False},
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(_fig_spark, use_container_width=True)
 
 if summary.is_sanctioned:
     st.error("🚨 Fournisseur SANCTIONNÉ — paiement à bloquer (LCB-FT).")
