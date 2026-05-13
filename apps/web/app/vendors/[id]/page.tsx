@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LlmNarrativeStream } from "@/components/llm-narrative-stream";
 import { formatDate, formatEur } from "@/lib/utils";
 
 const TABS = ["profile", "timeline", "findings"] as const;
@@ -214,9 +215,17 @@ export default function VendorDetailPage() {
                       </div>
                     ))}
                 </dl>
-                <Button className="mt-4" variant="outline" disabled>
-                  📝 Narration LLM (à câbler en Phase 6)
-                </Button>
+                <div className="mt-4">
+                  <LlmNarrativeStream
+                    vendorId={vendorId}
+                    vendorName={summary.data?.vendor_name}
+                    siren={summary.data?.siren}
+                    totalPaidEur={summary.data?.total_paid_eur}
+                    nInvoices={summary.data?.n_invoices ?? 0}
+                    isSanctioned={summary.data?.is_sanctioned ?? false}
+                    isPep={summary.data?.is_pep ?? false}
+                  />
+                </div>
               </CardContent>
             </Card>
           ) : tab === "timeline" ? (
