@@ -744,6 +744,32 @@
         }
       }
     },
+    "/api/v1/scenarios": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "List Scenarios Endpoint",
+        "description": "Liste les 5 sc\u00e9narios pr\u00e9-charg\u00e9s disponibles (P5-2).\n\nPhase 7 \u2014 alimente la Sandbox commerciale Next.js. Les sc\u00e9narios sont\nd\u00e9terministes (seed fix\u00e9) et g\u00e9n\u00e9rables c\u00f4t\u00e9 backend via\n`synthetic.scenarios.load_scenario(name)`.",
+        "operationId": "list_scenarios_endpoint_api_v1_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioMeta"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Endpoint Api V1 Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "tags": [
@@ -2137,6 +2163,63 @@
           "scenario"
         ],
         "title": "RingsGraph"
+      },
+      "ScenarioMeta": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "pillar": {
+            "type": "string",
+            "title": "Pillar"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "short": {
+            "type": "string",
+            "title": "Short"
+          },
+          "detectors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Detectors"
+          },
+          "target_vendor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Vendor"
+          },
+          "storyline": {
+            "type": "string",
+            "title": "Storyline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "title",
+          "pillar",
+          "severity",
+          "short",
+          "detectors",
+          "storyline"
+        ],
+        "title": "ScenarioMeta"
       },
       "ScoreRequest": {
         "properties": {

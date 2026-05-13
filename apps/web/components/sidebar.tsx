@@ -26,76 +26,79 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale, type Locale } from "@/components/locale-provider";
 
 type NavItem = {
   href: string;
-  label: string;
+  labelKey: string;
   Icon: typeof LayoutDashboard;
 };
 
 type NavSection = {
-  title: string;
+  titleKey: string;
   items: NavItem[];
 };
 
 const SECTIONS: NavSection[] = [
   {
-    title: "🧭 Pilotage",
+    titleKey: "nav.section_pilotage",
     items: [
-      { href: "/dashboard", label: "Cockpit", Icon: LayoutDashboard },
-      { href: "/tour", label: "Tour guidé", Icon: GraduationCap },
-      { href: "/sandbox", label: "Sandbox", Icon: Play },
-      { href: "/cases", label: "File d'investigation", Icon: Inbox },
-      { href: "/alerts", label: "Alertes & monitoring", Icon: Bell },
-      { href: "/collab", label: "Collaboration", Icon: Users },
+      { href: "/dashboard", labelKey: "nav.cockpit", Icon: LayoutDashboard },
+      { href: "/tour", labelKey: "nav.tour", Icon: GraduationCap },
+      { href: "/sandbox", labelKey: "nav.sandbox", Icon: Play },
+      { href: "/cases", labelKey: "nav.cases", Icon: Inbox },
+      { href: "/alerts", labelKey: "nav.alerts", Icon: Bell },
+      { href: "/collab", labelKey: "nav.collab", Icon: Users },
     ],
   },
   {
-    title: "🗂️ Données",
+    titleKey: "nav.section_donnees",
     items: [
-      { href: "/upload", label: "Import des données", Icon: Upload },
-      { href: "/master-history", label: "Référentiel — historique", Icon: History },
-      { href: "/sirene", label: "Contrôle Sirene", Icon: CheckCircle2 },
+      { href: "/upload", labelKey: "nav.upload", Icon: Upload },
+      { href: "/master-history", labelKey: "nav.master_history", Icon: History },
+      { href: "/sirene", labelKey: "nav.sirene", Icon: CheckCircle2 },
     ],
   },
   {
-    title: "🧮 Contrôles statistiques",
+    titleKey: "nav.section_controles",
     items: [
-      { href: "/benford", label: "Loi de Benford", Icon: BarChart3 },
-      { href: "/duplicates", label: "Doublons", Icon: Copy },
-      { href: "/structuring", label: "Fractionnement", Icon: Minus },
-      { href: "/sanctions", label: "Sanctions & PEP", Icon: Scale },
-      { href: "/decp-rbe", label: "DECP & RBE INPI", Icon: Scale },
+      { href: "/benford", labelKey: "nav.benford", Icon: BarChart3 },
+      { href: "/duplicates", labelKey: "nav.duplicates", Icon: Copy },
+      { href: "/structuring", labelKey: "nav.structuring", Icon: Minus },
+      { href: "/sanctions", labelKey: "nav.sanctions", Icon: Scale },
+      { href: "/decp-rbe", labelKey: "nav.decp_rbe", Icon: Scale },
     ],
   },
   {
-    title: "🤖 Détection ML",
+    titleKey: "nav.section_ml",
     items: [
-      { href: "/anomalies", label: "Anomalies (ML)", Icon: Brain },
-      { href: "/rings", label: "Anneaux de fraude", Icon: Network },
-      { href: "/score", label: "Explorateur de score", Icon: Lightbulb },
-      { href: "/findings", label: "Findings", Icon: BarChart3 },
+      { href: "/anomalies", labelKey: "nav.anomalies", Icon: Brain },
+      { href: "/rings", labelKey: "nav.rings", Icon: Network },
+      { href: "/score", labelKey: "nav.score", Icon: Lightbulb },
+      { href: "/findings", labelKey: "nav.findings", Icon: BarChart3 },
     ],
   },
   {
-    title: "🔎 Investigation",
+    titleKey: "nav.section_investigation",
     items: [
-      { href: "/vendors", label: "Fiche fournisseur 360°", Icon: UserCircle2 },
-      { href: "/exports", label: "Synthèse — export", Icon: FileText },
-      { href: "/audit", label: "Piste d'audit", Icon: Fingerprint },
+      { href: "/vendors", labelKey: "nav.vendors", Icon: UserCircle2 },
+      { href: "/exports", labelKey: "nav.exports", Icon: FileText },
+      { href: "/audit", labelKey: "nav.audit", Icon: Fingerprint },
     ],
   },
   {
-    title: "📚 Gouvernance",
+    titleKey: "nav.section_gouvernance",
     items: [
-      { href: "/methodology", label: "Méthodologie", Icon: BookOpen },
-      { href: "/governance", label: "Gouvernance", Icon: ShieldCheck },
+      { href: "/methodology", labelKey: "nav.methodology", Icon: BookOpen },
+      { href: "/governance", labelKey: "nav.governance", Icon: ShieldCheck },
     ],
   },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t, locale, setLocale } = useLocale();
+
   return (
     <aside className="flex h-screen w-64 flex-col bg-[#0f1b33] text-[#e6eaf2]">
       <div className="flex items-center gap-2 border-b border-[#1f3a6e] px-4 py-4">
@@ -108,11 +111,23 @@ export function Sidebar() {
           Detective FR
         </div>
       </div>
+
+      {/* Sélecteur de langue */}
+      <div className="flex items-center gap-1 border-b border-[#1f3a6e] px-3 py-2 text-xs">
+        <span className="text-[#9aa3b2]">{t("common.language")} :</span>
+        <LangButton current={locale} target="fr" onClick={setLocale}>
+          🇫🇷 FR
+        </LangButton>
+        <LangButton current={locale} target="en" onClick={setLocale}>
+          🇬🇧 EN
+        </LangButton>
+      </div>
+
       <nav className="flex-1 overflow-y-auto px-2 py-3 text-sm">
         {SECTIONS.map((section) => (
-          <div key={section.title} className="mb-4">
+          <div key={section.titleKey} className="mb-4">
             <div className="px-3 pb-1 text-[0.7rem] uppercase tracking-wider text-[#9aa3b2]">
-              {section.title}
+              {t(section.titleKey)}
             </div>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
@@ -129,7 +144,7 @@ export function Sidebar() {
                       )}
                     >
                       <item.Icon size={14} aria-hidden />
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate">{t(item.labelKey)}</span>
                     </Link>
                   </li>
                 );
@@ -139,8 +154,36 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-[#1f3a6e] px-4 py-3 text-[0.7rem] text-[#9aa3b2]">
-        v0.5.0 · Migration v2 Phase 6
+        v0.5.0 · Migration v2 Phase 7
       </div>
     </aside>
+  );
+}
+
+function LangButton({
+  current,
+  target,
+  onClick,
+  children,
+}: {
+  current: Locale;
+  target: Locale;
+  onClick: (l: Locale) => void;
+  children: string;
+}) {
+  const active = current === target;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(target)}
+      className={cn(
+        "rounded px-1.5 py-0.5 transition-colors",
+        active
+          ? "bg-[#1f3a6e] text-[#e5a93a]"
+          : "text-[#9aa3b2] hover:text-white",
+      )}
+    >
+      {children}
+    </button>
   );
 }

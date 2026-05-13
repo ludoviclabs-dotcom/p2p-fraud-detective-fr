@@ -552,6 +552,44 @@ def rings_graph(
     )
 
 
+class ScenarioMeta(BaseModel):
+    name: str
+    title: str
+    pillar: str
+    severity: str
+    short: str
+    detectors: list[str]
+    target_vendor: str | None = None
+    storyline: str
+
+
+@router.get("/scenarios", response_model=list[ScenarioMeta])
+def list_scenarios_endpoint(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[ScenarioMeta]:
+    """Liste les 5 scénarios pré-chargés disponibles (P5-2).
+
+    Phase 7 — alimente la Sandbox commerciale Next.js. Les scénarios sont
+    déterministes (seed fixé) et générables côté backend via
+    `synthetic.scenarios.load_scenario(name)`.
+    """
+    from p2p_fraud.synthetic.scenarios import list_scenarios
+
+    return [
+        ScenarioMeta(
+            name=m.name,
+            title=m.title,
+            pillar=m.pillar,
+            severity=m.severity,
+            short=m.short,
+            detectors=list(m.detectors),
+            target_vendor=m.target_vendor,
+            storyline=m.storyline,
+        )
+        for m in list_scenarios()
+    ]
+
+
 # ─── 4. Audit log ────────────────────────────────────────────────────────────
 
 

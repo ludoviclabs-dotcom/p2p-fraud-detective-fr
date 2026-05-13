@@ -289,6 +289,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Scenarios Endpoint
+         * @description Liste les 5 scénarios pré-chargés disponibles (P5-2).
+         *
+         *     Phase 7 — alimente la Sandbox commerciale Next.js. Les scénarios sont
+         *     déterministes (seed fixé) et générables côté backend via
+         *     `synthetic.scenarios.load_scenario(name)`.
+         */
+        get: operations["list_scenarios_endpoint_api_v1_scenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -862,6 +886,25 @@ export interface components {
             /** Scenario */
             scenario: string;
         };
+        /** ScenarioMeta */
+        ScenarioMeta: {
+            /** Name */
+            name: string;
+            /** Title */
+            title: string;
+            /** Pillar */
+            pillar: string;
+            /** Severity */
+            severity: string;
+            /** Short */
+            short: string;
+            /** Detectors */
+            detectors: string[];
+            /** Target Vendor */
+            target_vendor?: string | null;
+            /** Storyline */
+            storyline: string;
+        };
         /** ScoreRequest */
         ScoreRequest: {
             /** Invoices */
@@ -1424,6 +1467,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_scenarios_endpoint_api_v1_scenarios_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioMeta"][];
                 };
             };
         };
