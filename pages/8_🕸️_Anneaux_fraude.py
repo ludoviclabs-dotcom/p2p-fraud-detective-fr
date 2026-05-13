@@ -14,12 +14,15 @@ import streamlit as st
 from streamlit_agraph import Config, Edge, Node, agraph
 
 from p2p_fraud.detectors.graph import detect_fraud_rings
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Anneaux de fraude",
-    surtitle="Détection ML",
-    kicker=("Ego-network NetworkX · drill-down Fiche 360°"),
+    title=_("nav.page_anneaux"),
+    surtitle=_("nav.surtitle_ml"),
+    kicker=_("nav.kicker_anneaux"),
 )
 st.caption(
     "Graphe biparti `vendors ⟷ IBAN`. Détection : IBAN partagé entre fournisseurs (CRITICAL) "

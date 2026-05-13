@@ -9,14 +9,17 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from p2p_fraud.enrichment.sirene_client import SireneClient, cross_check_invoices
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
 load_dotenv()
 
+init_locale_from_session()
+
 init_page(
-    title="Contrôle Sirene",
-    surtitle="Données",
-    kicker=("Validation INSEE en temps réel"),
+    title=_("nav.page_sirene"),
+    surtitle=_("nav.surtitle_donnees"),
+    kicker=_("nav.kicker_sirene"),
 )
 st.caption(
     "Vérifie chaque SIREN contre le référentiel INSEE : existence, statut administratif, "

@@ -9,12 +9,15 @@ from p2p_fraud.config import get_settings
 from p2p_fraud.detectors.decp import detect_decp_rbe
 from p2p_fraud.enrichment.decp_client import DECPClient
 from p2p_fraud.enrichment.rbe_client import RBEClient
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="DECP & RBE INPI",
-    surtitle="Contrôles réglementaires",
-    kicker="Marchés publics (DECP) · Bénéficiaires effectifs (RBE/INPI) · Sapin 2 art. 17",
+    title=_("nav.page_decp"),
+    surtitle=_("nav.surtitle_controles"),
+    kicker=_("nav.kicker_decp"),
 )
 st.caption(
     "Croisement des fournisseurs avec le DECP (Données Essentielles des Contrats de la "

@@ -7,12 +7,15 @@ import plotly.express as px
 import streamlit as st
 
 from p2p_fraud.detectors.thresholds import _load_threshold_config, detect_under_threshold
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Fractionnement / sous-seuils",
-    surtitle="Contrôles statistiques",
-    kicker=("Détection clusters intentionnels"),
+    title=_("nav.page_sous_seuils"),
+    surtitle=_("nav.surtitle_controles"),
+    kicker=_("nav.kicker_sous_seuils"),
 )
 st.caption(
     "Fenêtre `[seuil − ε·seuil, seuil[` paramétrable. Sévérité aggravée par clustering fournisseur."

@@ -14,14 +14,17 @@ from st_aggrid import AgGrid, DataReturnMode, GridOptionsBuilder, GridUpdateMode
 
 from p2p_fraud.cases.models import CaseStatus
 from p2p_fraud.cases.service import CaseClosedError
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.schema import Finding
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
+init_locale_from_session()
+
 init_page(
-    title="File d'investigation",
-    surtitle="Pilotage",
-    kicker=("Case management + audit log immutable"),
+    title=_("nav.page_file"),
+    surtitle=_("nav.surtitle_pilotage"),
+    kicker=_("nav.kicker_file"),
 )
 st.caption(
     "Case management v0 avec audit log immutable chaîné par hash SHA-256. "

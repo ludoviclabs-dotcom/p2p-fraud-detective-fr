@@ -46,6 +46,35 @@ nav:
   page_audit_trail: Piste d'audit
   page_methodologie: Méthodologie
   page_gouvernance: Gouvernance
+  # Kickers (courte description sous le titre, P5-4.1)
+  kicker_cockpit: Vue consolidée des risques P2P
+  kicker_sandbox: 5 scénarios cliquables — démos institutionnelles en 60 secondes
+  kicker_file: Case management + audit log immutable
+  kicker_alertes: Slack · Teams · SMTP · Webhook B2B — règles dispatch et historique
+  kicker_collab: Multi-user · @mentions · SLA configurable · OIDC Microsoft Entra ID
+  kicker_upload: CSV/Excel + auto-détection ERP
+  kicker_master_data: Détection BEC + 4-eyes manquant
+  kicker_sirene: Validation INSEE en temps réel
+  kicker_benford: Scoping orienté risque Newcomb-Benford F1D/F2D/LD
+  kicker_doublons: Bucketing montant ± 0.01 € + fenêtre date paramétrable + RapidFuzz token_set_ratio
+  kicker_sous_seuils: Détection clusters intentionnels
+  kicker_sanctions: OFAC · Trésor FR · UE consolidée
+  kicker_decp: Marchés publics DECP · Bénéficiaires effectifs RBE/INPI · Sapin 2 art. 17
+  kicker_anomalies_ml: Isolation Forest + perturbation locale
+  kicker_anneaux: Ego-network NetworkX · drill-down Fiche 360°
+  kicker_score_explorer: Waterfall + reason codes FR
+  kicker_vendor_360: Profil · paiements · master data · findings
+  kicker_synthese: Risk score consolidé · Excel · Parquet
+  kicker_audit_trail: Journal immutable hash-chaîné SHA-256 + signatures Ed25519
+  kicker_methodologie: Sources · seuils · métriques · limites · architecture
+  kicker_gouvernance: AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD
+  # Surtitles (= nom de la section, P5-4.1)
+  surtitle_pilotage: Pilotage
+  surtitle_donnees: Données
+  surtitle_controles: Contrôles statistiques
+  surtitle_ml: Détection ML
+  surtitle_investigation: Investigation
+  surtitle_gouvernance: Gouvernance
 
 cockpit:
   title: Cockpit

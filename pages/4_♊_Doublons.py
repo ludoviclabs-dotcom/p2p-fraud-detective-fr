@@ -6,12 +6,15 @@ import pandas as pd
 import streamlit as st
 
 from p2p_fraud.detectors.duplicates import detect_duplicates
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Doublons",
-    surtitle="Contrôles statistiques",
-    kicker=("Bucketing montant ± 0,01 € + fenêtre date paramétrable + RapidFuzz token_set_ratio"),
+    title=_("nav.page_doublons"),
+    surtitle=_("nav.surtitle_controles"),
+    kicker=_("nav.kicker_doublons"),
 )
 
 if "df_invoices" not in st.session_state:

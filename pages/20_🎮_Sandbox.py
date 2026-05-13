@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.scenarios import (
     SCENARIOS,
@@ -24,10 +25,12 @@ from p2p_fraud.synthetic.scenarios import (
     load_scenario,
 )
 
+init_locale_from_session()
+
 init_page(
-    title="Sandbox commerciale",
-    surtitle="Pilotage",
-    kicker="5 scénarios cliquables — démos institutionnelles en 60 secondes",
+    title=_("nav.page_sandbox"),
+    surtitle=_("nav.surtitle_pilotage"),
+    kicker=_("nav.kicker_sandbox"),
 )
 
 st.markdown(

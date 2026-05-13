@@ -12,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.scoring.explainer import (
     score_waterfall,
     top_contributions_summary,
@@ -20,10 +21,12 @@ from p2p_fraud.scoring.explainer import (
 from p2p_fraud.scoring.risk_engine import aggregate_findings_with_explanations
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Explorateur de score",
-    surtitle="Détection ML",
-    kicker=("Waterfall + reason codes FR"),
+    title=_("nav.page_score_explorer"),
+    surtitle=_("nav.surtitle_ml"),
+    kicker=_("nav.kicker_score_explorer"),
 )
 st.caption(
     "Explication des scores consolidés en français : reason codes, waterfall des "

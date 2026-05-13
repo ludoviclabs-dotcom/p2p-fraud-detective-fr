@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.ingestion.column_mapper import CANONICAL_COLUMNS
 from p2p_fraud.ingestion.parsers import IngestionError, load_invoices
 from p2p_fraud.ingestion.presets import (
@@ -20,10 +21,12 @@ from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
 from pages._helpers import get_case_service
 
+init_locale_from_session()
+
 init_page(
-    title="Import des données",
-    surtitle="Données",
-    kicker=("CSV/Excel + auto-détection ERP"),
+    title=_("nav.page_upload"),
+    surtitle=_("nav.surtitle_donnees"),
+    kicker=_("nav.kicker_upload"),
 )
 st.caption(
     "Importez un export Excel/CSV de factures fournisseurs, ou générez un dataset synthétique pour la démo."

@@ -15,6 +15,7 @@ import plotly.express as px
 import streamlit as st
 
 from p2p_fraud.detectors import master_data_changes as md
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.schema import VendorMasterEvent
 from p2p_fraud.streamlit_theme import init_page
 from p2p_fraud.synthetic.generator import (
@@ -23,10 +24,12 @@ from p2p_fraud.synthetic.generator import (
     generate_master_data_events,
 )
 
+init_locale_from_session()
+
 init_page(
-    title="Référentiel — historique",
-    surtitle="Données",
-    kicker=("Détection BEC + 4-eyes manquant"),
+    title=_("nav.page_master_data"),
+    surtitle=_("nav.surtitle_donnees"),
+    kicker=_("nav.kicker_master_data"),
 )
 st.caption(
     "Le scénario fraude n°1 (AFP 2026) : changement d'IBAN sans 4-eyes, "

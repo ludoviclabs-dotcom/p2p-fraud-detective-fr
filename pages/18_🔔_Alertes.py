@@ -13,12 +13,15 @@ from p2p_fraud.alerts import (
     TeamsWebhook,
     evaluate_rules,
 )
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.streamlit_theme import init_page
 
+init_locale_from_session()
+
 init_page(
-    title="Alertes & monitoring",
-    surtitle="Pilotage",
-    kicker="Slack · Teams · SMTP — règles, dispatch et historique",
+    title=_("nav.page_alertes"),
+    surtitle=_("nav.surtitle_pilotage"),
+    kicker=_("nav.kicker_alertes"),
 )
 st.caption(
     "Configure les canaux d'alerte (Slack, Microsoft Teams, SMTP), définis les règles "
