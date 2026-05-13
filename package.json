@@ -1,0 +1,23 @@
+{
+  "name": "p2p-fraud-detective-fr-monorepo",
+  "version": "0.5.0",
+  "private": true,
+  "description": "P2P Fraud Detective FR — monorepo Streamlit (legacy) + Next.js (v2 in progress)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "web:dev": "pnpm --filter @p2pfd/web dev",
+    "web:build": "pnpm --filter @p2pfd/web build",
+    "web:lint": "pnpm --filter @p2pfd/web lint",
+    "web:typecheck": "pnpm --filter @p2pfd/web typecheck",
+    "sdk:gen-types": "openapi-typescript docs/api/openapi.json --output packages/shared-types/src/api.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

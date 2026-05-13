@@ -61,3 +61,4 @@ site/
 # Benchmark artifacts (régénérés par make bench-f1)
 docs/benchmark_results.json
 alerts.db
+node_modules/
