@@ -19,6 +19,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from p2p_fraud.i18n import _, init_locale_from_session
 from p2p_fraud.services.exposure import (
     aggregate_exposure_by_vendor,
     cases_to_dataframe,
@@ -27,10 +28,11 @@ from p2p_fraud.services.exposure import (
 from p2p_fraud.streamlit_theme import init_page
 from pages._helpers import get_case_service
 
+init_locale_from_session()
 init_page(
-    title="Cockpit",
-    surtitle="Pilotage",
-    kicker="Vue consolidée des risques P2P — exposition financière prioritaire",
+    title=_("cockpit.title"),
+    surtitle=_("cockpit.surtitle"),
+    kicker=_("cockpit.kicker"),
 )
 
 
@@ -127,20 +129,100 @@ else:
     )
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("💸 Exposition totale", _fmt_eur(exposure_total))
+col1.metric(f"💸 {_('cockpit.kpi_exposure_total')}", _fmt_eur(exposure_total))
 col2.metric(
-    "🔴 Exposition CRITICAL",
+    f"🔴 {_('cockpit.kpi_exposure_critical')}",
     _fmt_eur(exposure_critical),
     delta=f"{n_critical} alertes" if n_critical else None,
     delta_color="inverse",
 )
-col3.metric("📂 Cases ouverts", n_cases_open)
+col3.metric(f"📂 {_('cockpit.kpi_cases_open')}", n_cases_open)
 col4.metric(
-    "⏰ Cases en retard SLA",
+    f"⏰ {_('cockpit.kpi_cases_overdue')}",
     n_cases_overdue,
     delta=f"{n_cases_unassigned_critical} non assignés" if n_cases_unassigned_critical else None,
     delta_color="inverse",
 )
+
+
+# ─── 2ter. Recherche globale (P5-4) ──────────────────────────────────────────
+
+with st.expander(f"🔎 {_('search.title')}", expanded=False):
+    _query = st.text_input(
+        _("cockpit.search_placeholder"),
+        value=st.query_params.get("q", ""),
+        placeholder=_("search.hint"),
+        key="cockpit_search_q",
+    )
+    if _query:
+        st.query_params["q"] = _query
+        _q_lower = _query.strip().lower()
+        _matches: list[
+            tuple[str, str, str, str | None]
+        ] = []  # (kind, label, target_page, query_param)
+
+        # 1. Cases (par case_id, vendor_id ou title)
+        for _c in cases:
+            if (
+                _q_lower in (_c.case_id or "").lower()
+                or _q_lower in (_c.vendor_id or "").lower()
+                or _q_lower in (_c.title or "").lower()
+            ):
+                _matches.append(
+                    (
+                        _("search.match_case"),
+                        f"{_c.case_id} — {_c.title} ({_c.severity})",
+                        "pages/10_🗂️_File_d_investigation.py",
+                        f"case_id={_c.case_id}",
+                    )
+                )
+
+        # 2. Vendors (depuis les invoices chargés ou les cases avec vendor_id)
+        _vendor_pool: dict[str, str] = {}
+        if invoices is not None and "vendor_id" in invoices.columns:
+            for _v in invoices["vendor_id"].dropna().unique():
+                _vname = ""
+                if "vendor_name" in invoices.columns:
+                    _row = invoices[invoices["vendor_id"] == _v].head(1)
+                    if not _row.empty:
+                        _vname = str(_row.iloc[0].get("vendor_name", ""))
+                _vendor_pool[str(_v)] = _vname
+        for _vid, _vname in _vendor_pool.items():
+            if _q_lower in _vid.lower() or (_vname and _q_lower in _vname.lower()):
+                _matches.append(
+                    (
+                        _("search.match_vendor"),
+                        f"{_vid} — {_vname}" if _vname else _vid,
+                        "pages/15_🪪_Fiche_fournisseur_360.py",
+                        f"vendor_id={_vid}",
+                    )
+                )
+
+        # 3. Invoices (depuis le DF en session)
+        if invoices is not None and "invoice_id" in invoices.columns:
+            for _iid in invoices["invoice_id"].dropna().astype(str).unique():
+                if _q_lower in _iid.lower():
+                    _matches.append(
+                        (
+                            _("search.match_invoice"),
+                            _iid,
+                            "pages/14_💡_Score_explorer.py",
+                            f"invoice_id={_iid}",
+                        )
+                    )
+                    if len(_matches) >= 30:
+                        break
+
+        # Cap pour ne pas saturer l'UI
+        _matches = _matches[:30]
+        st.caption(_("cockpit.search_results", count=len(_matches)))
+        if not _matches:
+            st.info(_("cockpit.search_no_results"))
+        else:
+            for _kind, _label, _page, _qparam in _matches:
+                _col_a, _col_b = st.columns([5, 1])
+                _col_a.markdown(f"**{_kind}** · {_label}")
+                _col_b.page_link(_page, label=_("search.open_match"), icon="➡️")
 
 
 # ─── 2bis. Sparklines tendances 30 jours ─────────────────────────────────────
@@ -272,7 +354,7 @@ st.divider()
 
 # ─── 3. Raccourcis rapides ───────────────────────────────────────────────────
 
-st.subheader("🚀 Accès rapide")
+st.subheader(_("cockpit.quick_access"))
 
 q1, q2, q3 = st.columns(3)
 with q1:
@@ -314,7 +396,7 @@ st.divider()
 
 # ─── 4. Top 10 fournisseurs ──────────────────────────────────────────────────
 
-st.subheader("🏆 Top 10 fournisseurs par exposition financière")
+st.subheader(_("cockpit.top_vendors_title"))
 
 if summary and summary.top_vendors:
     df_top = pd.DataFrame(
