@@ -74,6 +74,7 @@ const SECTIONS: NavSection[] = [
       { href: "/anomalies", label: "Anomalies (ML)", Icon: Brain },
       { href: "/rings", label: "Anneaux de fraude", Icon: Network },
       { href: "/score", label: "Explorateur de score", Icon: Lightbulb },
+      { href: "/findings", label: "Findings", Icon: BarChart3 },
     ],
   },
   {
@@ -138,7 +139,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-[#1f3a6e] px-4 py-3 text-[0.7rem] text-[#9aa3b2]">
-        v0.5.0 · Migration v2 Phase 1
+        v0.5.0 · Migration v2 Phase 2
       </div>
     </aside>
   );
