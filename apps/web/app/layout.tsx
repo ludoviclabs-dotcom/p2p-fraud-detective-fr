@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { LocaleProvider } from "@/components/locale-provider";
 import { Sidebar } from "@/components/sidebar";
 import "./globals.css";
 
@@ -32,15 +33,17 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable}`}>
         <ThemeProvider>
-          <QueryProvider>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-[#f4f6fa] dark:bg-[#0f1b33]">
-                <div className="ribbon-demo">DÉMONSTRATEUR · v0.5 / v2</div>
-                {children}
-              </main>
-            </div>
-          </QueryProvider>
+          <LocaleProvider>
+            <QueryProvider>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto bg-[#f4f6fa] dark:bg-[#0f1b33]">
+                  <div className="ribbon-demo">DÉMONSTRATEUR · v0.5 / v2</div>
+                  {children}
+                </main>
+              </div>
+            </QueryProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>
