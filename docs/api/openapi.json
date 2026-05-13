@@ -700,6 +700,50 @@
         }
       }
     },
+    "/api/v1/rings": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rings Graph",
+        "description": "Charge un sc\u00e9nario synth\u00e9tique et retourne le graphe vendor\u2194IBAN.\n\nPhase 3b \u2014 alimente la visualisation sigma.js c\u00f4t\u00e9 Next.js sans n\u00e9cessiter\nqu'un dataset soit upload\u00e9 en session. R\u00e9utilise les sc\u00e9narios P5-2 +\n`detect_fraud_rings` (NetworkX).",
+        "operationId": "rings_graph_api_v1_rings_get",
+        "parameters": [
+          {
+            "name": "scenario",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "anneau_fraude",
+              "title": "Scenario"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RingsGraph"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "tags": [
@@ -1816,6 +1860,47 @@
         ],
         "title": "DetectResponse"
       },
+      "GraphEdge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target"
+        ],
+        "title": "GraphEdge"
+      },
+      "GraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "title": "GraphNode"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2008,6 +2093,50 @@
           "vendor_id"
         ],
         "title": "NarrativeBody"
+      },
+      "RingsGraph": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "n_shared_iban_rings": {
+            "type": "integer",
+            "title": "N Shared Iban Rings"
+          },
+          "n_vendor_clusters": {
+            "type": "integer",
+            "title": "N Vendor Clusters"
+          },
+          "largest_cluster_size": {
+            "type": "integer",
+            "title": "Largest Cluster Size"
+          },
+          "scenario": {
+            "type": "string",
+            "title": "Scenario"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges",
+          "n_shared_iban_rings",
+          "n_vendor_clusters",
+          "largest_cluster_size",
+          "scenario"
+        ],
+        "title": "RingsGraph"
       },
       "ScoreRequest": {
         "properties": {

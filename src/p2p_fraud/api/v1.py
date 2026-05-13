@@ -475,6 +475,83 @@ def cases_bulk_close(
     return BulkResult(n_ok=n_ok, n_errors=len(errors), error_case_ids=errors)
 
 
+class GraphNode(BaseModel):
+    id: str
+    kind: str  # "vendor" | "iban"
+    label: str
+
+
+class GraphEdge(BaseModel):
+    source: str
+    target: str
+
+
+class RingsGraph(BaseModel):
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
+    n_shared_iban_rings: int
+    n_vendor_clusters: int
+    largest_cluster_size: int
+    scenario: str
+
+
+@router.get("/rings", response_model=RingsGraph)
+def rings_graph(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    scenario: str = Query("anneau_fraude"),
+) -> RingsGraph:
+    """Charge un scénario synthétique et retourne le graphe vendor↔IBAN.
+
+    Phase 3b — alimente la visualisation sigma.js côté Next.js sans nécessiter
+    qu'un dataset soit uploadé en session. Réutilise les scénarios P5-2 +
+    `detect_fraud_rings` (NetworkX).
+    """
+    from p2p_fraud.detectors.graph import detect_fraud_rings
+    from p2p_fraud.synthetic.scenarios import SCENARIOS, load_scenario
+
+    if scenario not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}.")
+
+    invoices, _vendors, _events = load_scenario(scenario)  # type: ignore[arg-type]
+    # Les invoices contiennent déjà vendor_name + iban (cf. generator.py)
+    # — pas besoin de merge depuis vendors (qui causerait des suffixes _x/_y).
+    _findings, analysis = detect_fraud_rings(invoices)
+
+    # Sérialise le NetworkX graph : tuple (kind, value) → id string lisible
+    def _node_id(node: object) -> str:
+        if isinstance(node, tuple) and len(node) == 2:
+            return f"{node[0]}::{node[1]}"
+        return str(node)
+
+    def _node_label(node: object) -> str:
+        if isinstance(node, tuple) and len(node) == 2:
+            value = str(node[1])
+            return (value[:18] + "…") if len(value) > 20 else value
+        return str(node)
+
+    nodes: list[GraphNode] = []
+    for n, data in analysis.graph.nodes(data=True):
+        nodes.append(
+            GraphNode(
+                id=_node_id(n),
+                kind=str(data.get("kind", "?")),
+                label=_node_label(n),
+            )
+        )
+    edges: list[GraphEdge] = [
+        GraphEdge(source=_node_id(s), target=_node_id(t)) for s, t in analysis.graph.edges()
+    ]
+
+    return RingsGraph(
+        nodes=nodes,
+        edges=edges,
+        n_shared_iban_rings=analysis.n_shared_iban_rings,
+        n_vendor_clusters=analysis.n_vendor_clusters,
+        largest_cluster_size=analysis.largest_cluster_size,
+        scenario=scenario,
+    )
+
+
 # ─── 4. Audit log ────────────────────────────────────────────────────────────
 
 
