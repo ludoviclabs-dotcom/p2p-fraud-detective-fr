@@ -210,6 +210,658 @@
         }
       }
     },
+    "/api/v1/cockpit/kpis": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Cockpit Kpis",
+        "description": "4 KPI Cockpit + 4 s\u00e9ries 30 jours.\n\nSource : `CaseService.list_cases()` + `AuditLog`. Le frontend Next.js\nrend les sparklines via Recharts/visx en r\u00e9utilisant ces s\u00e9ries.",
+        "operationId": "cockpit_kpis_api_v1_cockpit_kpis_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CockpitKPIs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cockpit/top-vendors": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Cockpit Top Vendors",
+        "description": "Top N fournisseurs par exposition financi\u00e8re, agr\u00e9g\u00e9 depuis les cases.",
+        "operationId": "cockpit_top_vendors_api_v1_cockpit_top_vendors_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TopVendor"
+                  },
+                  "title": "Response Cockpit Top Vendors Api V1 Cockpit Top Vendors Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/findings": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "List Findings",
+        "description": "Liste pagin\u00e9e des findings \u2014 source : cases enrichis par leurs events.\n\nPhase 0 \u2014 on agr\u00e8ge depuis `service.list_cases()` (qui porte `severity`,\n`invoice_id`, `vendor_id`) + `case_events` pour `signal` / `rule_id`.\nEn Phase 5, une vraie table `findings` sera ajout\u00e9e.",
+        "operationId": "list_findings_api_v1_findings_get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/p2p_fraud__api__v1__FindingOut"
+                  },
+                  "title": "Response List Findings Api V1 Findings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vendors/{vendor_id}": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Vendor Summary",
+        "description": "Fiche fournisseur 360\u00b0 (version API \u2014 sans dataset session).\n\nEn l'absence de donn\u00e9es charg\u00e9es (free-tier strict), renvoie au moins les\ncases agr\u00e9g\u00e9s par vendor_id pour calculer l'exposition.",
+        "operationId": "vendor_summary_api_v1_vendors__vendor_id__get",
+        "parameters": [
+          {
+            "name": "vendor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vendor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vendors/{vendor_id}/timeline": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Vendor Timeline",
+        "description": "Timeline \u00e9v\u00e9nements 30 jours : cases + audit log pertinents.",
+        "operationId": "vendor_timeline_api_v1_vendors__vendor_id__timeline_get",
+        "parameters": [
+          {
+            "name": "vendor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vendor Id"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineEvent"
+                  },
+                  "title": "Response Vendor Timeline Api V1 Vendors  Vendor Id  Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "List Cases V1",
+        "description": "Liste pagin\u00e9e des cases avec filtres (status/severity/assignee).",
+        "operationId": "list_cases_v1_api_v1_cases_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "assignee",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assignee"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 200,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseOutV1"
+                  },
+                  "title": "Response List Cases V1 Api V1 Cases Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/comment": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Case Comment",
+        "operationId": "case_comment_api_v1_cases__case_id__comment_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Case Comment Api V1 Cases  Case Id  Comment Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/bulk/assign": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Cases Bulk Assign",
+        "operationId": "cases_bulk_assign_api_v1_cases_bulk_assign_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAssignBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/bulk/close": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Cases Bulk Close",
+        "operationId": "cases_bulk_close_api_v1_cases_bulk_close_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCloseBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Audit List",
+        "description": "Audit log paginated. `cursor` = seq de d\u00e9part (exclusif).",
+        "operationId": "audit_list_api_v1_audit_get",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/verify": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Audit Verify",
+        "description": "Recalcul du hash chain + validation des signatures Ed25519 (P5-5).",
+        "operationId": "audit_verify_api_v1_audit_verify_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditVerifyResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exports/dossier.pdf": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Export Dossier Pdf",
+        "description": "G\u00e9n\u00e8re et streame un dossier PDF d'enqu\u00eate (weasyprint si install\u00e9).\n\nPhase 0 \u2014 version minimale : renvoie un PDF placeholder via reportlab/\nweasyprint si disponibles, sinon un message en texte.",
+        "operationId": "export_dossier_pdf_api_v1_exports_dossier_pdf_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/llm/narrative": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Llm Narrative Stream",
+        "description": "G\u00e9n\u00e8re la narration d'audit ISA 240 en streaming SSE.\n\nFormat Server-Sent Events compatible Vercel AI SDK (`useChat`/`useCompletion`).\nLe front Next.js consomme via `EventSource` ou fetch streaming.",
+        "operationId": "llm_narrative_stream_api_v1_llm_narrative_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NarrativeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -229,6 +881,32 @@
                   },
                   "type": "object",
                   "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/public-key": {
+      "get": {
+        "tags": [
+          "Ops"
+        ],
+        "summary": "Security Public Key",
+        "description": "Publie la cl\u00e9 publique Ed25519 utilis\u00e9e pour signer l'audit log (P5-5).\n\nPermet \u00e0 un auditeur externe (CAC, ACPR, Cour des comptes) de v\u00e9rifier\nind\u00e9pendamment les signatures du journal d'audit sans acc\u00e8s au backend.\n\nEn l'absence de cl\u00e9 priv\u00e9e configur\u00e9e (mode d\u00e9mo), renvoie\n`{\"public_key_b64\": \"\", \"enabled\": false}`.",
+        "operationId": "security_public_key_security_public_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Security Public Key Security Public Key Get"
                 }
               }
             }
@@ -556,6 +1234,122 @@
   },
   "components": {
     "schemas": {
+      "AuditEntryOut": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "prev_hash": {
+            "type": "string",
+            "title": "Prev Hash"
+          },
+          "hash": {
+            "type": "string",
+            "title": "Hash"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "at",
+          "actor",
+          "kind",
+          "payload",
+          "prev_hash",
+          "hash"
+        ],
+        "title": "AuditEntryOut"
+      },
+      "AuditPage": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryOut"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "cursor_next": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor Next"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "total"
+        ],
+        "title": "AuditPage"
+      },
+      "AuditVerifyResult": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "invalid_seqs": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Invalid Seqs"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "n_signed": {
+            "type": "integer",
+            "title": "N Signed"
+          },
+          "public_key_b64": {
+            "type": "string",
+            "title": "Public Key B64",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "n_total",
+          "n_signed"
+        ],
+        "title": "AuditVerifyResult"
+      },
       "Body_detect_csv_detect_csv_post": {
         "properties": {
           "file": {
@@ -569,6 +1363,101 @@
           "file"
         ],
         "title": "Body_detect_csv_detect_csv_post"
+      },
+      "BulkAssignBody": {
+        "properties": {
+          "case_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Case Ids"
+          },
+          "assignee": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Assignee"
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_ids",
+          "assignee",
+          "actor"
+        ],
+        "title": "BulkAssignBody"
+      },
+      "BulkCloseBody": {
+        "properties": {
+          "case_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Case Ids"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "\"confirmed\" | \"rejected\" | \"false_positive\""
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Reason"
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_ids",
+          "status",
+          "reason",
+          "actor"
+        ],
+        "title": "BulkCloseBody"
+      },
+      "BulkResult": {
+        "properties": {
+          "n_ok": {
+            "type": "integer",
+            "title": "N Ok"
+          },
+          "n_errors": {
+            "type": "integer",
+            "title": "N Errors"
+          },
+          "error_case_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Error Case Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_ok",
+          "n_errors"
+        ],
+        "title": "BulkResult"
       },
       "CaseOut": {
         "properties": {
@@ -651,6 +1540,105 @@
         ],
         "title": "CaseOut"
       },
+      "CaseOutV1": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "vendor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Id"
+          },
+          "invoice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "exposure_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Eur"
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "closure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closure Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "title",
+          "severity",
+          "status",
+          "created_at"
+        ],
+        "title": "CaseOutV1"
+      },
       "CloseRequest": {
         "properties": {
           "reason": {
@@ -669,6 +1657,109 @@
           "reason"
         ],
         "title": "CloseRequest"
+      },
+      "CockpitKPIs": {
+        "properties": {
+          "exposure_total_eur": {
+            "type": "number",
+            "title": "Exposure Total Eur",
+            "description": "Exposition totale (\u20ac)"
+          },
+          "exposure_critical_eur": {
+            "type": "number",
+            "title": "Exposure Critical Eur",
+            "description": "Exposition CRITICAL (\u20ac)"
+          },
+          "n_cases_open": {
+            "type": "integer",
+            "title": "N Cases Open"
+          },
+          "n_cases_overdue": {
+            "type": "integer",
+            "title": "N Cases Overdue"
+          },
+          "n_cases_unassigned_critical": {
+            "type": "integer",
+            "title": "N Cases Unassigned Critical"
+          },
+          "trend_cases_created": {
+            "items": {
+              "$ref": "#/components/schemas/DailyPoint"
+            },
+            "type": "array",
+            "title": "Trend Cases Created"
+          },
+          "trend_cases_closed": {
+            "items": {
+              "$ref": "#/components/schemas/DailyPoint"
+            },
+            "type": "array",
+            "title": "Trend Cases Closed"
+          },
+          "trend_critical_alerts": {
+            "items": {
+              "$ref": "#/components/schemas/DailyPoint"
+            },
+            "type": "array",
+            "title": "Trend Critical Alerts"
+          },
+          "trend_audit_activity": {
+            "items": {
+              "$ref": "#/components/schemas/DailyPoint"
+            },
+            "type": "array",
+            "title": "Trend Audit Activity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exposure_total_eur",
+          "exposure_critical_eur",
+          "n_cases_open",
+          "n_cases_overdue",
+          "n_cases_unassigned_critical"
+        ],
+        "title": "CockpitKPIs"
+      },
+      "CommentBody": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "actor"
+        ],
+        "title": "CommentBody"
+      },
+      "DailyPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "DailyPoint"
       },
       "DetectRequest": {
         "properties": {
@@ -706,7 +1797,7 @@
           },
           "findings": {
             "items": {
-              "$ref": "#/components/schemas/FindingOut"
+              "$ref": "#/components/schemas/p2p_fraud__api__main__FindingOut"
             },
             "type": "array",
             "title": "Findings"
@@ -724,50 +1815,6 @@
           "run_at"
         ],
         "title": "DetectResponse"
-      },
-      "FindingOut": {
-        "properties": {
-          "invoice_id": {
-            "type": "string",
-            "title": "Invoice Id"
-          },
-          "detector": {
-            "type": "string",
-            "title": "Detector"
-          },
-          "rule_id": {
-            "type": "string",
-            "title": "Rule Id"
-          },
-          "severity": {
-            "type": "string",
-            "title": "Severity"
-          },
-          "signal": {
-            "type": "string",
-            "title": "Signal"
-          },
-          "evidence": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Evidence"
-          },
-          "detected_at": {
-            "type": "string",
-            "title": "Detected At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "invoice_id",
-          "detector",
-          "rule_id",
-          "severity",
-          "signal",
-          "evidence",
-          "detected_at"
-        ],
-        "title": "FindingOut"
       },
       "HTTPValidationError": {
         "properties": {
@@ -882,6 +1929,86 @@
         ],
         "title": "InvoiceRow"
       },
+      "NarrativeBody": {
+        "properties": {
+          "vendor_id": {
+            "type": "string",
+            "title": "Vendor Id"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "siren": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siren"
+          },
+          "total_paid_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Paid Eur"
+          },
+          "n_invoices": {
+            "type": "integer",
+            "title": "N Invoices",
+            "default": 0
+          },
+          "is_sanctioned": {
+            "type": "boolean",
+            "title": "Is Sanctioned",
+            "default": false
+          },
+          "is_pep": {
+            "type": "boolean",
+            "title": "Is Pep",
+            "default": false
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vendor_id"
+        ],
+        "title": "NarrativeBody"
+      },
       "ScoreRequest": {
         "properties": {
           "invoices": {
@@ -969,6 +2096,90 @@
         ],
         "title": "ScoreRow"
       },
+      "TimelineEvent": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "amount_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Eur"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "kind",
+          "label"
+        ],
+        "title": "TimelineEvent"
+      },
+      "TopVendor": {
+        "properties": {
+          "vendor_id": {
+            "type": "string",
+            "title": "Vendor Id"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "exposure_eur": {
+            "type": "number",
+            "title": "Exposure Eur"
+          },
+          "n_findings": {
+            "type": "integer",
+            "title": "N Findings"
+          },
+          "max_severity": {
+            "type": "string",
+            "title": "Max Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vendor_id",
+          "exposure_eur",
+          "n_findings",
+          "max_severity"
+        ],
+        "title": "TopVendor"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1008,6 +2219,154 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VendorSummary": {
+        "properties": {
+          "vendor_id": {
+            "type": "string",
+            "title": "Vendor Id"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          },
+          "siren": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siren"
+          },
+          "total_paid_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Paid Eur"
+          },
+          "n_invoices": {
+            "type": "integer",
+            "title": "N Invoices",
+            "default": 0
+          },
+          "is_sanctioned": {
+            "type": "boolean",
+            "title": "Is Sanctioned",
+            "default": false
+          },
+          "is_pep": {
+            "type": "boolean",
+            "title": "Is Pep",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "vendor_id"
+        ],
+        "title": "VendorSummary"
+      },
+      "p2p_fraud__api__main__FindingOut": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "detector": {
+            "type": "string",
+            "title": "Detector"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "detected_at": {
+            "type": "string",
+            "title": "Detected At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "detector",
+          "rule_id",
+          "severity",
+          "signal",
+          "evidence",
+          "detected_at"
+        ],
+        "title": "FindingOut"
+      },
+      "p2p_fraud__api__v1__FindingOut": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "detector": {
+            "type": "string",
+            "title": "Detector"
+          },
+          "detected_at": {
+            "type": "string",
+            "title": "Detected At"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "rule_id",
+          "severity",
+          "signal",
+          "detector",
+          "detected_at"
+        ],
+        "title": "FindingOut"
       }
     },
     "securitySchemes": {

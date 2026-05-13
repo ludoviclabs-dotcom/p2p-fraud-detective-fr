@@ -155,19 +155,19 @@ function KpiGrid({ data }: { data: CockpitKPIs }) {
       <div className="mt-3 grid gap-3 md:grid-cols-4">
         <div className="rounded-md border border-[#e1e5ee] bg-white p-3">
           <div className="text-xs text-[#5a6478]">Cases créés (30j)</div>
-          <Sparkline points={data.trend_cases_created} color="#1f3a6e" />
+          <Sparkline points={data.trend_cases_created ?? []} color="#1f3a6e" />
         </div>
         <div className="rounded-md border border-[#e1e5ee] bg-white p-3">
           <div className="text-xs text-[#5a6478]">Cases clôturés (30j)</div>
-          <Sparkline points={data.trend_cases_closed} color="#3e7c5a" />
+          <Sparkline points={data.trend_cases_closed ?? []} color="#3e7c5a" />
         </div>
         <div className="rounded-md border border-[#e1e5ee] bg-white p-3">
           <div className="text-xs text-[#5a6478]">Alertes critiques (30j)</div>
-          <Sparkline points={data.trend_critical_alerts} color="#a23e48" />
+          <Sparkline points={data.trend_critical_alerts ?? []} color="#a23e48" />
         </div>
         <div className="rounded-md border border-[#e1e5ee] bg-white p-3">
           <div className="text-xs text-[#5a6478]">Activité audit (30j)</div>
-          <Sparkline points={data.trend_audit_activity} color="#e5a93a" />
+          <Sparkline points={data.trend_audit_activity ?? []} color="#e5a93a" />
         </div>
       </div>
     </>

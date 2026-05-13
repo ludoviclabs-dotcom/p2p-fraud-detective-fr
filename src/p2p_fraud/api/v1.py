@@ -358,6 +358,59 @@ def vendor_timeline(
     return events
 
 
+class CaseOutV1(BaseModel):
+    case_id: str
+    title: str
+    severity: str
+    status: str
+    vendor_id: str | None = None
+    invoice_id: str | None = None
+    exposure_eur: float | None = None
+    assignee: str | None = None
+    created_at: str
+    closed_at: str | None = None
+    closure_reason: str | None = None
+
+
+@router.get("/cases", response_model=list[CaseOutV1])
+def list_cases_v1(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+    status: str | None = None,
+    severity: str | None = None,
+    assignee: str | None = None,
+    limit: int = Query(200, ge=1, le=1000),
+) -> list[CaseOutV1]:
+    """Liste paginée des cases avec filtres (status/severity/assignee)."""
+    cases = service.list_cases()
+    rows: list[CaseOutV1] = []
+    for c in cases:
+        if status and c.status.value != status:
+            continue
+        if severity and c.severity != severity:
+            continue
+        if assignee and c.assignee != assignee:
+            continue
+        rows.append(
+            CaseOutV1(
+                case_id=c.case_id,
+                title=c.title,
+                severity=c.severity,
+                status=c.status.value,
+                vendor_id=c.vendor_id,
+                invoice_id=c.invoice_id,
+                exposure_eur=c.exposure_eur,
+                assignee=c.assignee,
+                created_at=c.created_at.isoformat() if c.created_at else "",
+                closed_at=c.closed_at.isoformat() if c.closed_at else None,
+                closure_reason=c.closure_reason,
+            )
+        )
+        if len(rows) >= limit:
+            break
+    return rows
+
+
 # ─── 3. Cases — comment + bulk ──────────────────────────────────────────────
 
 
