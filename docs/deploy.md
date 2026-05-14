@@ -104,14 +104,20 @@ Smoke test : `curl https://<user>-p2p-fraud-detective-api.hf.space/health`
 ### Import du projet
 
 1. https://vercel.com/new → Import `ludoviclabs-dotcom/p2p-fraud-detective-fr`
-2. Vercel détecte automatiquement `vercel.json` à la racine :
-   - **Framework** : Next.js (auto)
-   - **Build Command** : `pnpm --filter @p2pfd/web build` (depuis vercel.json)
-   - **Install Command** : `pnpm install --frozen-lockfile` (depuis vercel.json)
-   - **Output Directory** : `apps/web/.next` (depuis vercel.json)
-3. **Root Directory** : laisser à la racine du repo (le `vercel.json` gère le ciblage `apps/web`).
+2. **Root Directory** : `apps/web` — c'est le seul réglage à faire. Vercel détecte
+   alors automatiquement Next.js **et** le workspace pnpm (lockfile à la racine du repo).
+3. **Build & Development Settings** : tout laisser sur **« Override » désactivé**
+   (valeurs par défaut). Vercel auto-détecte :
+   - **Framework** : Next.js
+   - **Build Command** : `next build`
+   - **Install Command** : `pnpm install`
+   - **Output Directory** : `.next`
 
-> Si Vercel demande quand même un Root Directory, mettre `apps/web` et il ignorera le `vercel.json` racine — les deux approches fonctionnent.
+> ⚠️ Ne **pas** définir d'`Output Directory` manuel (ex. `apps/web/.next`) : avec
+> Root Directory = `apps/web`, le chemin est interprété **relativement** à
+> `apps/web`, donc Vercel chercherait `apps/web/apps/web/.next` → déploiement en
+> échec. Si un override a été enregistré à l'import, le retirer dans
+> Settings → Build & Deployment.
 
 ### Variables d'environnement (Settings → Environment Variables)
 
@@ -122,7 +128,7 @@ Smoke test : `curl https://<user>-p2p-fraud-detective-api.hf.space/health`
 
 ### Déploiement
 
-`Deploy` → URL `https://<projet>.vercel.app`. Chaque push sur `main` redéploie automatiquement (cf. `vercel.json` → `git.deploymentEnabled.main`).
+`Deploy` → URL `https://<projet>.vercel.app`. Chaque push sur `main` redéploie automatiquement (comportement Git par défaut de Vercel).
 
 Smoke test :
 - `https://<projet>.vercel.app/` → landing
