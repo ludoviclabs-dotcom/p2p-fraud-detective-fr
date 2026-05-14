@@ -47,37 +47,41 @@ HF Spaces offre un vrai free tier Docker (16 GB RAM, pas de sleep), seule option
 5. **Hardware** : CPU basic (gratuit)
 6. Visibilité : Public ou Private au choix
 
-### Configuration
+### Configuration — déploiement automatisé (recommandé)
 
-Le Space HF a son propre dépôt git. Deux options :
+Le workflow [`.github/workflows/hf-sync.yml`](../.github/workflows/hf-sync.yml)
+synchronise automatiquement le backend vers le Space HF. **Aucune manipulation
+git côté HF** — il suffit d'ajouter 2 secrets GitHub :
 
-**Option A — push direct** (recommandée) :
+1. **Générer un token HF** : https://huggingface.co/settings/tokens → « New token »
+   → rôle **Write** → copier le token.
+
+2. **Ajouter les secrets GitHub** : Settings → Secrets and variables → Actions
+   → New repository secret :
+   | Secret | Valeur |
+   |---|---|
+   | `HF_TOKEN` | le token HF write généré ci-dessus |
+   | `HF_SPACE_ID` | `<user>/p2p-fraud-detective-api` (ex. `ludoviclabs/p2p-fraud-detective-api`) |
+
+3. **Déclencher le sync** :
+   - Manuel : onglet **Actions** → « Sync backend → Hugging Face Spaces » → « Run workflow »
+   - Automatique : à chaque tag `v*.*.*` poussé
+
+Le workflow assemble le bundle (`src/`, `data/`, `Dockerfile`, deps + `README.md`
+généré depuis `deploy/hf-space-README.md`) et le force-push vers le Space. HF
+build l'image Docker (~3-5 min).
+
+### Configuration — manuelle (alternative)
+
+Si tu préfères pousser à la main depuis ton poste :
 ```bash
-# Cloner le Space HF vide
 git clone https://huggingface.co/spaces/<user>/p2p-fraud-detective-api hf-space
 cd hf-space
-
-# Copier les fichiers nécessaires depuis le repo principal
-cp -r ../p2p-fraud-detective-fr/src .
-cp -r ../p2p-fraud-detective-fr/data .
-cp ../p2p-fraud-detective-fr/Dockerfile .
-cp ../p2p-fraud-detective-fr/pyproject.toml .
-cp ../p2p-fraud-detective-fr/requirements.txt .
-
-# Ajouter l'en-tête HF Spaces dans README.md
-cat > README.md <<'EOF'
----
-title: P2P Fraud Detective FR — API
-sdk: docker
-app_port: 8000
----
-Backend FastAPI du démonstrateur P2P Fraud Detective FR.
-EOF
-
+cp -r ../p2p-fraud-detective-fr/src ../p2p-fraud-detective-fr/data .
+cp ../p2p-fraud-detective-fr/Dockerfile ../p2p-fraud-detective-fr/pyproject.toml ../p2p-fraud-detective-fr/requirements.txt .
+cp ../p2p-fraud-detective-fr/deploy/hf-space-README.md README.md
 git add . && git commit -m "Deploy FastAPI backend" && git push
 ```
-
-**Option B — GitHub Actions sync** : ajouter un workflow `hf-sync.yml` qui pousse vers le Space à chaque release (hors périmètre v0.6.0, à faire si déploiements fréquents).
 
 ### Variables d'environnement (Settings → Variables and secrets)
 

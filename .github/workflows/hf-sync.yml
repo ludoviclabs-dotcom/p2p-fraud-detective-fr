@@ -1,0 +1,68 @@
+name: Sync backend → Hugging Face Spaces
+
+# Synchronise le backend FastAPI (src/, data/, Dockerfile, deps) vers un
+# Hugging Face Space Docker. Le frontend Next.js reste sur Vercel.
+#
+# Déclenchement :
+#   - manuel (workflow_dispatch) — pour le premier déploiement
+#   - sur tag v*.*.* — redéploiement à chaque release
+#
+# Prérequis (Settings → Secrets and variables → Actions) :
+#   - HF_TOKEN     : token Hugging Face "write" (https://huggingface.co/settings/tokens)
+#   - HF_SPACE_ID  : "<user>/<space-name>", ex. "ludoviclabs/p2p-fraud-detective-api"
+#
+# Le Space HF doit exister au préalable (SDK = Docker, créé via huggingface.co/new-space).
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Vérifier les secrets requis
+        run: |
+          if [ -z "${{ secrets.HF_TOKEN }}" ] || [ -z "${{ secrets.HF_SPACE_ID }}" ]; then
+            echo "::error::Secrets HF_TOKEN et HF_SPACE_ID requis. Voir docs/deploy.md §2."
+            exit 1
+          fi
+
+      - name: Assembler le bundle HF Space
+        run: |
+          rm -rf hf-build && mkdir -p hf-build
+          # Le Dockerfile racine attend src/, data/, pyproject.toml, requirements.txt
+          cp -r src hf-build/
+          cp -r data hf-build/
+          cp Dockerfile hf-build/
+          cp pyproject.toml hf-build/
+          cp requirements.txt hf-build/
+          # README.md avec l'en-tête YAML que HF Spaces exige
+          cp deploy/hf-space-README.md hf-build/README.md
+          # .gitattributes minimal (évite les soucis Git LFS sur les CSV)
+          echo "*.csv -filter -diff -merge text" > hf-build/.gitattributes
+          echo "Bundle assemblé :" && ls -la hf-build/
+
+      - name: Pousser vers le Space HF
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+        run: |
+          cd hf-build
+          HF_USER="${HF_SPACE_ID%%/*}"
+          git init -q
+          git config user.email "ci@p2p-fraud-detective-fr"
+          git config user.name "P2PFD CI"
+          git add -A
+          git commit -q -m "Sync from GitHub ${GITHUB_SHA::8} (${GITHUB_REF_NAME})"
+          # Force push : le Space est un miroir de déploiement, pas une source.
+          git push -q --force \
+            "https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_ID}.git" \
+            HEAD:main
+          echo "✅ Backend poussé vers https://huggingface.co/spaces/${HF_SPACE_ID}"
+          echo "   HF Spaces va builder l'image Docker automatiquement (~3-5 min)."
