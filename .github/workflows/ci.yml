@@ -79,3 +79,31 @@ jobs:
         env:
           INTEGRATION_DATABASE_URL: postgresql://test:test@localhost:5432/p2pfd
         run: pytest -m integration tests/integration -v
+
+  web:
+    # Frontend Next.js (Migration v2) — typecheck + build.
+    # Le backend Python n'est pas requis : le build Next.js est statique,
+    # les fetches runtime pointent vers NEXT_PUBLIC_API_URL en production.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (apps/web)
+        run: pnpm --filter @p2pfd/web typecheck
+
+      - name: Build (apps/web)
+        run: pnpm --filter @p2pfd/web build
+
