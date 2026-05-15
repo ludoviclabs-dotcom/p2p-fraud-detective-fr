@@ -14,6 +14,13 @@ dist/
 venv/
 env/
 
+# Node / Next.js
+node_modules/
+apps/*/node_modules/
+apps/*/.next/
+apps/*/out/
+npm-debug.log*
+
 # IDE
 .vscode/
 .idea/
@@ -25,6 +32,7 @@ env/
 
 # Tests / coverage
 .pytest_cache/
+.pytest-tmp/
 .coverage
 htmlcov/
 .tox/
