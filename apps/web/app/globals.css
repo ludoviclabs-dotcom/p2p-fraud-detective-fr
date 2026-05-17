@@ -1,19 +1,21 @@
 @import "tailwindcss";
 
-/* Design tokens P2P Fraud Detective FR — repris de Streamlit v0.5
-   (palette navy/charcoal/or institutionnelle). */
+/* Premium product tokens for the Next.js command center. */
 @theme {
-  --color-navy-900: #0f1b33;
-  --color-navy-700: #1f3a6e;
-  --color-navy-500: #3e7cb1;
-  --color-charcoal: #1a1f2c;
-  --color-slate-fr: #5a6478;
-  --color-slate-200-fr: #e1e5ee;
-  --color-bg-muted: #f4f6fa;
-  --color-gold: #e5a93a;
-  --color-alert: #a23e48;
-  --color-ok: #3e7c5a;
-  --color-warn: #c97b1f;
+  --color-ink: #08111f;
+  --color-ink-2: #111827;
+  --color-slate-fr: #667085;
+  --color-slate-300-fr: #d7deea;
+  --color-slate-200-fr: #e6ebf2;
+  --color-bg-muted: #f7f9fc;
+  --color-blue-signal: #2f6bff;
+  --color-blue-soft: #eaf1ff;
+  --color-amber-signal: #f5a524;
+  --color-risk: #e5484d;
+  --color-risk-soft: #fff0f1;
+  --color-verified: #12a876;
+  --color-verified-soft: #e8f8f1;
+  --color-panel-dark: #0c1729;
 
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -22,8 +24,8 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: var(--color-charcoal);
-    --primary: var(--color-navy-700);
+    --foreground: var(--color-ink-2);
+    --primary: var(--color-blue-signal);
     --muted: var(--color-bg-muted);
     --border: var(--color-slate-200-fr);
   }
@@ -31,13 +33,13 @@
   .dark {
     --background: 222 18% 10%;
     --foreground: 0 0% 95%;
-    --primary: var(--color-gold);
+    --primary: var(--color-blue-signal);
     --muted: 222 16% 18%;
     --border: 222 18% 24%;
   }
 
   body {
-    @apply bg-white text-[color:var(--color-charcoal)] antialiased dark:bg-[#0f1b33];
+    @apply bg-[#f7f9fc] text-[#111827] antialiased dark:bg-[#08111f] dark:text-white;
     font-family: var(--font-sans);
     font-variant-numeric: tabular-nums;
   }
@@ -49,17 +51,25 @@
   }
 }
 
-/* Ribbon DÉMONSTRATEUR — repris de Streamlit v0.5 */
-.ribbon-demo {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 9999;
-  background: var(--color-gold);
-  color: var(--color-charcoal);
-  font-weight: 600;
-  font-size: 0.7rem;
-  padding: 0.25rem 0.75rem;
-  border-bottom-left-radius: 4px;
-  letter-spacing: 0.04em;
+@layer components {
+  .app-surface {
+    background:
+      radial-gradient(circle at top left, rgba(47, 107, 255, 0.12), transparent 28rem),
+      linear-gradient(180deg, #ffffff 0%, #f7f9fc 44%, #eef3fb 100%);
+  }
+
+  .premium-panel {
+    @apply border border-[#e6ebf2] bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.04];
+    box-shadow: 0 18px 48px rgba(8, 17, 31, 0.06);
+  }
+
+  .metric-number {
+    font-size: clamp(1.85rem, 3vw, 2.35rem);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f6bff] focus-visible:ring-offset-2;
+  }
 }

@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Locale = "fr" | "en";
 
@@ -8,46 +14,44 @@ const STORAGE_KEY = "p2pfd_locale";
 
 type Translations = Record<string, Record<Locale, string>>;
 
-// Catalogue minimal Phase 7 — extension progressive aux pages au fil du besoin.
 const TRANSLATIONS: Translations = {
-  "common.app_name": { fr: "P2P Fraud Detective FR", en: "P2P Fraud Detective FR" },
-  "common.demo_banner": {
-    fr: "DÉMONSTRATEUR · v0.5 / v2",
-    en: "DEMONSTRATOR · v0.5 / v2",
+  "common.app_name": {
+    fr: "P2P Fraud Detective FR",
+    en: "P2P Fraud Detective FR",
   },
   "common.language": { fr: "Langue", en: "Language" },
-  "nav.section_pilotage": { fr: "🧭 Pilotage", en: "🧭 Steering" },
-  "nav.section_donnees": { fr: "🗂️ Données", en: "🗂️ Data" },
-  "nav.section_controles": {
-    fr: "🧮 Contrôles statistiques",
-    en: "🧮 Statistical controls",
-  },
-  "nav.section_ml": { fr: "🤖 Détection ML", en: "🤖 ML detection" },
-  "nav.section_investigation": { fr: "🔎 Investigation", en: "🔎 Investigation" },
-  "nav.section_gouvernance": { fr: "📚 Gouvernance", en: "📚 Governance" },
+  "nav.section_command": { fr: "Command center", en: "Command center" },
+  "nav.section_investigation": { fr: "Investigation", en: "Investigation" },
+  "nav.section_controls": { fr: "Contrôles", en: "Controls" },
+  "nav.section_data": { fr: "Données", en: "Data" },
+  "nav.section_governance": { fr: "Gouvernance", en: "Governance" },
+  "nav.home": { fr: "Accueil", en: "Home" },
   "nav.cockpit": { fr: "Cockpit", en: "Cockpit" },
-  "nav.tour": { fr: "Tour guidé", en: "Guided tour" },
-  "nav.sandbox": { fr: "Sandbox commerciale", en: "Commercial sandbox" },
+  "nav.tour": { fr: "Démo guidée", en: "Guided demo" },
+  "nav.sandbox": { fr: "Scénarios fraude", en: "Fraud scenarios" },
   "nav.cases": { fr: "File d'investigation", en: "Investigation queue" },
   "nav.alerts": { fr: "Alertes & monitoring", en: "Alerts & monitoring" },
   "nav.collab": { fr: "Collaboration", en: "Collaboration" },
   "nav.upload": { fr: "Import des données", en: "Data import" },
-  "nav.master_history": { fr: "Référentiel — historique", en: "Master data history" },
+  "nav.master_history": {
+    fr: "Historique référentiel",
+    en: "Master data history",
+  },
   "nav.sirene": { fr: "Contrôle Sirene", en: "Sirene check" },
   "nav.benford": { fr: "Loi de Benford", en: "Benford's Law" },
   "nav.duplicates": { fr: "Doublons", en: "Duplicates" },
   "nav.structuring": { fr: "Fractionnement", en: "Structuring" },
   "nav.sanctions": { fr: "Sanctions & PEP", en: "Sanctions & PEP" },
   "nav.decp_rbe": { fr: "DECP & RBE INPI", en: "DECP & RBE INPI" },
-  "nav.anomalies": { fr: "Anomalies (ML)", en: "Anomalies (ML)" },
+  "nav.anomalies": { fr: "Anomalies ML", en: "ML anomalies" },
   "nav.rings": { fr: "Anneaux de fraude", en: "Fraud rings" },
   "nav.score": { fr: "Explorateur de score", en: "Score explorer" },
   "nav.findings": { fr: "Findings", en: "Findings" },
-  "nav.vendors": { fr: "Fiche fournisseur 360°", en: "Vendor 360°" },
-  "nav.exports": { fr: "Synthèse — export", en: "Summary export" },
+  "nav.vendors": { fr: "Fournisseur 360", en: "Vendor 360" },
+  "nav.exports": { fr: "Synthèse & export", en: "Summary export" },
   "nav.audit": { fr: "Piste d'audit", en: "Audit trail" },
   "nav.methodology": { fr: "Méthodologie", en: "Methodology" },
-  "nav.governance": { fr: "Gouvernance", en: "Governance" },
+  "nav.governance": { fr: "Conformité", en: "Compliance" },
 };
 
 type LocaleContextValue = {
@@ -90,7 +94,6 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 export function useLocale(): LocaleContextValue {
   const ctx = useContext(LocaleContext);
   if (!ctx) {
-    // Fallback en dev si le provider n'est pas encore monté
     return {
       locale: "fr",
       setLocale: () => {},

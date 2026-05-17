@@ -3,7 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { LocaleProvider } from "@/components/locale-provider";
-import { Sidebar } from "@/components/sidebar";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "P2P Fraud Detective FR",
   description:
-    "Démonstrateur d'audit P2P / AML — détection de fraude sur le cycle Procure-to-Pay (Migration v2 Next.js).",
+    "Cockpit d'audit P2P pour détecter les fraudes fournisseurs, prioriser les risques et documenter les investigations.",
 };
 
 export default function RootLayout({
@@ -35,13 +35,7 @@ export default function RootLayout({
         <ThemeProvider>
           <LocaleProvider>
             <QueryProvider>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto bg-[#f4f6fa] dark:bg-[#0f1b33]">
-                  <div className="ribbon-demo">DÉMONSTRATEUR · v0.5 / v2</div>
-                  {children}
-                </main>
-              </div>
+              <AppShell>{children}</AppShell>
             </QueryProvider>
           </LocaleProvider>
         </ThemeProvider>
