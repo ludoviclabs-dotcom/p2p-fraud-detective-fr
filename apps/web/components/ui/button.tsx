@@ -5,18 +5,18 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f3a6e] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f6bff] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         primary:
-          "bg-[#1f3a6e] text-white hover:bg-[#0f1b33] dark:bg-[#e5a93a] dark:text-[#0f1b33] dark:hover:bg-[#d49627]",
+          "bg-[#2f6bff] text-white shadow-sm shadow-[#2f6bff]/20 hover:bg-[#2457d6]",
         secondary:
-          "border border-[#1f3a6e] bg-white text-[#1f3a6e] hover:bg-[#f4f6fa]",
+          "border border-[#2f6bff] bg-white text-[#2f6bff] hover:bg-[#eaf1ff]",
         outline:
-          "border border-[#e1e5ee] bg-white text-[#5a6478] hover:border-[#1f3a6e] hover:text-[#1f3a6e]",
-        ghost: "text-[#5a6478] hover:bg-[#f4f6fa] hover:text-[#0f1b33]",
-        danger: "bg-[#a23e48] text-white hover:bg-[#8a2f37]",
+          "border border-[#e6ebf2] bg-white text-[#667085] hover:border-[#2f6bff] hover:text-[#2f6bff]",
+        ghost: "text-[#667085] hover:bg-[#f7f9fc] hover:text-[#111827]",
+        danger: "bg-[#e5484d] text-white hover:bg-[#c9363b]",
       },
       size: {
         sm: "h-8 px-3 text-xs",
