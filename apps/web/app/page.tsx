@@ -18,10 +18,13 @@ import {
 } from "lucide-react";
 
 const TRUST_POINTS = [
-  { label: "Données synthétiques", detail: "démo sans fichier client" },
+  { label: "Données synthétiques", detail: "démo publique sans fichier client" },
   { label: "Sources publiques", detail: "Sirene, DECP, OpenSanctions" },
-  { label: "Audit trail signé", detail: "hash + Ed25519" },
-  { label: "RGPD-ready", detail: "minimisation et traçabilité" },
+  { label: "Audit trail signé", detail: "hash-chaîné · Ed25519 (RFC 8032) en pilote" },
+  {
+    label: "Minimisation documentée",
+    detail: "chiffrement IBAN, RBAC, traçabilité — voir Gouvernance",
+  },
 ];
 
 const MINI_CASES = [
@@ -71,12 +74,13 @@ export default function Home() {
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-16">
         <div className="flex flex-col justify-center">
           <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-normal text-[#08111f] dark:text-white sm:text-5xl lg:text-[3.25rem]">
-            Détectez les fraudes P2P avant qu'elles ne deviennent des pertes
+            Détectez les anomalies P2P avant qu'elles ne deviennent des pertes
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[#667085] sm:text-lg">
-            Analysez factures, fournisseurs, sanctions et signaux faibles dans
-            un cockpit d'audit explicable, prêt pour les équipes finance, audit
-            et conformité.
+            Outil d'aide à la détection, l'investigation et la documentation
+            d'anomalies fournisseurs et de paiements. Cockpit d'audit explicable
+            pour équipes finance, audit et conformité — supervision humaine
+            requise avant toute action.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -164,6 +168,9 @@ export default function Home() {
               <p className="mt-2 text-sm leading-6 text-[#667085]">
                 {item.detail}
               </p>
+              <span className="mt-3 inline-flex items-center rounded border border-[#d7deea] bg-[#f7f9fc] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#5a6478]">
+                Scénario synthétique
+              </span>
             </article>
           ))}
         </div>
@@ -202,7 +209,7 @@ export default function Home() {
             href="/sandbox"
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#08111f] transition-colors hover:bg-[#eaf1ff] lg:mt-0"
           >
-            Voir un cas réel synthétique
+            Voir un scénario synthétique
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -214,11 +221,17 @@ export default function Home() {
             <div className="font-semibold text-[#111827] dark:text-white">
               P2P Fraud Detective FR
             </div>
-            <div>Audit P2P, conformité AML/CFT, investigation fournisseur.</div>
+            <div>
+              Démonstrateur d'audit P2P · Détection, investigation et
+              documentation d'anomalies fournisseur.
+            </div>
           </div>
           <div className="flex flex-wrap gap-4">
+            <Link href="/about" className="hover:text-[#2f6bff]">
+              À propos &amp; limites
+            </Link>
             <Link href="/governance" className="hover:text-[#2f6bff]">
-              Trust Center
+              Gouvernance
             </Link>
             <Link href="/methodology" className="hover:text-[#2f6bff]">
               Méthodologie
@@ -230,7 +243,7 @@ export default function Home() {
               className="inline-flex items-center gap-1 hover:text-[#2f6bff]"
             >
               <Github size={15} />
-              Transparence technique
+              Code source
             </a>
           </div>
         </div>

@@ -1,9 +1,12 @@
 # Registre AI Act — P2P Fraud Detective FR
 
-> Pré-rempli pour conformité avec le règlement (UE) 2024/1689 (« AI Act »)
-> applicable depuis le 2 août 2026 pour les systèmes haut risque.
+> Modèle pré-rempli pour aider à la mise en conformité avec le règlement
+> (UE) 2024/1689 (« AI Act »), dont les obligations relatives aux systèmes à
+> haut risque entrent en application à partir du 2 août 2026 (calendrier
+> progressif prévu par le règlement).
+> Date du document : mai 2026.
 > À adapter à votre déploiement et faire valider par votre DPO / responsable
-> conformité.
+> conformité avant tout usage opérationnel.
 
 ## 1. Identification du système
 

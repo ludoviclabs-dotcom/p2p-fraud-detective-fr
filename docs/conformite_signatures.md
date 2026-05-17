@@ -1,7 +1,7 @@
 # Conformité — signatures cryptographiques + archivage légal
 
 > **PR P5-5** — signatures Ed25519 sur l'audit trail, doctrine d'archivage.
-> Document mis à jour octobre 2026.
+> Document mis à jour mai 2026.
 
 ## Pourquoi des signatures Ed25519
 
@@ -200,11 +200,11 @@ Si le pilote refuse AWS pour souveraineté :
 - **Scaleway Object Storage** (~ 3 €/mois pour 75 Go, Cold tier).
 - **OUTSCALE OOS** (qualifié SecNumCloud) — pour clients régaliens DGFiP / DGE.
 
-## Conformité jurisprudentielle
+## Cadre probatoire (général)
 
-- **Cour des comptes 2024** : a accepté des dossiers d'audit interne avec signatures cryptographiques comme « preuve recevable d'intégrité » dans plusieurs rapports d'organismes publics.
-- **TGI Paris 2025** : a validé une preuve issue d'un audit trail signé Ed25519 dans une affaire de détournement de fonds publics (anonymisée, jurisprudence partielle Légifrance).
-- **ACPR 2026** : le superviseur a publié une note recommandant aux établissements bancaires d'évaluer la non-répudiation cryptographique de leurs audit trails LCB-FT (note du 15 mars 2026).
+Le standard Ed25519 (RFC 8032) combiné au référentiel ANSSI RGS B1/B2 et au règlement eIDAS (UE 2014/910, mis à jour par le règlement (UE) 2024/1183) constitue le socle technique européen reconnu pour la signature électronique avancée. La **qualification probatoire** d'un audit trail signé dans un contentieux ou un contrôle dépend du contexte d'usage, du déployeur et des règles sectorielles applicables : elle doit être validée au cas par cas par le conseil juridique, le commissaire aux comptes et, le cas échéant, l'autorité de tutelle.
+
+Aucune jurisprudence n'est citée dans ce document : les exemples de décisions judiciaires ou administratives présentés en démonstrateur sont indicatifs et doivent être sourcés (Légifrance, sites institutionnels) avant tout usage en argumentaire commercial ou juridique.
 
 ## Synthèse — sécurité par défaut
 

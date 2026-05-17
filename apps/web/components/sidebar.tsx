@@ -192,7 +192,7 @@ export function Sidebar({
           Demander une démo
         </Link>
         <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-white/48">
-          <span>RGPD-ready</span>
+          <span>Minimisation documentée</span>
           <span className="text-right">Audit signé</span>
         </div>
       </div>

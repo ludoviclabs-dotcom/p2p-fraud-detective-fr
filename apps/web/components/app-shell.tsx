@@ -9,6 +9,7 @@ import {
   Bell,
   Command,
   FileSearch,
+  FlaskConical,
   Home,
   Menu,
   Moon,
@@ -51,10 +52,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenu={() => setMobileOpen(true)} />
+        <DemoBanner />
         <main className="min-w-0 flex-1 overflow-y-auto pb-20 lg:pb-0">
           {children}
         </main>
         <MobileBottomNav />
+      </div>
+    </div>
+  );
+}
+
+function DemoBanner() {
+  return (
+    <div className="border-b border-[#f0dca0] bg-[#fff8e1] px-4 py-2 text-xs text-[#7a5d12] lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="inline-flex items-center gap-1.5 font-semibold">
+          <FlaskConical size={13} />
+          Démonstrateur public
+        </span>
+        <span className="text-[#9a7820]">·</span>
+        <span>Données 100&nbsp;% synthétiques</span>
+        <span className="text-[#9a7820]">·</span>
+        <span>Outil d&apos;aide à l&apos;investigation, supervision humaine requise</span>
+        <Link
+          href="/about"
+          className="ml-auto inline-flex items-center font-semibold underline-offset-2 hover:underline"
+        >
+          À propos &amp; limites
+        </Link>
       </div>
     </div>
   );

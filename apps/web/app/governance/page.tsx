@@ -1,10 +1,42 @@
 import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Lock, Users, FileCheck2, Brain } from "lucide-react";
+import { Shield, Lock, Users, FileCheck2, Brain, Info } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Gouvernance — P2P Fraud Detective FR",
 };
+
+type Status = "applicable" | "aide" | "client";
+
+const STATUS_LABEL: Record<Status, { dot: string; label: string; className: string }> = {
+  applicable: {
+    dot: "🟢",
+    label: "Applicable et documenté",
+    className: "bg-[#e8f8f1] text-[#12714d] border-[#bfe7d5]",
+  },
+  aide: {
+    dot: "🟡",
+    label: "Aide à la mise en œuvre",
+    className: "bg-[#fff8e1] text-[#7a5d12] border-[#f0dca0]",
+  },
+  client: {
+    dot: "🔵",
+    label: "À configurer selon le contexte client",
+    className: "bg-[#eaf1ff] text-[#1f3a6e] border-[#c9d6ee]",
+  },
+};
+
+function StatusBadge({ status }: { status: Status }) {
+  const meta = STATUS_LABEL[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-semibold ${meta.className}`}
+    >
+      <span aria-hidden>{meta.dot}</span>
+      {meta.label}
+    </span>
+  );
+}
 
 export default function GovernancePage() {
   return (
@@ -15,15 +47,44 @@ export default function GovernancePage() {
       <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
         Gouvernance
       </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD · Sapin 2 · ANSSI RGS B1/B2
+      <p className="mb-4 text-sm text-[#5a6478]">
+        Référentiels couverts par la documentation produit — statut indiqué
+        pour chaque cadre. Aucune des cartes ci-dessous ne vaut auto-certification :
+        le produit est un démonstrateur public et une mise en production
+        nécessite la validation par votre DPO, RSSI, juriste et auditeur.
       </p>
+
+      <Card className="mb-4 border-[#d7deea] bg-[#f7f9fc] dark:bg-white/[0.03]">
+        <CardContent className="flex flex-col gap-2 py-4 text-sm">
+          <div className="flex items-center gap-2 text-[#5a6478]">
+            <Info size={16} />
+            <span className="font-semibold text-[#0f1b33] dark:text-white">
+              Légende des statuts
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge status="applicable" />
+            <StatusBadge status="aide" />
+            <StatusBadge status="client" />
+          </div>
+          <p className="text-xs text-[#5a6478]">
+            🟢 le projet implémente directement le contrôle (ex. RGPD art. 30,
+            AI Act art. 50, RGS B1/B2 Ed25519). 🟡 le projet fournit des
+            artefacts pour aider le déployeur (ex. AMLD6 mapping, Sapin 2 due
+            diligence). 🔵 à paramétrer selon le déploiement (ex. NIS2, DPIA
+            spécifique, RGAA complet).
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="mb-4 grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain size={18} /> AI Act (UE 2024/1689)
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Brain size={18} /> AI Act (UE 2024/1689)
+              </span>
+              <StatusBadge status="applicable" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -33,24 +94,34 @@ export default function GovernancePage() {
               (annexe III).
             </p>
             <p>
-              <strong>Conformité</strong> : page Méthodologie publique avec
-              sources, seuils, métriques F1, limites. Pas de scoring opaque.
-              Audit log immutable de toutes les décisions.
+              <strong>Transparence</strong> : page Méthodologie publique avec
+              sources, seuils, métriques F1 sur dataset synthétique, limites
+              connues. Pas de scoring opaque. Audit log immutable de toutes
+              les décisions.
+            </p>
+            <p className="text-xs text-[#5a6478]">
+              Obligations haut risque (annexe III) applicables à partir du
+              2 août 2026 — non concernées par ce produit.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock size={18} /> RGPD (UE 2016/679)
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Lock size={18} /> RGPD (UE 2016/679)
+              </span>
+              <StatusBadge status="applicable" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
               <strong>Données traitées</strong> : 100 % synthétiques en démo
               publique. En pilote ETI, données fournisseurs uniquement
-              (vendor_name, SIREN, IBAN, montants) — pas de PII salariés.
+              (vendor_name, SIREN, IBAN, montants) — pas de PII salariés. Si
+              le référentiel contient des entrepreneurs individuels ou des
+              personnes nommément désignées, un DPIA spécifique est requis.
             </p>
             <p>
               <strong>Droit à l'effacement (art. 17)</strong> : bouton "Purger
@@ -73,8 +144,11 @@ export default function GovernancePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users size={18} /> RBAC — 4 rôles
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Users size={18} /> RBAC — 4 rôles
+              </span>
+              <StatusBadge status="applicable" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -114,18 +188,27 @@ export default function GovernancePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield size={18} /> AMLD6 (UE 2018/1673)
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Shield size={18} /> AMLD6 (UE 2018/1673)
+              </span>
+              <StatusBadge status="aide" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            <p className="rounded bg-[#fff8e1] px-2 py-1 text-xs text-[#7a5d12]">
+              Couverture partielle — démonstrateur non opérationnel. Le
+              produit n'est pas un système LCB-FT au sens de l'art. L. 561-2
+              du Code monétaire et financier (assujettis).
+            </p>
             <p>
               <strong>Bénéficiaires effectifs ≥ 25 %</strong> : page
               <a className="text-[#1f3a6e] hover:underline" href="/decp-rbe">
                 {" "}
                 DECP & RBE INPI
               </a>{" "}
-              via Pappers.
+              via Pappers (mode démo). Stratégie RNE/INPI directe à mettre en
+              œuvre en pilote.
             </p>
             <p>
               <strong>PEP screening</strong> : OpenSanctions Yente CC-BY 4.0,
@@ -136,17 +219,22 @@ export default function GovernancePage() {
               .
             </p>
             <p>
-              <strong>Tracfin déclaration de soupçon</strong> : bouton
-              "Générer brouillon DS" dans la fiche fournisseur (annoté
-              "démonstration pédagogique").
+              <strong>Export documentaire d'investigation</strong> : PDF +
+              JSONL signé téléchargeables depuis la fiche fournisseur, annotés
+              « démonstration pédagogique ». Non transmissibles au portail
+              ERMES de Tracfin sans qualification d'assujetti (art. L. 561-2
+              CMF).
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileCheck2 size={18} /> Sapin 2 — art. 17
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <FileCheck2 size={18} /> Sapin 2 — art. 17
+              </span>
+              <StatusBadge status="aide" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -156,7 +244,7 @@ export default function GovernancePage() {
               nationalités à haut risque.
             </p>
             <p>
-              <strong>Cartographie risques</strong> : scoring 0-100 par
+              <strong>Cartographie des risques</strong> : scoring 0-100 par
               fournisseur, waterfall des contributions sur{" "}
               <a className="text-[#1f3a6e] hover:underline" href="/score">
                 /score
@@ -164,34 +252,42 @@ export default function GovernancePage() {
               .
             </p>
             <p>
-              <strong>Plan de prévention</strong> : audit trail Ed25519
-              recevable comme preuve de diligence (Cour des comptes 2024).
+              <strong>Plan de prévention</strong> : audit trail signé Ed25519
+              conforme aux standards techniques RGS B1/B2. La qualification
+              probatoire dans un contentieux dépend du contexte d'usage et
+              doit être validée au cas par cas par le conseil juridique et
+              l'auditeur du déployeur.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock size={18} /> ANSSI RGS B1/B2 — Ed25519
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Lock size={18} /> ANSSI RGS B1/B2 — Ed25519
+              </span>
+              <StatusBadge status="applicable" />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
               <strong>Signatures cryptographiques</strong> : audit log signé
-              Ed25519 (RFC 8032) — non-répudiation, intégrité, vérifiabilité
-              externe.
+              Ed25519 (RFC 8032) — intégrité prouvable, non-répudiation,
+              vérifiabilité externe via clé publique.
             </p>
             <p>
               <strong>Clé publique exposée</strong> :{" "}
               <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
                 GET /security/public-key
               </code>{" "}
-              — vérification indépendante par CAC, ACPR, magistrat.
+              — permet la vérification indépendante par un tiers (CAC,
+              superviseur, magistrat).
             </p>
             <p>
-              <strong>Conformité eIDAS 2024/1183</strong> : signatures
-              électroniques avancées.
+              <strong>Cadre eIDAS</strong> : règlement (UE) 910/2014 mis à
+              jour par le règlement (UE) 2024/1183 — signature électronique
+              avancée.
             </p>
           </CardContent>
         </Card>
@@ -215,7 +311,7 @@ export default function GovernancePage() {
                 [
                   "DPIA (Analyse d'impact RGPD)",
                   "Art. 35 RGPD",
-                  "docs/compliance/dpia.md",
+                  "docs/compliance/dpia_template.md",
                 ],
                 [
                   "Registre AI Act",
@@ -225,7 +321,7 @@ export default function GovernancePage() {
                 [
                   "Registre RGPD art. 30",
                   "RGPD art. 30",
-                  "docs/compliance/rgpd_register.md",
+                  "docs/compliance/data_processing_record.md",
                 ],
                 [
                   "AMLD6 mapping",
@@ -265,7 +361,10 @@ export default function GovernancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>♿ Accessibilité RGAA 4.1 (partielle)</CardTitle>
+          <CardTitle className="flex items-center justify-between gap-2">
+            <span>♿ Accessibilité RGAA 4.1 (partielle)</span>
+            <StatusBadge status="client" />
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-[#5a6478]">
           <p>

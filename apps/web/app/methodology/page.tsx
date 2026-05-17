@@ -14,11 +14,22 @@ export default function MethodologyPage() {
       <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
         Méthodologie
       </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
+      <p className="mb-4 text-sm text-[#5a6478]">
         Documentation transparente de l'approche analytique, des seuils de
         détection, des métriques de validation et des limites connues.
         Conforme aux exigences de transparence <strong>AI Act art. 50</strong>.
       </p>
+
+      <div className="mb-6 rounded-md border border-[#f0dca0] bg-[#fff8e1] px-4 py-3 text-xs text-[#7a5d12]">
+        <strong>Métriques calculées sur dataset synthétique étiqueté</strong>{" "}
+        (générateur reproductible{" "}
+        <code className="rounded bg-white/60 px-1">p2p_fraud.synthetic</code>,
+        échantillon public{" "}
+        <code className="rounded bg-white/60 px-1">data/samples/sample_5k.csv</code>).
+        Aucune validation rétrospective sur données client réelles n'est
+        publiée à ce jour : tout claim de performance en production nécessite
+        un benchmark client préalable.
+      </div>
 
       <Card className="mb-4">
         <CardHeader>
@@ -152,11 +163,11 @@ export default function MethodologyPage() {
             </thead>
             <tbody className="text-xs">
               {[
-                ["BEC (master_data)", "0.91", "0.94", "0.88", "Synthetic + 6 cas confirmés"],
-                ["Doublons fuzzy", "0.87", "0.92", "0.83", "AMLSim 50k"],
+                ["BEC (master_data)", "0.91", "0.94", "0.88", "Synthetic master_data_events"],
+                ["Doublons fuzzy", "0.87", "0.92", "0.83", "AMLSim 50k (synthétique)"],
                 ["Sous-seuils", "0.84", "0.89", "0.80", "Synthetic structuring"],
                 ["Anneaux IBAN", "1.0", "1.0", "1.0", "Synthetic anneau_fraude"],
-                ["Sanctions", "0.95", "0.97", "0.93", "Snapshot UE 2024-2026"],
+                ["Sanctions", "0.95", "0.97", "0.93", "Snapshot listes publiques 2024-2026"],
               ].map(([d, f1, p, r, ds]) => (
                 <tr key={d} className="border-b border-[#e1e5ee]">
                   <td className="py-2 font-medium">{d}</td>
