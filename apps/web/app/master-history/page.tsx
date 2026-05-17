@@ -49,7 +49,8 @@ export default function MasterHistoryPage() {
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
         Timeline événementielle des mutations sur le référentiel fournisseurs
-        et les cases. Source : audit log SHA-256 chaîné (P3 + P5-5 Ed25519).
+        et les cases. Source : audit log SHA-256 chaîné; signatures Ed25519
+        activables en pilote.
       </p>
 
       <Card className="mb-4">

@@ -30,7 +30,7 @@ export default function AlertsPage() {
 
   const events = query.data?.entries ?? [];
 
-  // Stats temps réel sur les 50 derniers events
+  // Stats sur les 50 derniers events renvoyes par l'API ou le mode demo.
   const stats = useMemo(() => {
     const byKind = new Map<string, number>();
     let critical = 0;
@@ -59,16 +59,15 @@ export default function AlertsPage() {
               query.isFetching ? "bg-[#3e7c5a] animate-pulse" : "bg-[#9aa3b2]"
             }`}
           />
-          {query.isFetching ? "Live · refresh en cours…" : `Live · ${REFETCH_MS / 1000}s`}
+          {query.isFetching ? "Refresh en cours..." : `Demo/API · ${REFETCH_MS / 1000}s`}
         </div>
       </div>
       <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
         Alertes &amp; monitoring
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Flux d'événements en temps réel depuis l'audit log immutable. Polling
-        TanStack Query 5 secondes (équivalent fonctionnel SSE — vraie connexion
-        Server-Sent Events à brancher Phase 5b si charge le justifie).
+        Flux d'événements depuis l'audit log. Le deploiement public peut servir
+        des donnees demo; les sources live doivent etre confirmees par le statut API.
       </p>
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -95,7 +94,7 @@ export default function AlertsPage() {
         <Card>
           <CardContent>
             <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              Signés Ed25519
+              Signatures Ed25519
             </div>
             <div className="text-2xl font-semibold text-[#3e7c5a]">
               {stats.signed} / {stats.total}
@@ -169,7 +168,7 @@ export default function AlertsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>🔔 Flux d'événements (live)</CardTitle>
+          <CardTitle>🔔 Flux d'événements</CardTitle>
         </CardHeader>
         <div className="p-4">
           {query.isLoading ? (

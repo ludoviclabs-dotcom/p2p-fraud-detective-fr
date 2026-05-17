@@ -111,9 +111,9 @@ export default function ExportsPage() {
         Synthèse — export
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Génération de dossiers d'enquête PDF (weasyprint côté FastAPI) et
-        export CSV de la sélection. Conforme aux exigences d'archivage légal
-        Sapin 2 (10 ans).
+        Génération de dossiers d'enquête et export CSV de la sélection. En mode
+        demo Vercel, les dossiers sont synthétiques; en pilote, le backend
+        FastAPI peut produire les PDF exploitables.
       </p>
 
       <Card className="mb-4">

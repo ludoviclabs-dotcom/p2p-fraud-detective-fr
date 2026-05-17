@@ -17,7 +17,8 @@ export default function MethodologyPage() {
       <p className="mb-6 text-sm text-[#5a6478]">
         Documentation transparente de l'approche analytique, des seuils de
         détection, des métriques de validation et des limites connues.
-        Conforme aux exigences de transparence <strong>AI Act art. 50</strong>.
+        Alignée avec un objectif de transparence de type{" "}
+        <strong>AI Act art. 50</strong>, à valider juridiquement en pilote.
       </p>
 
       <Card className="mb-4">
@@ -44,7 +45,7 @@ export default function MethodologyPage() {
 
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>📡 Sources de données publiques</CardTitle>
+          <CardTitle>📡 Sources de données prévues</CardTitle>
         </CardHeader>
         <CardContent>
           <table className="w-full text-sm">

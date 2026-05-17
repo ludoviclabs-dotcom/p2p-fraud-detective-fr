@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 
 const TRUST_POINTS = [
-  { label: "Données synthétiques", detail: "démo sans fichier client" },
-  { label: "Sources publiques", detail: "Sirene, DECP, OpenSanctions" },
-  { label: "Audit trail signé", detail: "hash + Ed25519" },
-  { label: "RGPD-ready", detail: "minimisation et traçabilité" },
+  { label: "Donnees synthetiques", detail: "demo sans fichier client" },
+  { label: "Connecteurs prepares", detail: "Sirene, DECP, OpenSanctions" },
+  { label: "Audit verifiable", detail: "hash chain; Ed25519 en pilote" },
+  { label: "Donnees minimales", detail: "provenance et tracabilite" },
 ];
 
 const MINI_CASES = [
@@ -32,7 +32,7 @@ const MINI_CASES = [
   },
   {
     title: "Fournisseur sous sanction",
-    detail: "Correspondance fuzzy avec référentiel public et justification exportable.",
+    detail: "Correspondance fuzzy avec snapshot demo et justification exportable.",
     risk: "88",
   },
   {
@@ -60,7 +60,7 @@ const MODULES = [
   },
   {
     title: "Conformité documentée",
-    body: "Préparez une piste d'audit signée et vérifiable par un tiers.",
+    body: "Preparez une piste d'audit verifiable; signatures activees en pilote.",
     Icon: ShieldCheck,
   },
 ];
@@ -202,7 +202,7 @@ export default function Home() {
             href="/sandbox"
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#08111f] transition-colors hover:bg-[#eaf1ff] lg:mt-0"
           >
-            Voir un cas réel synthétique
+            Voir un cas synthetique
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -243,7 +243,7 @@ function FraudOperationsPreview() {
   return (
     <div className="premium-panel relative overflow-hidden rounded-md bg-white p-4 dark:bg-[#0c1729]">
       <div className="absolute right-5 top-5 rounded bg-[#e8f8f1] px-2 py-1 text-xs font-semibold text-[#12a876]">
-        Sources vérifiées
+        Donnees demo
       </div>
       <div className="rounded-md border border-[#e6ebf2] bg-[#08111f] p-4 text-white shadow-xl shadow-[#08111f]/20 dark:border-white/10">
         <div className="flex items-center justify-between gap-4">

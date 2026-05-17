@@ -62,9 +62,9 @@ export default function SanctionsPage() {
         Sanctions & PEP
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Croisement des fournisseurs avec OpenSanctions (UE consolidée, OFAC SDN,
-        Trésor FR) + listes PEP. Source live activable via `ENRICHMENT_MODE=live`
-        + `YENTE_BASE_URL` (cf. P5-1).
+        Croisement des fournisseurs avec OpenSanctions/Yente ou snapshot local
+        selon la configuration backend. En demo publique, les résultats sont
+        synthétiques; le live s'active via `ENRICHMENT_MODE=live`.
       </p>
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -139,7 +139,7 @@ export default function SanctionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>📡 Sources actives</CardTitle>
+          <CardTitle>📡 Sources déclarées</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
           <table className="w-full">

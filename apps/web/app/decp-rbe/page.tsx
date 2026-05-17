@@ -10,7 +10,7 @@ export default function DecpRbePage() {
         title: "DECP & RBE INPI",
         kicker: "Marchés publics DECP · Bénéficiaires effectifs RBE/INPI · Sapin 2 art. 17",
         description:
-          "Croisement des fournisseurs avec deux référentiels critiques : DECP (Données Essentielles des Contrats de la Commande Publique) — identifie les fournisseurs simultanément titulaires d'un marché public et payés en P2P privé (conflit d'intérêts potentiel Sapin 2 art. 17). RBE INPI (Registre des Bénéficiaires Effectifs) — détecte les structures opaques, BO inconnus, nationalités à haut risque. Mode live activable via `ENRICHMENT_MODE=live` (P5-1).",
+          "Croisement des fournisseurs avec deux référentiels critiques : DECP (Données Essentielles des Contrats de la Commande Publique) et RBE/INPI via Pappers quand le backend est configuré. En demo publique, les lignes sont synthétiques et doivent être distinguées des sources live. Le mode live s'active via `ENRICHMENT_MODE=live` et les clés nécessaires.",
         ruleIdMatchers: [
           "DECP_VENDOR_IN_PUBLIC_MARKET",
           "RBE_BENEFICIAL_OWNER_MATCH",

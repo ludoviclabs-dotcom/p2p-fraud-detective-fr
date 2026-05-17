@@ -112,7 +112,7 @@ export default function CollabPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>👥 Cas par assigné (live)</CardTitle>
+          <CardTitle>👥 Cas par assigné</CardTitle>
         </CardHeader>
         <CardContent>
           {cases.isLoading ? (

@@ -53,8 +53,8 @@ export default function GovernancePage() {
               (vendor_name, SIREN, IBAN, montants) — pas de PII salariés.
             </p>
             <p>
-              <strong>Droit à l'effacement (art. 17)</strong> : bouton "Purger
-              session" + endpoint{" "}
+              <strong>Droit à l'effacement (art. 17)</strong> : à implémenter
+              en pilote via bouton de purge et endpoint{" "}
               <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
                 purge_user_data()
               </code>
@@ -136,9 +136,8 @@ export default function GovernancePage() {
               .
             </p>
             <p>
-              <strong>Tracfin déclaration de soupçon</strong> : bouton
-              "Générer brouillon DS" dans la fiche fournisseur (annoté
-              "démonstration pédagogique").
+              <strong>Tracfin déclaration de soupçon</strong> : fonctionnalité
+              à cadrer; le site public ne génère pas de brouillon DS.
             </p>
           </CardContent>
         </Card>
@@ -156,16 +155,16 @@ export default function GovernancePage() {
               nationalités à haut risque.
             </p>
             <p>
-              <strong>Cartographie risques</strong> : scoring 0-100 par
-              fournisseur, waterfall des contributions sur{" "}
+              <strong>Cartographie risques</strong> : priorisation par exposition
+              et sévérité; le scoring 0-100 complet dépend du backend sur{" "}
               <a className="text-[#1f3a6e] hover:underline" href="/score">
                 /score
               </a>
               .
             </p>
             <p>
-              <strong>Plan de prévention</strong> : audit trail Ed25519
-              recevable comme preuve de diligence (Cour des comptes 2024).
+              <strong>Plan de prévention</strong> : audit trail hash-chaîné;
+              signatures Ed25519 activables en pilote avec clé publique.
             </p>
           </CardContent>
         </Card>
@@ -173,7 +172,7 @@ export default function GovernancePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Lock size={18} /> ANSSI RGS B1/B2 — Ed25519
+              <Lock size={18} /> Signature Ed25519 optionnelle
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -183,11 +182,11 @@ export default function GovernancePage() {
               externe.
             </p>
             <p>
-              <strong>Clé publique exposée</strong> :{" "}
+              <strong>Clé publique exposée si configurée</strong> :{" "}
               <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
                 GET /security/public-key
               </code>{" "}
-              — vérification indépendante par CAC, ACPR, magistrat.
+              — le mode demo renvoie `enabled:false`.
             </p>
             <p>
               <strong>Conformité eIDAS 2024/1183</strong> : signatures
@@ -215,7 +214,7 @@ export default function GovernancePage() {
                 [
                   "DPIA (Analyse d'impact RGPD)",
                   "Art. 35 RGPD",
-                  "docs/compliance/dpia.md",
+                  "docs/compliance/dpia_template.md",
                 ],
                 [
                   "Registre AI Act",
@@ -225,7 +224,7 @@ export default function GovernancePage() {
                 [
                   "Registre RGPD art. 30",
                   "RGPD art. 30",
-                  "docs/compliance/rgpd_register.md",
+                  "docs/compliance/data_processing_record.md",
                 ],
                 [
                   "AMLD6 mapping",

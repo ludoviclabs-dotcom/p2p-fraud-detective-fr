@@ -120,7 +120,7 @@ export function LlmNarrativeStream(props: Props) {
           </Button>
         ) : (
           <Button onClick={start} type="button">
-            <Sparkles size={14} /> Générer narration (Claude streaming)
+            <Sparkles size={14} /> Générer narration (demo/API)
           </Button>
         )}
         <span className="text-xs text-[#5a6478]">
@@ -128,7 +128,7 @@ export function LlmNarrativeStream(props: Props) {
           <code className="rounded bg-[#f4f6fa] px-1 py-0.5">
             POST /api/v1/llm/narrative
           </code>{" "}
-          · Requiert <code>ANTHROPIC_API_KEY</code> côté FastAPI.
+          · Claude est utilisé uniquement quand le backend FastAPI est configuré.
         </span>
       </div>
 

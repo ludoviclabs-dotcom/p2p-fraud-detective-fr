@@ -89,7 +89,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 
         <div className="ml-auto hidden items-center gap-2 rounded-md border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#12a876] dark:border-white/10 dark:bg-white/[0.04] sm:flex">
           <ShieldCheck size={14} />
-          Sources publiques actives
+          Mode demo synthetique
         </div>
 
         <LangSwitch locale={locale} setLocale={setLocale} />
@@ -108,7 +108,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
           className="focus-ring hidden h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2457d6] sm:inline-flex"
         >
           <Play size={15} />
-          Demander une démo
+          Lancer la demo
         </Link>
       </div>
     </header>

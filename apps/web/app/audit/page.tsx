@@ -37,8 +37,8 @@ export default function AuditPage() {
         Piste d'audit
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Journal immutable hash-chaîné SHA-256 + signatures Ed25519 (P5-5).
-        Vérifiable indépendamment via{" "}
+        Journal hash-chaîné SHA-256. En mode demo, les signatures Ed25519 sont
+        désactivées; en pilote, la clé publique permet la vérification via{" "}
         <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
           GET /security/public-key
         </code>

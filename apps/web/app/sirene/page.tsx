@@ -8,9 +8,9 @@ export default function SirenePage() {
       config={{
         surtitle: "Données",
         title: "Contrôle Sirene",
-        kicker: "Validation INSEE en temps réel — clé Luhn + statut actif/radié",
+        kicker: "Validation INSEE configurable — clé Luhn + statut actif/radié",
         description:
-          "Croisement des SIREN fournisseurs avec le référentiel Sirene v3 de l'INSEE. Détections : SIREN invalide (clé de Luhn KO), entreprise radiée, dénomination Sirene différente de celle saisie dans le master (potentiel doublon ou erreur de saisie), code APE absent ou non cohérent avec le compte de tiers. Cache `requests-cache` 30 jours pour respecter les quotas API Sirene v3 (30 req/s).",
+          "Croisement des SIREN fournisseurs avec le référentiel Sirene v3 de l'INSEE quand le backend dispose d'un token. En demo publique, les cas affichés sont synthétiques. Détections : SIREN invalide, entreprise radiée, dénomination différente, code APE absent ou incohérent. Cache `requests-cache` 30 jours côté FastAPI pour respecter les quotas API Sirene v3.",
         ruleIdMatchers: ["SIRENE", "SIREN_INVALID", "RADIE"],
         titleMatchers: ["sirene", "radié", "luhn"],
         regulations: [

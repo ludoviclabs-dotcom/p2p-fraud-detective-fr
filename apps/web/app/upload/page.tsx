@@ -76,9 +76,9 @@ export default function UploadPage() {
         Import des données
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Upload d'un CSV/Excel de factures fournisseurs (auto-détection schéma
-        ERP : SAP, Sage X3, Cegid, Oracle). Le fichier est streamé vers le
-        backend FastAPI sans buffering RAM (Route Handler Node.js).
+        Upload CSV/TSV de factures fournisseurs. Sans backend configuré, le
+        site exécute une détection locale simplifiée de démonstration; les
+        formats Excel/Parquet nécessitent le backend FastAPI.
       </p>
 
       <Card className="mb-4">
@@ -115,12 +115,12 @@ export default function UploadPage() {
                 </>
               )}
             </div>
-            <div className="text-xs text-[#9aa3b2]">CSV, XLSX — max 50 Mo</div>
+            <div className="text-xs text-[#9aa3b2]">CSV, TSV — demo locale</div>
           </div>
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,.xlsx,.xls,.tsv,.parquet"
+            accept=".csv,.tsv"
             onChange={onSelect}
             className="hidden"
           />

@@ -171,7 +171,7 @@ export default function DashboardPage() {
           ) : kpisQuery.error ? (
             <ActionState
               title="Backend indisponible"
-              body="Les KPI live ne sont pas accessibles. Vous pouvez tout de même lancer une démo synthétique pour explorer le parcours."
+              body="Les KPI API ne sont pas accessibles. Vous pouvez tout de même lancer une démo synthétique pour explorer le parcours."
               actionHref="/sandbox"
               actionLabel="Lancer la sandbox"
             />
