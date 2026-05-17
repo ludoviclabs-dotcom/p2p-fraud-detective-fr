@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, StopCircle } from "lucide-react";
+import { AlertTriangle, Sparkles, StopCircle } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 const SECRET = process.env.FRAUD_API_SECRET ?? "";
@@ -113,6 +113,22 @@ export function LlmNarrativeStream(props: Props) {
 
   return (
     <div className="space-y-3">
+      <div
+        role="note"
+        className="flex items-start gap-2 rounded-md border border-[#f0dca0] bg-[#fff8e1] px-3 py-2 text-xs text-[#7a5d12]"
+      >
+        <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+        <div>
+          <strong>Assistance rédactionnelle générée par IA</strong> — outil
+          d&apos;aide à la rédaction d&apos;une narration d&apos;investigation
+          (cadre ISA 240). Le contenu produit ne décide pas et n&apos;engage
+          pas l&apos;organisation : <strong>une supervision humaine est
+          requise</strong> avant toute utilisation opérationnelle, transmission
+          à un tiers ou archivage. Conforme à l&apos;obligation de
+          transparence (AI Act art. 50).
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         {streaming ? (
           <Button onClick={stop} variant="danger" type="button">

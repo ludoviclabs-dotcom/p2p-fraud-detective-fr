@@ -29,6 +29,7 @@ const TRANSLATIONS: Translations = {
   "nav.cockpit": { fr: "Cockpit", en: "Cockpit" },
   "nav.tour": { fr: "Démo guidée", en: "Guided demo" },
   "nav.sandbox": { fr: "Scénarios fraude", en: "Fraud scenarios" },
+  "nav.use_cases": { fr: "Cas d'usage", en: "Use cases" },
   "nav.cases": { fr: "File d'investigation", en: "Investigation queue" },
   "nav.alerts": { fr: "Alertes & monitoring", en: "Alerts & monitoring" },
   "nav.collab": { fr: "Collaboration", en: "Collaboration" },

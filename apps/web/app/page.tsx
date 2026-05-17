@@ -4,11 +4,13 @@ import {
   BadgeCheck,
   Bell,
   CheckCircle2,
+  Circle,
   Database,
   FileCheck2,
   Github,
   GitBranch,
   LockKeyhole,
+  MapPin,
   Network,
   Play,
   ShieldCheck,
@@ -194,24 +196,35 @@ export default function Home() {
         </div>
       </section>
 
+      <MaturitySection />
+
       <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-md bg-[#08111f] p-6 text-white shadow-2xl shadow-[#08111f]/15 lg:flex lg:items-center lg:justify-between lg:p-8">
           <div>
             <h2 className="text-2xl font-bold">
-              Prêt à tester un cas de fraude synthétique ?
+              Prêt à tester un scénario synthétique ?
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">
-              Lancez la sandbox, choisissez une typologie et suivez le chemin
-              jusqu'au cockpit, au fournisseur 360 et à la piste d'audit.
+              Lancez la sandbox interactive ou parcourez le catalogue des
+              9 typologies couvertes par le démonstrateur.
             </p>
           </div>
-          <Link
-            href="/sandbox"
-            className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#08111f] transition-colors hover:bg-[#eaf1ff] lg:mt-0"
-          >
-            Voir un scénario synthétique
-            <ArrowRight size={16} />
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-3 lg:mt-0">
+            <Link
+              href="/sandbox"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#08111f] transition-colors hover:bg-[#eaf1ff]"
+            >
+              Sandbox interactive
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/use-cases"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-white/20 bg-white/[0.06] px-5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.12]"
+            >
+              Catalogue des cas d&apos;usage
+              <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -249,6 +262,89 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function MaturitySection() {
+  const STEPS = [
+    {
+      label: "Démonstrateur",
+      desc: "Données 100 % synthétiques · démo publique · état actuel",
+      current: true,
+    },
+    {
+      label: "POC entreprise",
+      desc: "Données réelles ou semi-réelles · 1 client identifié",
+      current: false,
+    },
+    {
+      label: "Pilote ETI / public",
+      desc: "Usage contrôlé · workflows et exports probatoires",
+      current: false,
+    },
+    {
+      label: "Produit SaaS / on-prem",
+      desc: "Connecteurs ERP · e-invoicing · VoP · support · SLA",
+      current: false,
+    },
+  ];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+      <div className="premium-panel rounded-md p-6 lg:p-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-xl font-bold text-[#08111f] dark:text-white">
+            Maturité du produit
+          </h2>
+          <Link
+            href="/about"
+            className="text-xs font-semibold text-[#2f6bff] hover:underline"
+          >
+            À propos &amp; limites <ArrowRight size={12} className="inline" />
+          </Link>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
+          Trajectoire prévue : démonstrateur → POC → pilote → produit. Le
+          projet est aujourd&apos;hui en phase démonstrateur public, sans
+          surpromesse commerciale.
+        </p>
+
+        <ol className="mt-5 grid gap-3 md:grid-cols-4">
+          {STEPS.map((step, idx) => (
+            <li
+              key={step.label}
+              className={`relative rounded-md border p-3 ${
+                step.current
+                  ? "border-[#2f6bff] bg-[#eaf1ff] dark:bg-white/[0.08]"
+                  : "border-[#e6ebf2] bg-white dark:border-white/10 dark:bg-white/[0.03]"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {step.current ? (
+                  <MapPin size={16} className="text-[#2f6bff]" />
+                ) : (
+                  <Circle size={16} className="text-[#9aa3b3]" />
+                )}
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#5a6478]">
+                  Étape {idx + 1}
+                </span>
+                {step.current ? (
+                  <span className="ml-auto rounded bg-[#2f6bff] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    Ici
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-2 text-sm font-semibold text-[#111827] dark:text-white">
+                {step.label}
+              </div>
+              <div className="mt-1 text-xs leading-5 text-[#667085]">
+                {step.desc}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
   );
 }
 
