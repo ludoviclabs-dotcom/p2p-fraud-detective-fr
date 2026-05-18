@@ -1,336 +1,262 @@
-"use client";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BadgeEuro,
+  FileSearch,
+  Network,
+  ShieldAlert,
+} from "lucide-react";
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  getVendorSummary,
-  getVendorTimeline,
-  listFindings,
-} from "@/lib/api-client";
+import { getP2PDataset, getVendor, getVendorFindings } from "@/data/get-dataset";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
-import { LlmNarrativeStream } from "@/components/llm-narrative-stream";
-import { formatDate, formatEur } from "@/lib/utils";
+import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
+import { getSignalLabel, SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
 
-const TABS = ["profile", "timeline", "findings"] as const;
-type TabKey = (typeof TABS)[number];
+export default async function VendorDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const vendor = getVendor(id);
+  if (!vendor) notFound();
 
-export default function VendorDetailPage() {
-  const params = useParams<{ id: string }>();
-  const vendorId = params?.id ?? "";
-  const [tab, setTab] = useState<TabKey>("profile");
+  const dataset = getP2PDataset();
+  const findings = getVendorFindings(id);
+  const signalCounts = findings.reduce<Record<string, number>>((counts, finding) => {
+    counts[finding.signal] = (counts[finding.signal] ?? 0) + 1;
+    return counts;
+  }, {});
 
-  const summary = useQuery({
-    queryKey: ["vendor", vendorId],
-    queryFn: () => getVendorSummary(vendorId),
-    enabled: !!vendorId,
-  });
-  const timeline = useQuery({
-    queryKey: ["vendor-timeline", vendorId],
-    queryFn: () => getVendorTimeline(vendorId, 30),
-    enabled: !!vendorId,
-  });
-  const findings = useQuery({
-    queryKey: ["vendor-findings", vendorId],
-    queryFn: () => listFindings({ limit: 100 }),
-    enabled: !!vendorId && tab === "findings",
-  });
+  const ibanConnections = dataset.edges
+    .filter((edge) => edge.kind === "uses_iban" && edge.source === vendor.id)
+    .map((edge) => {
+      const node = dataset.nodes.find((item) => item.id === edge.target);
+      return node ? { edge, node } : null;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .sort((a, b) => b.edge.findingIds.length - a.edge.findingIds.length);
 
-  // Construire la série exposition 30j depuis la timeline
-  const expSeries = (() => {
-    const events = timeline.data ?? [];
-    const byDay = new Map<string, number>();
-    for (const e of events) {
-      const day = e.at.slice(0, 10);
-      byDay.set(day, (byDay.get(day) ?? 0) + (e.amount_eur ?? 0));
-    }
-    const today = new Date();
-    const points: { date: string; value: number }[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
-      points.push({ date: iso.slice(5), value: byDay.get(iso) ?? 0 });
-    }
-    return points;
-  })();
-  const exp30dTotal = expSeries.reduce((s, p) => s + p.value, 0);
-
-  // Filter findings by vendor
-  const vendorFindings = (findings.data ?? []).filter(
-    (f) => (f.evidence?.vendor_id as string | undefined) === vendorId,
-  );
+  const topFindings = findings.slice(0, 12);
+  const findingTotal = findings.length;
+  const criticalOrHigh = findings.filter(
+    (finding) => SEVERITY_ORDER[finding.severity] >= SEVERITY_ORDER.high,
+  ).length;
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Investigation
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/rings"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F3A6E]"
+        >
+          <ArrowLeft aria-hidden className="h-4 w-4" />
+          Retour au graphe
+        </Link>
+        <Link
+          href="/vendors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#5A6478]"
+        >
+          Liste fournisseurs
+        </Link>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Fiche fournisseur 360°
-      </h1>
-      <p className="mb-6 font-mono text-sm text-[#5a6478]">{vendorId}</p>
 
-      {summary.isLoading ? (
-        <div className="text-sm text-[#5a6478]">Chargement…</div>
-      ) : summary.error ? (
-        <div className="rounded border border-[#a23e48] bg-[#fdecee] p-4 text-sm text-[#a23e48]">
-          API indisponible : {(summary.error as Error).message}
+      <section className="mt-6 rounded-md border border-[#D8DEE9] bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
+              Fiche fournisseur 360
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-[#141927]">{vendor.name}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[#5A6478]">
+              <span className="mono">{vendor.vendorId}</span>
+              {vendor.siren ? <span>SIREN {vendor.siren}</span> : null}
+              {vendor.apeCode ? <span>APE {vendor.apeCode}</span> : null}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <SeverityBadge value={vendor.severity} />
+            <span className="mono rounded-md bg-[#F6F7FB] px-3 py-2 text-sm text-[#141927]">
+              Score {vendor.riskScore}/100
+            </span>
+          </div>
         </div>
-      ) : (
-        <>
-          <div className="mb-4 grid gap-3 md:grid-cols-4">
-            <Card>
-              <CardContent>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Nom
-                </div>
-                <div className="text-lg font-semibold text-[#0f1b33]">
-                  {summary.data?.vendor_name ?? "—"}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  SIREN
-                </div>
-                <div className="font-mono text-lg text-[#0f1b33]">
-                  {summary.data?.siren ?? "—"}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Paiements
-                </div>
-                <div className="text-lg font-semibold text-[#0f1b33]">
-                  {formatEur(summary.data?.total_paid_eur)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Cases
-                </div>
-                <div className="text-lg font-semibold text-[#0f1b33]">
-                  {summary.data?.n_invoices ?? 0}
-                </div>
-              </CardContent>
-            </Card>
+      </section>
+
+      <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          icon={<BadgeEuro aria-hidden className="h-5 w-5" />}
+          label="Exposition"
+          value={formatEuro(vendor.exposureEur)}
+        />
+        <KpiCard
+          icon={<FileSearch aria-hidden className="h-5 w-5" />}
+          label="Findings"
+          value={formatNumber(findingTotal)}
+        />
+        <KpiCard
+          icon={<ShieldAlert aria-hidden className="h-5 w-5" />}
+          label="Critical / high"
+          value={formatNumber(criticalOrHigh)}
+        />
+        <KpiCard
+          icon={<Network aria-hidden className="h-5 w-5" />}
+          label="IBAN connectes"
+          value={formatNumber(ibanConnections.length)}
+        />
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Findings relies au fournisseur</CardTitle>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F6F7FB] text-[#5A6478]">
+                <tr>
+                  <th className="px-4 py-3 text-left">Invoice</th>
+                  <th className="px-4 py-3 text-left">Signal</th>
+                  <th className="px-4 py-3 text-left">Severite</th>
+                  <th className="px-4 py-3 text-right">Score</th>
+                  <th className="px-4 py-3 text-right">Exposition</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topFindings.map((finding) => (
+                  <tr key={finding.id} className="border-t border-[#E6EBF2]">
+                    <td className="mono px-4 py-3 text-xs text-[#141927]">
+                      {finding.invoiceId}
+                    </td>
+                    <td className="px-4 py-3 text-[#141927]">
+                      {getSignalLabel(finding.signal)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <SeverityBadge value={finding.severity} />
+                    </td>
+                    <td className="mono px-4 py-3 text-right text-[#141927]">
+                      {finding.riskScore}/100
+                    </td>
+                    <td className="mono px-4 py-3 text-right text-[#141927]">
+                      {formatEuro(finding.exposureEur)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/score/${finding.invoiceId}`}
+                        className="inline-flex items-center gap-1 font-semibold text-[#1F3A6E]"
+                      >
+                        Ouvrir
+                        <ArrowUpRight aria-hidden className="h-3.5 w-3.5" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </Card>
 
-          {summary.data?.is_sanctioned ? (
-            <div className="mb-4 rounded border border-[#a23e48] bg-[#fdecee] p-3 text-sm text-[#a23e48]">
-              🚨 Fournisseur SANCTIONNÉ — paiement à bloquer (LCB-FT).
-            </div>
-          ) : summary.data?.is_pep ? (
-            <div className="mb-4 rounded border border-[#c97b1f] bg-[#fff8ec] p-3 text-sm text-[#c97b1f]">
-              ⚠️ Lien PEP détecté — vigilance renforcée (Sapin 2).
-            </div>
-          ) : null}
+        <aside className="space-y-5">
+          <Card>
+            <CardHeader>
+              <CardTitle>Breakdown signaux</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Object.entries(signalCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([signal, count]) => (
+                  <div key={signal}>
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="font-medium text-[#141927]">{getSignalLabel(signal)}</span>
+                      <span className="mono text-[#5A6478]">{count}</span>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-[#EEF3FB]">
+                      <div
+                        className="h-2 rounded-full bg-[#1F3A6E]"
+                        style={{ width: `${Math.max((count / Math.max(findingTotal, 1)) * 100, 8)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
 
-          {/* Sparkline trend 30j */}
-          {exp30dTotal > 0 ? (
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle>
-                  📈 Exposition 30 derniers jours : {formatEur(exp30dTotal)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={expSeries}>
-                    <defs>
-                      <linearGradient id="g-vendor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1f3a6e" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#1f3a6e" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip
-                      formatter={(v) => formatEur(Number(v))}
-                      labelStyle={{ color: "#0f1b33", fontSize: 12 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#1f3a6e"
-                      strokeWidth={2}
-                      fill="url(#g-vendor)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          ) : null}
+          <Card>
+            <CardHeader>
+              <CardTitle>Connexions IBAN</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {ibanConnections.length ? (
+                ibanConnections.slice(0, 8).map(({ edge, node }) => (
+                  <div
+                    key={`${edge.source}-${edge.target}`}
+                    className="rounded-md border border-[#E6EBF2] bg-[#F6F7FB] p-3"
+                  >
+                    <div className="mono text-xs text-[#141927]">
+                      {node.maskedValue ?? node.label}
+                    </div>
+                    <div className="mt-1 text-xs text-[#5A6478]">
+                      {edge.findingIds.length} finding(s) associe(s)
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-[#5A6478]">Aucune connexion IBAN directe.</p>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Tabs */}
-          <div className="mb-4 flex gap-1 border-b border-[#e1e5ee]">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  tab === t
-                    ? "border-b-2 border-[#1f3a6e] text-[#0f1b33]"
-                    : "text-[#5a6478] hover:text-[#0f1b33]"
-                }`}
+          <Card>
+            <CardHeader>
+              <CardTitle>Decision audit</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-6 text-[#5A6478]">
+              <p>
+                Priorite a la revue des invoices critical/high, puis validation du RIB et
+                recherche de fournisseurs partageant les memes coordonnees bancaires.
+              </p>
+              <Link
+                href="/rings"
+                className="inline-flex items-center gap-2 rounded-md bg-[#1F3A6E] px-3 py-2 font-semibold text-white"
               >
-                {t === "profile"
-                  ? "Profil"
-                  : t === "timeline"
-                    ? "Timeline 30j"
-                    : "Findings"}
-              </button>
-            ))}
-          </div>
-
-          {tab === "profile" ? (
-            <Card>
-              <CardContent>
-                <dl className="grid grid-cols-2 gap-3 text-sm">
-                  {summary.data &&
-                    Object.entries(summary.data).map(([k, v]) => (
-                      <div key={k}>
-                        <dt className="font-mono text-xs text-[#5a6478]">
-                          {k}
-                        </dt>
-                        <dd className="text-[#0f1b33]">
-                          {String(v ?? "—")}
-                        </dd>
-                      </div>
-                    ))}
-                </dl>
-                <div className="mt-4">
-                  <LlmNarrativeStream
-                    vendorId={vendorId}
-                    vendorName={summary.data?.vendor_name}
-                    siren={summary.data?.siren}
-                    totalPaidEur={summary.data?.total_paid_eur}
-                    nInvoices={summary.data?.n_invoices ?? 0}
-                    isSanctioned={summary.data?.is_sanctioned ?? false}
-                    isPep={summary.data?.is_pep ?? false}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ) : tab === "timeline" ? (
-            <Card>
-              <div className="overflow-x-auto">
-                {timeline.isLoading ? (
-                  <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-                ) : !timeline.data?.length ? (
-                  <div className="p-4 text-sm text-[#5a6478]">
-                    Aucun événement sur 30 jours.
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-[#f4f6fa] text-[#5a6478]">
-                      <tr>
-                        <th className="px-3 py-2 text-left">Date</th>
-                        <th className="px-3 py-2 text-left">Type</th>
-                        <th className="px-3 py-2 text-left">Label</th>
-                        <th className="px-3 py-2 text-left">Sévérité</th>
-                        <th className="px-3 py-2 text-right">Montant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {timeline.data.map((e, i) => (
-                        <tr
-                          key={`${e.at}-${i}`}
-                          className="border-t border-[#e1e5ee]"
-                        >
-                          <td className="px-3 py-2 text-xs text-[#5a6478]">
-                            {formatDate(e.at)}
-                          </td>
-                          <td className="px-3 py-2 font-mono text-xs">
-                            {e.kind}
-                          </td>
-                          <td className="px-3 py-2">{e.label}</td>
-                          <td className="px-3 py-2">
-                            {e.severity ? (
-                              <SeverityBadge value={e.severity} />
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatEur(e.amount_eur ?? null)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </Card>
-          ) : (
-            <Card>
-              <div className="overflow-x-auto">
-                {findings.isLoading ? (
-                  <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-                ) : !vendorFindings.length ? (
-                  <div className="p-4 text-sm text-[#5a6478]">
-                    Aucun finding pour ce fournisseur.
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-[#f4f6fa] text-[#5a6478]">
-                      <tr>
-                        <th className="px-3 py-2 text-left">Invoice ID</th>
-                        <th className="px-3 py-2 text-left">Rule</th>
-                        <th className="px-3 py-2 text-left">Sévérité</th>
-                        <th className="px-3 py-2 text-left">Signal</th>
-                        <th className="px-3 py-2 text-right">Exposition</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vendorFindings.map((f) => {
-                        const exp = f.evidence?.exposure_eur as
-                          | number
-                          | undefined;
-                        return (
-                          <tr
-                            key={`${f.invoice_id}-${f.rule_id}`}
-                            className="border-t border-[#e1e5ee]"
-                          >
-                            <td className="px-3 py-2 font-mono text-xs">
-                              {f.invoice_id}
-                            </td>
-                            <td className="px-3 py-2 font-mono text-xs">
-                              {f.rule_id}
-                            </td>
-                            <td className="px-3 py-2">
-                              <SeverityBadge value={f.severity} />
-                            </td>
-                            <td className="px-3 py-2">{f.signal}</td>
-                            <td className="px-3 py-2 text-right">
-                              {formatEur(exp)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </Card>
-          )}
-        </>
-      )}
+                Revenir au graphe
+                <ArrowUpRight aria-hidden className="h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        </aside>
+      </section>
     </div>
+  );
+}
+
+function KpiCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Card>
+      <CardContent>
+        <div className="flex items-center justify-between gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-md bg-[#EAF1FF] text-[#1F3A6E]">
+            {icon}
+          </div>
+        </div>
+        <div className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
+          {label}
+        </div>
+        <div className="mt-2 text-2xl font-semibold text-[#141927]">{value}</div>
+      </CardContent>
+    </Card>
   );
 }
