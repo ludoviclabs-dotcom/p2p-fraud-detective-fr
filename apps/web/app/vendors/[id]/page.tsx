@@ -173,6 +173,7 @@ export default async function VendorDetailPage({
                 invoiceId: leadFinding.invoiceId,
                 vendorId: vendor.vendorId,
                 vendorName: vendor.name,
+                ruleId: leadFinding.ruleId,
                 signal: leadFinding.signal,
                 severity: leadFinding.severity,
                 exposureEur: leadFinding.exposureEur,

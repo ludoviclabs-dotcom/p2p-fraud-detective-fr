@@ -25,6 +25,7 @@ export interface CaseWorkflowContext {
   invoiceId: string;
   vendorId: string;
   vendorName: string;
+  ruleId: string;
   signal: string;
   severity: Severity;
   exposureEur: number;
@@ -105,6 +106,7 @@ export function exportCaseWorkflowCsv(records: CaseWorkflowRecord[]): string {
     "finding_id",
     "vendor_id",
     "vendor_name",
+    "rule_id",
     "signal",
     "severity",
     "risk_score",
@@ -125,6 +127,7 @@ export function exportCaseWorkflowCsv(records: CaseWorkflowRecord[]): string {
       record.findingId,
       record.vendorId,
       record.vendorName,
+      record.ruleId,
       record.signal,
       record.severity,
       String(record.riskScore),

@@ -666,6 +666,47 @@
         }
       }
     },
+    "/api/v1/cases/bootstrap": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Case Bootstrap",
+        "operationId": "case_bootstrap_api_v1_cases_bootstrap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseBootstrapBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOutV1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/status": {
       "post": {
         "tags": [
@@ -1628,6 +1669,94 @@
           "n_errors"
         ],
         "title": "BulkResult"
+      },
+      "CaseBootstrapBody": {
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Finding Id"
+          },
+          "invoice_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Invoice Id"
+          },
+          "vendor_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Vendor Id"
+          },
+          "vendor_name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Vendor Name"
+          },
+          "rule_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Rule Id"
+          },
+          "signal": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Signal"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "\"low\" | \"medium\" | \"high\" | \"critical\""
+          },
+          "exposure_eur": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Exposure Eur",
+            "default": 0
+          },
+          "risk_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score",
+            "default": 0
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Actor"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "finding_id",
+          "invoice_id",
+          "vendor_id",
+          "vendor_name",
+          "rule_id",
+          "signal",
+          "severity",
+          "actor"
+        ],
+        "title": "CaseBootstrapBody"
       },
       "CaseOut": {
         "properties": {

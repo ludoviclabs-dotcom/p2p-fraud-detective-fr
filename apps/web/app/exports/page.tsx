@@ -21,6 +21,7 @@ export default function ExportsPage() {
       invoiceId: finding.invoiceId,
       vendorId: finding.vendorId,
       vendorName: finding.vendorName,
+      ruleId: finding.ruleId,
       signal: finding.signal,
       severity: finding.severity,
       exposureEur: finding.exposureEur,

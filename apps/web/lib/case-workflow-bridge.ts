@@ -2,6 +2,7 @@ import {
   bulkAssignCases,
   bulkCloseCases,
   commentCase,
+  createCaseFromWorkflow,
   listCases,
   setCaseStatus,
   type CaseOutV1,
@@ -92,7 +93,9 @@ export async function saveCaseWorkflowRecord(
       ? await findRemoteCase(context, localSaved.backendCaseId)
       : await findRemoteCase(context)) ?? null;
 
-  if (!remoteCase) {
+  const ensuredRemoteCase = remoteCase ?? (await createRemoteCase(context));
+
+  if (!ensuredRemoteCase) {
     return {
       mode: "local",
       record: localSaved,
@@ -100,9 +103,9 @@ export async function saveCaseWorkflowRecord(
     };
   }
 
-  if (localSaved.assignee && localSaved.assignee !== (remoteCase.assignee ?? "")) {
+  if (localSaved.assignee && localSaved.assignee !== (ensuredRemoteCase.assignee ?? "")) {
     await bulkAssignCases({
-      case_ids: [remoteCase.case_id],
+      case_ids: [ensuredRemoteCase.case_id],
       assignee: localSaved.assignee,
       actor: CASE_WORKFLOW_ACTOR,
     });
@@ -110,7 +113,7 @@ export async function saveCaseWorkflowRecord(
 
   const syncStatus = mapWorkflowStatusToApi(localSaved.status);
   if (syncStatus) {
-    await setCaseStatus(remoteCase.case_id, {
+    await setCaseStatus(ensuredRemoteCase.case_id, {
       status: syncStatus,
       actor: CASE_WORKFLOW_ACTOR,
       reason:
@@ -122,10 +125,10 @@ export async function saveCaseWorkflowRecord(
   } else if (
     localSaved.status === "cleared" &&
     localSaved.decision === "close_false_positive" &&
-    !remoteCase.closed_at
+    !ensuredRemoteCase.closed_at
   ) {
     await bulkCloseCases({
-      case_ids: [remoteCase.case_id],
+      case_ids: [ensuredRemoteCase.case_id],
       status: "false_positive",
       reason: localSaved.note || "Cloture depuis le workflow web.",
       actor: CASE_WORKFLOW_ACTOR,
@@ -136,13 +139,13 @@ export async function saveCaseWorkflowRecord(
   const previousNote = previous?.note.trim() ?? "";
   if (normalizedNote && normalizedNote !== previousNote) {
     const prefix = getDecisionCommentPrefix(localSaved.decision);
-    await commentCase(remoteCase.case_id, {
+    await commentCase(ensuredRemoteCase.case_id, {
       actor: CASE_WORKFLOW_ACTOR,
       text: `${prefix}: ${normalizedNote}`,
     });
   }
 
-  const refreshed = await findRemoteCase(context, remoteCase.case_id);
+  const refreshed = await findRemoteCase(context, ensuredRemoteCase.case_id);
   const merged = refreshed
     ? {
         ...mapApiCaseToWorkflowRecord(context, refreshed),
@@ -152,7 +155,7 @@ export async function saveCaseWorkflowRecord(
       }
     : {
         ...localSaved,
-        backendCaseId: remoteCase.case_id,
+        backendCaseId: ensuredRemoteCase.case_id,
         source: "hybrid" as const,
       };
 
@@ -193,6 +196,24 @@ async function findRemoteCase(
     rows.find((row) => row.invoice_id === context.invoiceId) ??
     rows.find((row) => row.vendor_id === context.vendorId)
   );
+}
+
+async function createRemoteCase(
+  context: CaseWorkflowContext,
+): Promise<CaseOutV1 | undefined> {
+  return createCaseFromWorkflow({
+    finding_id: context.findingId,
+    invoice_id: context.invoiceId,
+    vendor_id: context.vendorId,
+    vendor_name: context.vendorName,
+    rule_id: context.ruleId,
+    signal: context.signal,
+    severity: context.severity,
+    exposure_eur: context.exposureEur,
+    risk_score: context.riskScore,
+    actor: CASE_WORKFLOW_ACTOR,
+    title: `${context.ruleId} - ${context.invoiceId}`,
+  });
 }
 
 function mapApiCaseToWorkflowRecord(

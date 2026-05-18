@@ -66,6 +66,7 @@ export type {
 };
 
 export type CaseOutV1 = Schemas["CaseOutV1"];
+export type CaseBootstrapBody = Schemas["CaseBootstrapBody"];
 
 export interface DemoSignalBreakdown {
   signal: string;
@@ -177,3 +178,6 @@ export const setCaseStatus = (
   },
 ) =>
   api.post<CaseOutV1>(`/api/v1/cases/${encodeURIComponent(caseId)}/status`, body);
+
+export const createCaseFromWorkflow = (body: CaseBootstrapBody) =>
+  api.post<CaseOutV1>("/api/v1/cases/bootstrap", body);
