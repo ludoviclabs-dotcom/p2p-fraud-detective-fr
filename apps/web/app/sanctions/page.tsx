@@ -6,7 +6,6 @@ import { listCases, type CaseOutV1 } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Scale, AlertTriangle } from "lucide-react";
 import { formatEur } from "@/lib/utils";
 

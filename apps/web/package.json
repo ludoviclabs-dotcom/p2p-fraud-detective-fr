@@ -7,8 +7,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "generate:p2p-demo": "python ../../scripts/export_p2p_graph_demo.py"
   },
   "dependencies": {
     "@p2pfd/shared-types": "workspace:*",

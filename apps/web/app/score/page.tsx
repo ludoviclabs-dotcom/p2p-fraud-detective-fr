@@ -24,6 +24,17 @@ const SEVERITY_COLORS: Record<string, string> = {
   low: "#3e7c5a",
 };
 
+type WaterfallRow = {
+  rank: number;
+  case_id: string;
+  title: string;
+  severity: string;
+  value: number;
+  cumul: number;
+  start: number;
+  invisible: number;
+};
+
 export default function ScorePage() {
   const [severity, setSeverity] = useState("");
 
@@ -52,22 +63,30 @@ export default function ScorePage() {
 
   // Waterfall data : cumul progressif
   const waterfallData = useMemo(() => {
-    let cumul = 0;
-    return sortedCases.map((c, i) => {
-      const value = c.exposure_eur ?? 0;
-      const start = cumul;
-      cumul += value;
-      return {
-        rank: i + 1,
-        case_id: c.case_id.slice(0, 12),
-        title: c.title,
-        severity: c.severity,
-        value,
-        cumul,
-        start,
-        invisible: start, // bar invisible pour offset
-      };
-    });
+    return sortedCases.reduce<{ rows: WaterfallRow[]; cumul: number }>(
+      (acc, c, i) => {
+        const value = c.exposure_eur ?? 0;
+        const start = acc.cumul;
+        const cumul = start + value;
+        return {
+          rows: [
+            ...acc.rows,
+            {
+              rank: i + 1,
+              case_id: c.case_id.slice(0, 12),
+              title: c.title,
+              severity: c.severity,
+              value,
+              cumul,
+              start,
+              invisible: start, // bar invisible pour offset
+            },
+          ],
+          cumul,
+        };
+      },
+      { rows: [], cumul: 0 },
+    ).rows;
   }, [sortedCases]);
 
   return (
@@ -196,7 +215,20 @@ export default function ScorePage() {
 
 function CasesTable({ rows }: { rows: CaseOutV1[] }) {
   if (!rows.length) return null;
-  let cumul = 0;
+  const rowsWithCumul = rows.reduce<
+    { row: CaseOutV1; rank: number; cumul: number }[]
+  >((acc, row, index) => {
+    const previous = acc.at(-1)?.cumul ?? 0;
+    return [
+      ...acc,
+      {
+        row,
+        rank: index + 1,
+        cumul: previous + (row.exposure_eur ?? 0),
+      },
+    ];
+  }, []);
+
   return (
     <table className="w-full text-sm">
       <thead className="bg-[#f4f6fa] text-[#5a6478]">
@@ -210,11 +242,10 @@ function CasesTable({ rows }: { rows: CaseOutV1[] }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((c, i) => {
-          cumul += c.exposure_eur ?? 0;
+        {rowsWithCumul.map(({ row: c, rank, cumul }) => {
           return (
             <tr key={c.case_id} className="border-t border-[#e1e5ee]">
-              <td className="px-3 py-2 font-mono text-xs">{i + 1}</td>
+              <td className="px-3 py-2 font-mono text-xs">{rank}</td>
               <td className="px-3 py-2 font-mono text-xs">
                 {c.case_id.slice(0, 16)}
               </td>

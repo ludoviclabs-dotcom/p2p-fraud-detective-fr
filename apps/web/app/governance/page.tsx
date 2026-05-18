@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Lock, Users, FileCheck2, Brain } from "lucide-react";
 
@@ -121,18 +122,18 @@ export default function GovernancePage() {
           <CardContent className="space-y-2 text-sm">
             <p>
               <strong>Bénéficiaires effectifs ≥ 25 %</strong> : page
-              <a className="text-[#1f3a6e] hover:underline" href="/decp-rbe">
+              <Link className="text-[#1f3a6e] hover:underline" href="/decp-rbe">
                 {" "}
                 DECP & RBE INPI
-              </a>{" "}
+              </Link>{" "}
               via Pappers.
             </p>
             <p>
               <strong>PEP screening</strong> : OpenSanctions Yente CC-BY 4.0,
               page{" "}
-              <a className="text-[#1f3a6e] hover:underline" href="/sanctions">
+              <Link className="text-[#1f3a6e] hover:underline" href="/sanctions">
                 Sanctions & PEP
-              </a>
+              </Link>
               .
             </p>
             <p>
@@ -158,9 +159,9 @@ export default function GovernancePage() {
             <p>
               <strong>Cartographie risques</strong> : scoring 0-100 par
               fournisseur, waterfall des contributions sur{" "}
-              <a className="text-[#1f3a6e] hover:underline" href="/score">
+              <Link className="text-[#1f3a6e] hover:underline" href="/score">
                 /score
-              </a>
+              </Link>
               .
             </p>
             <p>

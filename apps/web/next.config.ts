@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ["127.0.0.1"],
   // typedRoutes désactivé en Phase 0 — réactivé en Phase 2 quand tous les
   // segments de route auront leur page (sinon il faut caster `as Route`
   // pour chaque Link vers une route stub).
