@@ -18,6 +18,7 @@ import type {
   VendorSummary,
   Schemas,
 } from "@p2pfd/shared-types";
+import type { P2PMetrics } from "@/types/p2p";
 
 const _BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 const _SECRET = process.env.FRAUD_API_SECRET ?? "";
@@ -66,6 +67,19 @@ export type {
 
 export type CaseOutV1 = Schemas["CaseOutV1"];
 
+export interface DemoSignalBreakdown {
+  signal: string;
+  label: string;
+  count: number;
+  share: number;
+}
+
+export interface DemoGraphMetrics {
+  generatedAt: string;
+  metrics: P2PMetrics;
+  signalBreakdown: DemoSignalBreakdown[];
+}
+
 // ─── Endpoints typés ────────────────────────────────────────────────────────
 
 export const getCockpitKpis = () =>
@@ -73,6 +87,15 @@ export const getCockpitKpis = () =>
 
 export const getTopVendors = (limit = 10) =>
   api.get<TopVendor[]>(`/api/v1/cockpit/top-vendors?limit=${limit}`);
+
+export async function getDemoGraphMetrics(): Promise<DemoGraphMetrics> {
+  const resp = await fetch("/api/graph/metrics");
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Demo graph metrics ${resp.status} ${resp.statusText}: ${text}`);
+  }
+  return (await resp.json()) as DemoGraphMetrics;
+}
 
 export const listCases = (params: {
   status?: string;

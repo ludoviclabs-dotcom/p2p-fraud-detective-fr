@@ -5,43 +5,19 @@ import { ArrowUpRight, CircleAlert, EyeOff, Landmark, Network } from "lucide-rea
 import Link from "next/link";
 
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
+import {
+  getSignalLabel,
+  SEVERITY_COLORS,
+  SEVERITY_ORDER,
+  SIGNAL_ORDER,
+} from "@/lib/p2p-demo-taxonomy";
 import type { GraphNode, P2PDemoDataset, Severity } from "@/types/p2p";
-
-const SEVERITY_ORDER: Record<Severity, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-  critical: 4,
-};
 
 const NODE_COLORS = {
   vendor: "#1F3A6E",
   iban: "#3E7CB1",
   finding: "#A23E48",
 };
-
-const SEVERITY_COLORS: Record<Severity, string> = {
-  low: "#3E7C5A",
-  medium: "#C97B1F",
-  high: "#D35F2A",
-  critical: "#A23E48",
-};
-
-const SIGNAL_LABELS: Record<string, string> = {
-  amount_just_under_threshold: "Sous seuils",
-  duplicate_exact: "Doublons exacts",
-  duplicate_fuzzy: "Doublons proches",
-  shared_iban_ring: "Anneaux IBAN partagés",
-  vendor_cluster: "Clusters fournisseurs",
-};
-
-const SIGNAL_ORDER = [
-  "shared_iban_ring",
-  "vendor_cluster",
-  "duplicate_exact",
-  "duplicate_fuzzy",
-  "amount_just_under_threshold",
-];
 
 const SEVERITY_OPTIONS = [
   { value: "all", label: "Toutes sévérités" },
@@ -87,10 +63,6 @@ function severityMatches(severity: Severity, selected: string): boolean {
   return SEVERITY_ORDER[severity] >= SEVERITY_ORDER[selected as Severity];
 }
 
-function signalLabel(signal: string): string {
-  return SIGNAL_LABELS[signal] ?? signal.replaceAll("_", " ");
-}
-
 function selectedNodeSummary(dataset: P2PDemoDataset, node: GraphNode | undefined) {
   if (!node) return null;
   if (node.kind === "finding") {
@@ -119,7 +91,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
       { value: "all", label: "Tous les signaux" },
       ...[...orderedSignals, ...extraSignals].map((value) => ({
         value,
-        label: signalLabel(value),
+        label: getSignalLabel(value),
       })),
     ];
   }, [dataset.findings]);
@@ -339,18 +311,33 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
           <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
             Légende
           </h3>
-          <div className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center gap-3">
-              <span className="h-3 w-3 rounded-full bg-[#1F3A6E]" />
-              <span>Fournisseur</span>
+          <div className="mt-4 space-y-4 text-sm">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5A6478]">
+                Types de nœuds
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-[#1F3A6E]" />
+                <span>Fournisseur</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-[#3E7CB1]" />
+                <span>IBAN masqué</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="h-3 w-3 rounded-full bg-[#3E7CB1]" />
-              <span>IBAN masqué</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="h-3 w-3 rounded-full bg-[#A23E48]" />
-              <span>Finding critique</span>
+            <div className="space-y-3 border-t border-[#D8DEE9] pt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5A6478]">
+                Sévérité des findings
+              </p>
+              {(["critical", "high", "medium"] as const).map((level) => (
+                <div key={level} className="flex items-center gap-3">
+                  <span
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: SEVERITY_COLORS[level] }}
+                  />
+                  <span className="capitalize">{level}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -433,7 +420,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
               {details.finding ? (
                 <div className="rounded-md border border-[#D8DEE9] bg-[#F6F7FB] p-4 text-sm">
                   <p className="font-semibold text-[#141927]">
-                    {signalLabel(details.finding.signal)}
+                    {getSignalLabel(details.finding.signal)}
                   </p>
                   <p className="mono mt-1 text-[#5A6478]">{details.finding.invoiceId}</p>
                   <Link

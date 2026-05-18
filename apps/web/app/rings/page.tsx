@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraphExplorer } from "@/components/p2p-graph-explorer";
 import { getP2PDataset } from "@/data/get-dataset";
 import { formatDate, formatEuro, formatNumber } from "@/lib/p2p-demo-format";
+import { SEVERITY_COLORS } from "@/lib/p2p-demo-taxonomy";
 
 export default function RingsPage() {
   const dataset = getP2PDataset();
@@ -50,10 +51,15 @@ export default function RingsPage() {
             <span className="inline-block h-3 w-3 rounded-full bg-[#3E7CB1]" />
             IBAN masqué
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#a23e48]" />
-            Finding critique
-          </div>
+          {(["critical", "high", "medium"] as const).map((level) => (
+            <div key={level} className="flex items-center gap-2">
+              <span
+                className="inline-block h-3 w-3 rounded-full"
+                style={{ backgroundColor: SEVERITY_COLORS[level] }}
+              />
+              Finding {level}
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
