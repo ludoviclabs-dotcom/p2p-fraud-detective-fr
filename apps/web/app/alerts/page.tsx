@@ -28,7 +28,7 @@ export default function AlertsPage() {
     refetchIntervalInBackground: false,
   });
 
-  const events = query.data?.entries ?? [];
+  const events = useMemo(() => query.data?.entries ?? [], [query.data?.entries]);
 
   // Stats temps réel sur les 50 derniers events
   const stats = useMemo(() => {

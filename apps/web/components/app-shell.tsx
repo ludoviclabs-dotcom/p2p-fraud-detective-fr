@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   BarChart3,
-  Bell,
   Command,
   FileSearch,
   Home,
@@ -63,7 +62,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const { locale, setLocale } = useLocale();
   const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+  const isDark = mounted && resolvedTheme === "dark";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#e6ebf2]/90 bg-white/88 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#08111f]/88 lg:px-8">
