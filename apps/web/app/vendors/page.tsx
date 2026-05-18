@@ -1,134 +1,120 @@
-"use client";
+import Link from "next/link";
+import { ArrowUpRight, BriefcaseBusiness } from "lucide-react";
 
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { listCases } from "@/lib/api-client";
+import { getP2PDataset } from "@/data/get-dataset";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
-import { formatEur } from "@/lib/utils";
-
-type VendorRow = {
-  vendor_id: string;
-  total_exposure: number;
-  n_cases: number;
-  max_severity: string;
-};
-
-const SEVERITY_RANK: Record<string, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
-};
+import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
+import { SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
 
 export default function VendorsIndexPage() {
-  const [search, setSearch] = useState("");
+  const dataset = getP2PDataset();
+  const vendors = [...dataset.vendors]
+    .sort(
+      (a, b) =>
+        SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity] ||
+        b.exposureEur - a.exposureEur ||
+        b.riskScore - a.riskScore,
+    )
+    .slice(0, 80);
 
-  const cases = useQuery({
-    queryKey: ["all-cases"],
-    queryFn: () => listCases({ limit: 1000 }),
-  });
-
-  const vendors = useMemo<VendorRow[]>(() => {
-    const acc = new Map<string, VendorRow>();
-    for (const c of cases.data ?? []) {
-      if (!c.vendor_id) continue;
-      const row = acc.get(c.vendor_id) ?? {
-        vendor_id: c.vendor_id,
-        total_exposure: 0,
-        n_cases: 0,
-        max_severity: "low",
-      };
-      row.total_exposure += c.exposure_eur ?? 0;
-      row.n_cases += 1;
-      if ((SEVERITY_RANK[c.severity] ?? 0) > (SEVERITY_RANK[row.max_severity] ?? 0)) {
-        row.max_severity = c.severity;
-      }
-      acc.set(c.vendor_id, row);
-    }
-    let rows = Array.from(acc.values()).sort(
-      (a, b) => b.total_exposure - a.total_exposure,
-    );
-    if (search) {
-      const q = search.toLowerCase();
-      rows = rows.filter((r) => r.vendor_id.toLowerCase().includes(q));
-    }
-    return rows;
-  }, [cases.data, search]);
+  const criticalVendors = dataset.vendors.filter(
+    (vendor) => vendor.severity === "critical",
+  ).length;
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Investigation
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
+            Investigation
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold text-[#141927]">
+            Fournisseurs exposes
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5A6478]">
+            Index statique issu du dataset de demonstration. Chaque ligne ouvre une fiche
+            fournisseur 360 connectee aux findings et au graphe.
+          </p>
+        </div>
+        <Link
+          href="/rings"
+          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#1F3A6E] px-4 text-sm font-semibold text-white"
+        >
+          Explorer le graphe
+          <ArrowUpRight aria-hidden className="h-4 w-4" />
+        </Link>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Fournisseurs (index)
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Vue agrégée par vendor_id. Cliquer pour ouvrir la fiche 360°.
-      </p>
 
-      <Card className="mb-4">
-        <CardContent>
-          <Input
-            placeholder="Rechercher un vendor_id…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </CardContent>
-      </Card>
+      <section className="mt-6 grid gap-4 md:grid-cols-3">
+        <Kpi label="Fournisseurs" value={formatNumber(dataset.metrics.vendorCount)} />
+        <Kpi label="Critical" value={formatNumber(criticalVendors)} />
+        <Kpi label="Exposition graphe" value={formatEuro(dataset.metrics.exposureEur)} />
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{vendors.length} fournisseur(s)</CardTitle>
+      <Card className="mt-6">
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>Top fournisseurs a investiguer</CardTitle>
+          <BriefcaseBusiness aria-hidden className="h-5 w-5 text-[#1F3A6E]" />
         </CardHeader>
         <div className="overflow-x-auto">
-          {cases.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-          ) : !vendors.length ? (
-            <div className="p-4 text-sm text-[#5a6478]">
-              Aucun vendor à afficher.
-            </div>
-          ) : (
-            <VendorsTable rows={vendors} />
-          )}
+          <table className="w-full text-sm">
+            <thead className="bg-[#F6F7FB] text-[#5A6478]">
+              <tr>
+                <th className="px-4 py-3 text-left">Fournisseur</th>
+                <th className="px-4 py-3 text-left">SIREN</th>
+                <th className="px-4 py-3 text-left">Severite</th>
+                <th className="px-4 py-3 text-right">Score</th>
+                <th className="px-4 py-3 text-right">Findings</th>
+                <th className="px-4 py-3 text-right">Exposition</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendors.map((vendor) => (
+                <tr key={vendor.id} className="border-t border-[#E6EBF2]">
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/vendors/${vendor.vendorId}`}
+                      className="font-semibold text-[#1F3A6E] hover:underline"
+                    >
+                      {vendor.name}
+                    </Link>
+                    <div className="mono mt-1 text-xs text-[#5A6478]">{vendor.vendorId}</div>
+                  </td>
+                  <td className="mono px-4 py-3 text-xs text-[#141927]">
+                    {vendor.siren ?? "-"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <SeverityBadge value={vendor.severity} />
+                  </td>
+                  <td className="mono px-4 py-3 text-right text-[#141927]">
+                    {vendor.riskScore}/100
+                  </td>
+                  <td className="mono px-4 py-3 text-right text-[#141927]">
+                    {vendor.findingIds.length}
+                  </td>
+                  <td className="mono px-4 py-3 text-right text-[#141927]">
+                    {formatEuro(vendor.exposureEur)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Card>
     </div>
   );
 }
 
-function VendorsTable({ rows }: { rows: VendorRow[] }) {
+function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
-        <tr>
-          <th className="px-3 py-2 text-left">Vendor ID</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
-          <th className="px-3 py-2 text-right">Cases</th>
-          <th className="px-3 py-2 text-left">Sévérité max</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.vendor_id} className="border-t border-[#e1e5ee]">
-            <td className="px-3 py-2">
-              <a
-                href={`/vendors/${encodeURIComponent(row.vendor_id)}`}
-                className="font-mono text-xs text-[#1f3a6e] hover:underline"
-              >
-                {row.vendor_id}
-              </a>
-            </td>
-            <td className="px-3 py-2 text-right">{formatEur(row.total_exposure)}</td>
-            <td className="px-3 py-2 text-right">{row.n_cases}</td>
-            <td className="px-3 py-2">
-              <SeverityBadge value={row.max_severity} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <Card>
+      <CardContent>
+        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
+          {label}
+        </div>
+        <div className="mt-2 text-2xl font-semibold text-[#141927]">{value}</div>
+      </CardContent>
+    </Card>
   );
 }
