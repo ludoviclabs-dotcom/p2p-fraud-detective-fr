@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, GitBranch, ShieldAlert } from "lucide-react";
 
 import { getP2PDataset } from "@/data/get-dataset";
+import { CaseWorkflowStatusBadge } from "@/components/case-workflow-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
@@ -61,6 +62,7 @@ export default function ScoreIndexPage() {
                 <th className="px-4 py-3 text-left">Fournisseur</th>
                 <th className="px-4 py-3 text-left">Signal</th>
                 <th className="px-4 py-3 text-left">Severite</th>
+                <th className="px-4 py-3 text-left">Workflow</th>
                 <th className="px-4 py-3 text-right">Score</th>
                 <th className="px-4 py-3 text-right">Exposition</th>
               </tr>
@@ -89,6 +91,9 @@ export default function ScoreIndexPage() {
                   </td>
                   <td className="px-4 py-3">
                     <SeverityBadge value={finding.severity} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <CaseWorkflowStatusBadge caseIds={[`case:${finding.id}`]} />
                   </td>
                   <td className="mono px-4 py-3 text-right text-[#141927]">
                     {finding.riskScore}/100

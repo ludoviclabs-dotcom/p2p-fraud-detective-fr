@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, BriefcaseBusiness } from "lucide-react";
 
 import { getP2PDataset } from "@/data/get-dataset";
+import { CaseWorkflowStatusBadge } from "@/components/case-workflow-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
@@ -64,6 +65,7 @@ export default function VendorsIndexPage() {
                 <th className="px-4 py-3 text-left">Fournisseur</th>
                 <th className="px-4 py-3 text-left">SIREN</th>
                 <th className="px-4 py-3 text-left">Severite</th>
+                <th className="px-4 py-3 text-left">Workflow</th>
                 <th className="px-4 py-3 text-right">Score</th>
                 <th className="px-4 py-3 text-right">Findings</th>
                 <th className="px-4 py-3 text-right">Exposition</th>
@@ -86,6 +88,12 @@ export default function VendorsIndexPage() {
                   </td>
                   <td className="px-4 py-3">
                     <SeverityBadge value={vendor.severity} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <CaseWorkflowStatusBadge
+                      caseIds={vendor.findingIds.map((id) => `case:${id}`)}
+                      vendorId={vendor.vendorId}
+                    />
                   </td>
                   <td className="mono px-4 py-3 text-right text-[#141927]">
                     {vendor.riskScore}/100

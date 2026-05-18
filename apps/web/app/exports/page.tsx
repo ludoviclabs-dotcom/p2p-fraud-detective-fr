@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { CaseWorkflowExport } from "@/components/case-workflow-export";
 import { getP2PDataset } from "@/data/get-dataset";
@@ -51,6 +51,29 @@ export default function ExportsPage() {
           <ArrowUpRight aria-hidden className="h-4 w-4" />
         </Link>
       </div>
+
+      <section className="mt-6 grid gap-3 md:grid-cols-4">
+        {[
+          ["1", "Dashboard", "/dashboard"],
+          ["2", "Graphe rings", "/rings"],
+          ["3", "Score detaille", "/score"],
+          ["4", "Export audit", "/exports"],
+        ].map(([step, label, href]) => (
+          <Link
+            key={step}
+            href={href}
+            className="flex min-h-20 items-center justify-between gap-3 rounded-md border border-[#e6ebf2] bg-white px-4 py-3 text-sm font-semibold text-[#141927] shadow-sm"
+          >
+            <span className="flex items-center gap-3">
+              <span className="mono grid h-7 w-7 place-items-center rounded bg-[#eaf1ff] text-xs text-[#1f3a6e]">
+                {step}
+              </span>
+              {label}
+            </span>
+            <ArrowRight aria-hidden className="h-4 w-4 text-[#1f3a6e]" />
+          </Link>
+        ))}
+      </section>
 
       <div className="mt-6">
         <CaseWorkflowExport suggestedCases={suggestedCases} />
