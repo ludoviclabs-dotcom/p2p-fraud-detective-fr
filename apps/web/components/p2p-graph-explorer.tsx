@@ -27,10 +27,20 @@ const SEVERITY_COLORS: Record<Severity, string> = {
   critical: "#A23E48",
 };
 
-const SIGNAL_OPTIONS = [
-  { value: "all", label: "Tous les signaux" },
-  { value: "shared_iban_ring", label: "Anneaux IBAN partagés" },
-  { value: "vendor_cluster", label: "Clusters fournisseurs" },
+const SIGNAL_LABELS: Record<string, string> = {
+  amount_just_under_threshold: "Sous seuils",
+  duplicate_exact: "Doublons exacts",
+  duplicate_fuzzy: "Doublons proches",
+  shared_iban_ring: "Anneaux IBAN partagés",
+  vendor_cluster: "Clusters fournisseurs",
+};
+
+const SIGNAL_ORDER = [
+  "shared_iban_ring",
+  "vendor_cluster",
+  "duplicate_exact",
+  "duplicate_fuzzy",
+  "amount_just_under_threshold",
 ];
 
 const SEVERITY_OPTIONS = [
@@ -77,6 +87,10 @@ function severityMatches(severity: Severity, selected: string): boolean {
   return SEVERITY_ORDER[severity] >= SEVERITY_ORDER[selected as Severity];
 }
 
+function signalLabel(signal: string): string {
+  return SIGNAL_LABELS[signal] ?? signal.replaceAll("_", " ");
+}
+
 function selectedNodeSummary(dataset: P2PDemoDataset, node: GraphNode | undefined) {
   if (!node) return null;
   if (node.kind === "finding") {
@@ -96,6 +110,19 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
   const [severity, setSeverity] = useState("all");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [graphError, setGraphError] = useState<string | null>(null);
+
+  const signalOptions = useMemo(() => {
+    const availableSignals = new Set(dataset.findings.map((finding) => finding.signal));
+    const orderedSignals = SIGNAL_ORDER.filter((value) => availableSignals.delete(value));
+    const extraSignals = Array.from(availableSignals).sort();
+    return [
+      { value: "all", label: "Tous les signaux" },
+      ...[...orderedSignals, ...extraSignals].map((value) => ({
+        value,
+        label: signalLabel(value),
+      })),
+    ];
+  }, [dataset.findings]);
 
   const filtered = useMemo(() => {
     const findingIds = new Set(
@@ -257,7 +284,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
               onChange={(event) => setSignal(event.target.value)}
               className="rounded-md border border-[#D8DEE9] bg-white px-3 py-2 text-sm font-medium text-[#141927]"
             >
-              {SIGNAL_OPTIONS.map((option) => (
+              {signalOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -405,7 +432,9 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
 
               {details.finding ? (
                 <div className="rounded-md border border-[#D8DEE9] bg-[#F6F7FB] p-4 text-sm">
-                  <p className="font-semibold text-[#141927]">{details.finding.signal}</p>
+                  <p className="font-semibold text-[#141927]">
+                    {signalLabel(details.finding.signal)}
+                  </p>
                   <p className="mono mt-1 text-[#5A6478]">{details.finding.invoiceId}</p>
                   <Link
                     href={`/score/${details.finding.invoiceId}`}

@@ -56,6 +56,8 @@ export interface P2PMetrics {
   largestClusterSize: number;
   criticalFindings: number;
   highFindings: number;
+  mediumFindings: number;
+  signalCounts: Record<string, number>;
   exposureEur: number;
 }
 
