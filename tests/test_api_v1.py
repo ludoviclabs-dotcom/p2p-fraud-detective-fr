@@ -165,6 +165,43 @@ def test_bulk_assign_succeeds(client: TestClient) -> None:
     assert body["n_errors"] == 0
 
 
+def test_list_cases_filters_by_invoice_id(client: TestClient) -> None:
+    cases = _case_service().list_cases()
+    target = cases[0]
+    r = client.get(f"/api/v1/cases?invoice_id={target.invoice_id}")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body) == 1
+    assert body[0]["case_id"] == target.case_id
+
+
+def test_case_status_update_sets_in_progress(client: TestClient) -> None:
+    case = _case_service().list_cases()[0]
+    r = client.post(
+        f"/api/v1/cases/{case.case_id}/status",
+        json={"status": "in_progress", "actor": "auditeur.web"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["case_id"] == case.case_id
+    assert body["status"] == "in_progress"
+
+
+def test_case_status_update_escalates(client: TestClient) -> None:
+    case = _case_service().list_cases()[1]
+    r = client.post(
+        f"/api/v1/cases/{case.case_id}/status",
+        json={
+            "status": "escalated",
+            "actor": "auditeur.web",
+            "reason": "Paiement a bloquer avant revue complementaire.",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "escalated"
+
+
 def test_bulk_close_invalid_status_returns_400(client: TestClient) -> None:
     cases = _case_service().list_cases()
     r = client.post(

@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CASE_DECISION_OPTIONS,
   CASE_STATUS_OPTIONS,
-  CASE_WORKFLOW_STORAGE_KEY,
   createDefaultCaseWorkflowRecord,
   exportCaseWorkflowCsv,
   getCaseDecisionLabel,
@@ -16,26 +15,14 @@ import {
   type CaseWorkflowContext,
   type CaseWorkflowRecord,
 } from "@/lib/case-workflow";
+import {
+  isCaseWorkflowApiEnabled,
+  loadCaseWorkflowRecord,
+  saveCaseWorkflowRecord,
+} from "@/lib/case-workflow-bridge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatEuro } from "@/lib/p2p-demo-format";
-
-function readStoredRecords(): CaseWorkflowRecord[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(CASE_WORKFLOW_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeStoredRecords(records: CaseWorkflowRecord[]) {
-  window.localStorage.setItem(CASE_WORKFLOW_STORAGE_KEY, JSON.stringify(records));
-}
 
 function downloadText(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -60,11 +47,42 @@ export function CaseWorkflowPanel({
     createDefaultCaseWorkflowRecord(context),
   );
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [bridgeMode, setBridgeMode] = useState<"local" | "fastapi" | "hybrid">("local");
+  const [bridgeMessage, setBridgeMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const stored = readStoredRecords().find((item) => item.id === context.id);
-    setRecord(stored ?? createDefaultCaseWorkflowRecord(context));
-    setSavedAt(stored?.updatedAt ?? null);
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const loaded = await loadCaseWorkflowRecord(context);
+        if (cancelled) return;
+        setRecord(loaded.record);
+        setSavedAt(loaded.record.updatedAt ?? null);
+        setBridgeMode(loaded.mode);
+        setBridgeMessage(
+          loaded.mode === "fastapi"
+            ? "Case lie au backend FastAPI."
+            : loaded.mode === "hybrid"
+              ? "Mode hybride : sauvegarde locale + synchronisation FastAPI."
+              : isCaseWorkflowApiEnabled()
+                ? "Bridge FastAPI indisponible pour ce case."
+                : "Mode demo local.",
+        );
+      } catch {
+        if (cancelled) return;
+        setRecord(createDefaultCaseWorkflowRecord(context));
+        setSavedAt(null);
+        setBridgeMode("local");
+        setBridgeMessage("Mode demo local.");
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [context]);
 
   const statusTone = useMemo(
@@ -82,17 +100,27 @@ export function CaseWorkflowPanel({
     setRecord((current) => ({ ...current, ...patch }));
   };
 
-  const saveRecord = () => {
-    const records = readStoredRecords();
-    const updated: CaseWorkflowRecord = {
-      ...record,
-      updatedAt: new Date().toISOString(),
-    };
-    const next = [updated, ...records.filter((item) => item.id !== updated.id)];
-    writeStoredRecords(next);
-    setRecord(updated);
-    setSavedAt(updated.updatedAt);
-    window.dispatchEvent(new Event("p2p-case-workflow-updated"));
+  const saveRecord = async () => {
+    setIsSaving(true);
+    setBridgeMessage(null);
+    try {
+      const saved = await saveCaseWorkflowRecord(context, record);
+      setRecord(saved.record);
+      setSavedAt(saved.record.updatedAt);
+      setBridgeMode(saved.mode);
+      setBridgeMessage(
+        saved.warning ??
+          (saved.mode === "hybrid"
+            ? "Sauvegarde locale et synchronisation FastAPI effectuees."
+            : "Sauvegarde locale effectuee."),
+      );
+      window.dispatchEvent(new Event("p2p-case-workflow-updated"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erreur de sauvegarde.";
+      setBridgeMessage(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const exportOne = () => {
@@ -184,9 +212,9 @@ export function CaseWorkflowPanel({
         </label>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={saveRecord}>
+          <Button type="button" onClick={saveRecord} disabled={isSaving}>
             <Save aria-hidden className="h-4 w-4" />
-            Enregistrer
+            {isSaving ? "Sauvegarde..." : "Enregistrer"}
           </Button>
           <Button type="button" variant="outline" onClick={exportOne}>
             <Download aria-hidden className="h-4 w-4" />
@@ -198,13 +226,17 @@ export function CaseWorkflowPanel({
                   dateStyle: "short",
                   timeStyle: "short",
                 }).format(new Date(savedAt))}`
-              : "Stockage local navigateur, exportable."}
+              : "Workflow exportable depuis le navigateur."}
           </span>
         </div>
 
+        {bridgeMessage ? (
+          <p className="text-xs leading-5 text-[#5a6478]">{bridgeMessage}</p>
+        ) : null}
+
         <p className="text-xs leading-5 text-[#5a6478]">
           Statut actuel: {getCaseStatusLabel(record.status)} - Decision:{" "}
-          {getCaseDecisionLabel(record.decision)}
+          {getCaseDecisionLabel(record.decision)} - Mode: {bridgeMode}
         </p>
       </CardContent>
     </Card>

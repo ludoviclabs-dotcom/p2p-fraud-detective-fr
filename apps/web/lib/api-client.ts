@@ -98,12 +98,18 @@ export async function getDemoGraphMetrics(): Promise<DemoGraphMetrics> {
 }
 
 export const listCases = (params: {
+  case_id?: string;
+  invoice_id?: string;
+  vendor_id?: string;
   status?: string;
   severity?: string;
   assignee?: string;
   limit?: number;
 } = {}) => {
   const qs = new URLSearchParams();
+  if (params.case_id) qs.set("case_id", params.case_id);
+  if (params.invoice_id) qs.set("invoice_id", params.invoice_id);
+  if (params.vendor_id) qs.set("vendor_id", params.vendor_id);
   if (params.status) qs.set("status", params.status);
   if (params.severity) qs.set("severity", params.severity);
   if (params.assignee) qs.set("assignee", params.assignee);
@@ -160,3 +166,14 @@ export const commentCase = (
     `/api/v1/cases/${encodeURIComponent(caseId)}/comment`,
     body,
   );
+
+export const setCaseStatus = (
+  caseId: string,
+  body: {
+    status: "new" | "triaged" | "in_progress" | "escalated";
+    actor: string;
+    reason?: string;
+    channel?: string;
+  },
+) =>
+  api.post<CaseOutV1>(`/api/v1/cases/${encodeURIComponent(caseId)}/status`, body);

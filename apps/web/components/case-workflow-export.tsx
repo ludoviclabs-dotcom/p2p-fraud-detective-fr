@@ -9,6 +9,7 @@ import {
   exportCaseWorkflowCsv,
   getCaseDecisionLabel,
   getCaseStatusLabel,
+  readStoredCaseWorkflowRecords,
   type CaseWorkflowContext,
   type CaseWorkflowRecord,
 } from "@/lib/case-workflow";
@@ -17,19 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro } from "@/lib/p2p-demo-format";
 import { getSignalLabel } from "@/lib/p2p-demo-taxonomy";
-
-function readStoredRecords(): CaseWorkflowRecord[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(CASE_WORKFLOW_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 function downloadText(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -53,7 +41,7 @@ export function CaseWorkflowExport({
   const [statusFilter, setStatusFilter] = useState("all");
   const [decisionFilter, setDecisionFilter] = useState("all");
 
-  const refresh = () => setRecords(readStoredRecords());
+  const refresh = () => setRecords(readStoredCaseWorkflowRecords());
 
   useEffect(() => {
     refresh();
@@ -138,7 +126,7 @@ export function CaseWorkflowExport({
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle>Registre local des decisions</CardTitle>
+            <CardTitle>Registre workflow</CardTitle>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" type="button" onClick={refresh}>
                 <RotateCcw aria-hidden className="h-4 w-4" />
@@ -218,6 +206,7 @@ export function CaseWorkflowExport({
                       <th className="px-4 py-3 text-left">Statut</th>
                       <th className="px-4 py-3 text-left">Decision</th>
                       <th className="px-4 py-3 text-left">Responsable</th>
+                      <th className="px-4 py-3 text-left">Source</th>
                       <th className="px-4 py-3 text-right">Exposition</th>
                     </tr>
                   </thead>
@@ -254,6 +243,9 @@ export function CaseWorkflowExport({
                         </td>
                         <td className="px-4 py-3 text-[#5a6478]">
                           {record.assignee || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[#5a6478]">
+                          {record.backendCaseId ? `FastAPI ${record.backendCaseId}` : "Local"}
                         </td>
                         <td className="mono px-4 py-3 text-right text-[#141927]">
                           {formatEuro(record.exposureEur)}

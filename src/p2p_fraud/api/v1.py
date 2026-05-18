@@ -105,6 +105,16 @@ class CommentBody(BaseModel):
     actor: str = Field(..., min_length=1, max_length=128)
 
 
+class StatusBody(BaseModel):
+    status: str = Field(
+        ...,
+        description='"new" | "triaged" | "in_progress" | "escalated"',
+    )
+    actor: str = Field(..., min_length=1, max_length=128)
+    reason: str | None = Field(default=None, max_length=2000)
+    channel: str | None = Field(default=None, max_length=128)
+
+
 class BulkAssignBody(BaseModel):
     case_ids: list[str] = Field(..., min_length=1, max_length=500)
     assignee: str = Field(..., min_length=1, max_length=128)
@@ -372,10 +382,29 @@ class CaseOutV1(BaseModel):
     closure_reason: str | None = None
 
 
+def _to_case_out_v1(case: Any) -> CaseOutV1:
+    return CaseOutV1(
+        case_id=case.case_id,
+        title=case.title,
+        severity=case.severity,
+        status=case.status.value,
+        vendor_id=case.vendor_id,
+        invoice_id=case.invoice_id,
+        exposure_eur=case.exposure_eur,
+        assignee=case.assignee,
+        created_at=case.created_at.isoformat() if case.created_at else "",
+        closed_at=case.closed_at.isoformat() if case.closed_at else None,
+        closure_reason=case.closure_reason,
+    )
+
+
 @router.get("/cases", response_model=list[CaseOutV1])
 def list_cases_v1(
     _: Annotated[str, Depends(_require_auth_v1)],
     service: Annotated[CaseService, Depends(_get_service)],
+    case_id: str | None = None,
+    invoice_id: str | None = None,
+    vendor_id: str | None = None,
     status: str | None = None,
     severity: str | None = None,
     assignee: str | None = None,
@@ -385,27 +414,19 @@ def list_cases_v1(
     cases = service.list_cases()
     rows: list[CaseOutV1] = []
     for c in cases:
+        if case_id and c.case_id != case_id:
+            continue
+        if invoice_id and c.invoice_id != invoice_id:
+            continue
+        if vendor_id and c.vendor_id != vendor_id:
+            continue
         if status and c.status.value != status:
             continue
         if severity and c.severity != severity:
             continue
         if assignee and c.assignee != assignee:
             continue
-        rows.append(
-            CaseOutV1(
-                case_id=c.case_id,
-                title=c.title,
-                severity=c.severity,
-                status=c.status.value,
-                vendor_id=c.vendor_id,
-                invoice_id=c.invoice_id,
-                exposure_eur=c.exposure_eur,
-                assignee=c.assignee,
-                created_at=c.created_at.isoformat() if c.created_at else "",
-                closed_at=c.closed_at.isoformat() if c.closed_at else None,
-                closure_reason=c.closure_reason,
-            )
-        )
+        rows.append(_to_case_out_v1(c))
         if len(rows) >= limit:
             break
     return rows
@@ -426,6 +447,46 @@ def case_comment(
     except CaseNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"ok": True, "case_id": case_id}
+
+
+_STATUS_UPDATE_MAP = {
+    "new": CaseStatus.NEW,
+    "triaged": CaseStatus.TRIAGED,
+    "in_progress": CaseStatus.IN_PROGRESS,
+}
+
+
+@router.post("/cases/{case_id}/status", response_model=CaseOutV1)
+def case_status_update(
+    case_id: str,
+    body: StatusBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> CaseOutV1:
+    try:
+        if body.status == "escalated":
+            case = service.escalate(
+                case_id,
+                actor=body.actor,
+                channel=body.channel or "audit-workflow",
+                reason=(body.reason or "Escalade depuis le workflow web.").strip(),
+            )
+        else:
+            target = _STATUS_UPDATE_MAP.get(body.status)
+            if target is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"status invalide : {body.status}. "
+                        'Choisir parmi ["new", "triaged", "in_progress", "escalated"].'
+                    ),
+                )
+            case = service.set_status(case_id, target, actor=body.actor)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (CaseClosedError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_case_out_v1(case)
 
 
 @router.post("/cases/bulk/assign", response_model=BulkResult)
