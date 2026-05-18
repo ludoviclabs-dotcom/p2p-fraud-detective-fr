@@ -17,7 +17,9 @@ from typing import Any
 
 import pandas as pd
 
+from p2p_fraud.detectors.duplicates import detect_duplicates
 from p2p_fraud.detectors.graph import _normalize_iban, detect_fraud_rings
+from p2p_fraud.detectors.thresholds import detect_under_threshold
 from p2p_fraud.schema import Finding, Severity
 
 DEFAULT_INVOICES = Path("data/samples/sample_5k.csv")
@@ -30,6 +32,23 @@ SEVERITY_RISK_SCORE = {
     Severity.HIGH: 70,
     Severity.CRITICAL: 95,
 }
+
+SEVERITY_RANK = {
+    Severity.LOW.value: 1,
+    Severity.MEDIUM.value: 2,
+    Severity.HIGH.value: 3,
+    Severity.CRITICAL.value: 4,
+}
+
+DEMO_SIGNAL_CAPS = {
+    "shared_iban_ring": 140,
+    "vendor_cluster": 50,
+    "duplicate_exact": 40,
+    "duplicate_fuzzy": 120,
+    "amount_just_under_threshold": 110,
+}
+
+DEMO_SIGNAL_ORDER = tuple(DEMO_SIGNAL_CAPS)
 
 
 def stable_hash(value: str, *, length: int = 12) -> str:
@@ -51,8 +70,8 @@ def mask_iban(value: str | None) -> str | None:
     if not normalized:
         return None
     if len(normalized) <= 10:
-        return f"{normalized[:2]}••••{normalized[-2:]}"
-    return f"{normalized[:4]}••••••••{normalized[-4:]}"
+        return f"{normalized[:2]}****{normalized[-2:]}"
+    return f"{normalized[:4]}********{normalized[-4:]}"
 
 
 def sanitize_evidence(value: Any) -> Any:
@@ -76,6 +95,16 @@ def sanitize_evidence(value: Any) -> Any:
     if isinstance(value, tuple):
         return [sanitize_evidence(item) for item in value]
     return value
+
+
+def strongest_severity(current: str | None, candidate: str | None) -> str | None:
+    if current is None:
+        return candidate
+    if candidate is None:
+        return current
+    if SEVERITY_RANK.get(candidate, 0) > SEVERITY_RANK.get(current, 0):
+        return candidate
+    return current
 
 
 def read_invoices(path: Path) -> pd.DataFrame:
@@ -111,22 +140,83 @@ def finding_id(finding: Finding, index: int) -> str:
     return f"finding:{stable_hash(raw, length=16)}"
 
 
+def invoice_amount(invoice_rows: dict[str, pd.Series], invoice_id: str) -> float:
+    row = invoice_rows.get(str(invoice_id))
+    if row is None:
+        return 0.0
+    return float(row.get("amount") or 0)
+
+
+def select_demo_findings(
+    findings: list[Finding],
+    invoice_rows: dict[str, pd.Series],
+    *,
+    max_findings: int,
+) -> list[Finding]:
+    """Keep the public demo balanced across real detector signals."""
+    selected: list[Finding] = []
+    selected_keys: set[str] = set()
+
+    def selection_key(finding: Finding) -> str:
+        evidence_hash = stable_hash(
+            json.dumps(finding.evidence, sort_keys=True, default=str),
+            length=12,
+        )
+        return f"{finding.invoice_id}|{finding.rule_id}|{finding.signal}|{evidence_hash}"
+
+    def sort_key(finding: Finding) -> tuple[int, float, str]:
+        return (
+            SEVERITY_RISK_SCORE.get(finding.severity, 0),
+            invoice_amount(invoice_rows, finding.invoice_id),
+            str(finding.invoice_id),
+        )
+
+    def append_unique(bucket: list[Finding], cap: int) -> None:
+        for finding in sorted(bucket, key=sort_key, reverse=True)[:cap]:
+            key = selection_key(finding)
+            if key in selected_keys:
+                continue
+            selected.append(finding)
+            selected_keys.add(key)
+
+    for signal in DEMO_SIGNAL_ORDER:
+        signal_findings = [finding for finding in findings if finding.signal == signal]
+        append_unique(signal_findings, DEMO_SIGNAL_CAPS[signal])
+
+    remaining = [
+        finding
+        for finding in findings
+        if finding.signal not in DEMO_SIGNAL_CAPS and selection_key(finding) not in selected_keys
+    ]
+    append_unique(remaining, max(0, max_findings - len(selected)))
+
+    return selected[:max_findings]
+
+
 def build_dataset(
     invoices: pd.DataFrame,
     vendors: pd.DataFrame,
     *,
     cluster_min_size: int = 3,
-    max_findings: int = 400,
+    max_findings: int = 420,
 ) -> dict[str, Any]:
-    findings, analysis = detect_fraud_rings(invoices, cluster_min_size=cluster_min_size)
-    findings = findings[:max_findings]
-
     vendor_meta = vendor_lookup(vendors)
     invoice_rows = {
         str(row["invoice_id"]): row
         for _, row in invoices.iterrows()
         if "invoice_id" in row and not pd.isna(row["invoice_id"])
     }
+    graph_findings, analysis = detect_fraud_rings(invoices, cluster_min_size=cluster_min_size)
+    raw_findings = [
+        *graph_findings,
+        *detect_duplicates(invoices),
+        *detect_under_threshold(invoices),
+    ]
+    findings = select_demo_findings(
+        raw_findings,
+        invoice_rows,
+        max_findings=max_findings,
+    )
 
     nodes: dict[str, dict[str, Any]] = {}
     edges: dict[str, dict[str, Any]] = {}
@@ -143,10 +233,7 @@ def build_dataset(
             float(existing.get("exposureEur") or 0) + float(node.get("exposureEur") or 0),
             2,
         )
-        if node.get("severity") == "critical":
-            existing["severity"] = "critical"
-        elif existing.get("severity") not in {"critical", "high"} and node.get("severity"):
-            existing["severity"] = node["severity"]
+        existing["severity"] = strongest_severity(existing.get("severity"), node.get("severity"))
 
     def add_edge(edge: dict[str, Any]) -> None:
         key = f"{edge['source']}->{edge['target']}:{edge['kind']}"
@@ -265,22 +352,24 @@ def build_dataset(
         )
         vendor_bucket["exposureEur"] = round(float(vendor_bucket["exposureEur"]) + amount, 2)
         vendor_bucket["riskScore"] = max(int(vendor_bucket["riskScore"]), int(risk_score))
-        if severity == "critical":
-            vendor_bucket["severity"] = "critical"
+        vendor_bucket["severity"] = strongest_severity(vendor_bucket["severity"], severity)
         vendor_bucket["findingIds"].append(fid)
 
     severities = pd.Series([f["severity"] for f in finding_summaries], dtype="object")
+    signals = pd.Series([f["signal"] for f in finding_summaries], dtype="object")
     metrics = {
-        "invoiceCount": int(len(invoices)),
-        "findingCount": int(len(finding_summaries)),
+        "invoiceCount": len(invoices),
+        "findingCount": len(finding_summaries),
         "vendorCount": int(sum(1 for n in nodes.values() if n["kind"] == "vendor")),
         "ibanNodeCount": int(sum(1 for n in nodes.values() if n["kind"] == "iban")),
-        "edgeCount": int(len(edges)),
+        "edgeCount": len(edges),
         "sharedIbanRings": int(analysis.n_shared_iban_rings),
         "vendorClusters": int(analysis.n_vendor_clusters),
         "largestClusterSize": int(analysis.largest_cluster_size),
         "criticalFindings": int((severities == "critical").sum()) if not severities.empty else 0,
         "highFindings": int((severities == "high").sum()) if not severities.empty else 0,
+        "mediumFindings": int((severities == "medium").sum()) if not severities.empty else 0,
+        "signalCounts": signals.value_counts().sort_index().to_dict() if not signals.empty else {},
         "exposureEur": round(sum(float(f["exposureEur"]) for f in finding_summaries), 2),
     }
 
