@@ -3,23 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  CASE_WORKFLOW_STORAGE_KEY,
   getCaseStatusLabel,
+  readStoredCaseWorkflowRecords,
   type CaseWorkflowRecord,
 } from "@/lib/case-workflow";
-
-function readStoredRecords(): CaseWorkflowRecord[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(CASE_WORKFLOW_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 export function CaseWorkflowStatusBadge({
   caseIds,
@@ -31,7 +18,7 @@ export function CaseWorkflowStatusBadge({
   const [records, setRecords] = useState<CaseWorkflowRecord[]>([]);
 
   useEffect(() => {
-    const refresh = () => setRecords(readStoredRecords());
+    const refresh = () => setRecords(readStoredCaseWorkflowRecords());
     refresh();
     window.addEventListener("p2p-case-workflow-updated", refresh);
     window.addEventListener("storage", refresh);

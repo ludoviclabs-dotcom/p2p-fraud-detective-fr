@@ -1,6 +1,7 @@
 import type { Severity } from "@/types/p2p";
 
 export const CASE_WORKFLOW_STORAGE_KEY = "p2p.caseWorkflow.v1";
+export const CASE_WORKFLOW_ACTOR = "web.audit";
 
 export type CaseStatus =
   | "new"
@@ -15,6 +16,8 @@ export type CaseDecision =
   | "request_documents"
   | "block_payment"
   | "close_false_positive";
+
+export type CaseWorkflowSource = "local" | "fastapi" | "hybrid";
 
 export interface CaseWorkflowContext {
   id: string;
@@ -35,6 +38,8 @@ export interface CaseWorkflowRecord extends CaseWorkflowContext {
   note: string;
   createdAt: string;
   updatedAt: string;
+  backendCaseId?: string | null;
+  source?: CaseWorkflowSource;
 }
 
 export const CASE_STATUS_OPTIONS: Array<{
@@ -77,6 +82,8 @@ export function createDefaultCaseWorkflowRecord(
     note: "",
     createdAt: now,
     updatedAt: now,
+    backendCaseId: null,
+    source: "local",
   };
 }
 
@@ -93,6 +100,7 @@ export function getCaseDecisionLabel(decision: CaseDecision): string {
 export function exportCaseWorkflowCsv(records: CaseWorkflowRecord[]): string {
   const headers = [
     "case_id",
+    "backend_case_id",
     "invoice_id",
     "finding_id",
     "vendor_id",
@@ -112,6 +120,7 @@ export function exportCaseWorkflowCsv(records: CaseWorkflowRecord[]): string {
   const rows = records.map((record) =>
     [
       record.id,
+      record.backendCaseId ?? "",
       record.invoiceId,
       record.findingId,
       record.vendorId,
@@ -135,4 +144,22 @@ export function exportCaseWorkflowCsv(records: CaseWorkflowRecord[]): string {
 function toCsvCell(value: string): string {
   const escaped = value.replaceAll('"', '""');
   return /[",\n\r]/.test(escaped) ? `"${escaped}"` : escaped;
+}
+
+export function readStoredCaseWorkflowRecords(): CaseWorkflowRecord[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(CASE_WORKFLOW_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeStoredCaseWorkflowRecords(records: CaseWorkflowRecord[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CASE_WORKFLOW_STORAGE_KEY, JSON.stringify(records));
 }
