@@ -16,10 +16,13 @@ import {
 } from "lucide-react";
 import {
   getCockpitKpis,
+  getDemoGraphMetrics,
   getTopVendors,
   type CockpitKPIs,
+  type DemoGraphMetrics,
   type TopVendor,
 } from "@/lib/api-client";
+import { formatNumber } from "@/lib/p2p-demo-format";
 import { formatEur } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -134,6 +137,11 @@ export default function DashboardPage() {
     queryFn: () => getTopVendors(10),
     retry: false,
   });
+  const demoGraphQuery = useQuery({
+    queryKey: ["p2p-demo", "graph-metrics"],
+    queryFn: getDemoGraphMetrics,
+    retry: false,
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -241,30 +249,13 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="flex items-center gap-2 font-semibold text-[#111827] dark:text-white">
-            <FileSearch size={19} className="text-[#2f6bff]" />
-            Parcours recommandé
-          </div>
-          <div className="mt-5 space-y-4">
-            {[
-              ["1", "Qualifier la case", "Vérifier score, source et exposition."],
-              ["2", "Ouvrir fournisseur 360", "Valider liens SIREN, IBAN et historique."],
-              ["3", "Exporter la preuve", "Signer et archiver la piste d'audit."],
-            ].map(([step, title, body]) => (
-              <div key={step} className="flex gap-3">
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#eaf1ff] text-xs font-bold text-[#2f6bff]">
-                  {step}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-[#111827] dark:text-white">
-                    {title}
-                  </div>
-                  <div className="text-sm leading-6 text-[#667085]">{body}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-col gap-4">
+          <SignalBreakdownCard
+            data={demoGraphQuery.data}
+            isLoading={demoGraphQuery.isLoading}
+            isError={demoGraphQuery.isError}
+          />
+          <RecommendedPath />
         </div>
       </section>
     </div>
@@ -368,6 +359,128 @@ function TrendCard({
       </div>
       <Sparkline points={points} color={color} />
       <div className="mt-2 text-xs text-[#667085]">Tendance 30 jours</div>
+    </div>
+  );
+}
+
+function SignalBreakdownCard({
+  data,
+  isLoading,
+  isError,
+}: {
+  data: DemoGraphMetrics | undefined;
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="h-72 animate-pulse rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="h-5 w-40 rounded bg-[#eef3fb]" />
+        <div className="mt-5 h-4 w-full rounded bg-[#eef3fb]" />
+        <div className="mt-3 h-4 w-10/12 rounded bg-[#eef3fb]" />
+        <div className="mt-3 h-4 w-8/12 rounded bg-[#eef3fb]" />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <ActionState
+        title="Breakdown démo indisponible"
+        body="Les métriques statiques du graphe ne sont pas accessibles pour le moment."
+        actionHref="/rings"
+        actionLabel="Ouvrir le graphe"
+      />
+    );
+  }
+
+  const severityRows = [
+    ["Critical", data.metrics.criticalFindings, "#e5484d"],
+    ["High", data.metrics.highFindings, "#d35f2a"],
+    ["Medium", data.metrics.mediumFindings, "#c97b1f"],
+  ];
+
+  return (
+    <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
+            Démo Vercel
+          </div>
+          <h2 className="mt-1 font-semibold text-[#111827] dark:text-white">
+            Répartition des signaux
+          </h2>
+        </div>
+        <BarChart3 size={20} className="text-[#2f6bff]" />
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
+        {severityRows.map(([label, count, color]) => (
+          <div key={label} className="rounded-md bg-[#f7f9fc] p-3 dark:bg-white/[0.04]">
+            <div className="text-xs text-[#667085]">{label}</div>
+            <div className="mt-1 font-mono text-lg font-bold" style={{ color: String(color) }}>
+              {formatNumber(Number(count))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {data.signalBreakdown.map((item) => (
+          <div key={item.signal}>
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-medium text-[#111827] dark:text-white">{item.label}</span>
+              <span className="font-mono text-xs text-[#667085]">
+                {formatNumber(item.count)}
+              </span>
+            </div>
+            <div className="mt-1 h-2 rounded-full bg-[#eef3fb] dark:bg-white/[0.07]">
+              <div
+                className="h-2 rounded-full bg-[#2f6bff]"
+                style={{ width: `${Math.max(item.share * 100, 2)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href="/rings"
+        className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[#2f6bff] hover:underline"
+      >
+        Explorer le graphe
+        <ArrowRight size={14} />
+      </Link>
+    </div>
+  );
+}
+
+function RecommendedPath() {
+  return (
+    <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="flex items-center gap-2 font-semibold text-[#111827] dark:text-white">
+        <FileSearch size={19} className="text-[#2f6bff]" />
+        Parcours recommandé
+      </div>
+      <div className="mt-5 space-y-4">
+        {[
+          ["1", "Qualifier la case", "Vérifier score, source et exposition."],
+          ["2", "Ouvrir fournisseur 360", "Valider liens SIREN, IBAN et historique."],
+          ["3", "Exporter la preuve", "Signer et archiver la piste d'audit."],
+        ].map(([step, title, body]) => (
+          <div key={step} className="flex gap-3">
+            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#eaf1ff] text-xs font-bold text-[#2f6bff]">
+              {step}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#111827] dark:text-white">
+                {title}
+              </div>
+              <div className="text-sm leading-6 text-[#667085]">{body}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
