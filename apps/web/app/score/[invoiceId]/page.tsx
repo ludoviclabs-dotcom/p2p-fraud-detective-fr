@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { getFinding, getFindingContext, getFindingVendor } from "@/data/get-dataset";
+import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
@@ -150,6 +151,21 @@ export default async function ScoreDetailPage({
         </div>
 
         <aside className="space-y-5">
+          <CaseWorkflowPanel
+            compact
+            context={{
+              id: `case:${finding.id}`,
+              findingId: finding.id,
+              invoiceId: finding.invoiceId,
+              vendorId: finding.vendorId,
+              vendorName: finding.vendorName,
+              signal: finding.signal,
+              severity: finding.severity,
+              exposureEur: finding.exposureEur,
+              riskScore: finding.riskScore,
+            }}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle>Fournisseur</CardTitle>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { getP2PDataset, getVendor, getVendorFindings } from "@/data/get-dataset";
+import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
@@ -42,6 +43,7 @@ export default async function VendorDetailPage({
     .sort((a, b) => b.edge.findingIds.length - a.edge.findingIds.length);
 
   const topFindings = findings.slice(0, 12);
+  const leadFinding = topFindings[0];
   const findingTotal = findings.length;
   const criticalOrHigh = findings.filter(
     (finding) => SEVERITY_ORDER[finding.severity] >= SEVERITY_ORDER.high,
@@ -162,6 +164,23 @@ export default async function VendorDetailPage({
         </Card>
 
         <aside className="space-y-5">
+          {leadFinding ? (
+            <CaseWorkflowPanel
+              compact
+              context={{
+                id: `case:${leadFinding.id}`,
+                findingId: leadFinding.id,
+                invoiceId: leadFinding.invoiceId,
+                vendorId: vendor.vendorId,
+                vendorName: vendor.name,
+                signal: leadFinding.signal,
+                severity: leadFinding.severity,
+                exposureEur: leadFinding.exposureEur,
+                riskScore: leadFinding.riskScore,
+              }}
+            />
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle>Breakdown signaux</CardTitle>
