@@ -271,11 +271,11 @@ def build_dataset(
 
     severities = pd.Series([f["severity"] for f in finding_summaries], dtype="object")
     metrics = {
-        "invoiceCount": int(len(invoices)),
-        "findingCount": int(len(finding_summaries)),
+        "invoiceCount": len(invoices),
+        "findingCount": len(finding_summaries),
         "vendorCount": int(sum(1 for n in nodes.values() if n["kind"] == "vendor")),
         "ibanNodeCount": int(sum(1 for n in nodes.values() if n["kind"] == "iban")),
-        "edgeCount": int(len(edges)),
+        "edgeCount": len(edges),
         "sharedIbanRings": int(analysis.n_shared_iban_rings),
         "vendorClusters": int(analysis.n_vendor_clusters),
         "largestClusterSize": int(analysis.largest_cluster_size),
