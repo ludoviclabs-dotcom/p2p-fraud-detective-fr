@@ -3,13 +3,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { listAudit, type AuditEntryOut } from "@/lib/api-client";
+import {
+  ALERTS_REFETCH_MS,
+  computeAlertFeedStats,
+  getAlertStreamStatusLabel,
+  mergeAuditEvent,
+  type StreamState,
+} from "@/lib/alerts-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { Bell, Activity } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-
-const REFETCH_MS = 5_000;
-type StreamState = "connecting" | "open" | "fallback";
 
 const SEVERITY_BG: Record<string, string> = {
   critical: "border-l-4 border-l-[#a23e48]",
@@ -27,7 +31,7 @@ export default function AlertsPage() {
     queryKey: ["alerts-feed"],
     queryFn: () => listAudit(0, 50),
     enabled: streamState !== "open",
-    refetchInterval: REFETCH_MS,
+    refetchInterval: ALERTS_REFETCH_MS,
     refetchIntervalInBackground: false,
   });
 
@@ -41,10 +45,7 @@ export default function AlertsPage() {
 
     source.addEventListener("audit", (event) => {
       const next = JSON.parse((event as MessageEvent<string>).data) as AuditEntryOut;
-      setStreamEvents((prev) => {
-        const deduped = prev.filter((item) => item.seq !== next.seq);
-        return [next, ...deduped].sort((a, b) => b.seq - a.seq).slice(0, 50);
-      });
+      setStreamEvents((prev) => mergeAuditEvent(prev, next));
     });
 
     source.addEventListener("heartbeat", () => {
@@ -73,21 +74,11 @@ export default function AlertsPage() {
   );
 
   // Stats temps réel sur les 50 derniers events
-  const stats = useMemo(() => {
-    const byKind = new Map<string, number>();
-    let critical = 0;
-    for (const e of events) {
-      byKind.set(e.kind, (byKind.get(e.kind) ?? 0) + 1);
-      const sev = (e.payload?.severity as string) ?? "";
-      if (sev === "critical") critical++;
-    }
-    return {
-      total: events.length,
-      kinds: byKind,
-      critical,
-      signed: events.filter((e) => e.signature).length,
-    };
-  }, [events]);
+  const stats = useMemo(() => computeAlertFeedStats(events), [events]);
+  const streamStatusLabel = getAlertStreamStatusLabel({
+    streamState,
+    isFetching: query.isFetching,
+  });
 
   return (
     <div className="px-8 py-10">
@@ -103,11 +94,7 @@ export default function AlertsPage() {
                 : "bg-[#9aa3b2]"
             }`}
           />
-          {streamState === "open"
-            ? "Live SSE"
-            : query.isFetching
-              ? "Polling · refresh en cours..."
-              : `Fallback polling · ${REFETCH_MS / 1000}s`}
+          {streamStatusLabel}
         </div>
       </div>
       <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">

@@ -275,7 +275,7 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 
 - **274 tests Python existants** : **aucun à toucher**. La logique métier reste sur FastAPI. ✅
 - **Tests E2E Playwright** : 5 specs minimum (upload → détection → triage → export → audit verify)
-- **Vitest** côté Next.js : composants critiques (`<Money>`, `<DataTable>`, `<SeverityBadge>`, `<ChartContainer>`)
+- **Vitest** côté Next.js : socle logique alertes en place, à étendre aux composants critiques (`<Money>`, `<DataTable>`, `<SeverityBadge>`, `<ChartContainer>`)
 - **Contract tests** : `openapi-typescript` régénéré à chaque PR + CI check de drift schéma
 
 ## Décisions structurantes — synthèse
