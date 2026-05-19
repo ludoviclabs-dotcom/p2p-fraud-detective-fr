@@ -316,6 +316,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * P2P Graph Dataset
+         * @description Dataset graphe P2P public-safe, compatible avec la demo Vercel.
+         *
+         *     Le frontend garde un JSON statique pour la demo publique, mais cet endpoint
+         *     expose le meme contrat cote FastAPI pour preparer une passerelle quasi-live
+         *     sans changer les composants sigma.js.
+         */
+        get: operations["p2p_graph_dataset_api_v1_graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rings": {
         parameters: {
             query?: never;
@@ -964,6 +988,127 @@ export interface components {
             }[];
             /** Api Key */
             api_key?: string | null;
+        };
+        /** P2PDemoDataset */
+        P2PDemoDataset: {
+            /** Generatedat */
+            generatedAt: string;
+            /** Nodes */
+            nodes: components["schemas"]["P2PGraphNode"][];
+            /** Edges */
+            edges: components["schemas"]["P2PGraphEdge"][];
+            /** Findings */
+            findings: components["schemas"]["P2PFindingSummary"][];
+            /** Vendors */
+            vendors: components["schemas"]["P2PVendorSummary"][];
+            metrics: components["schemas"]["P2PGraphMetrics"];
+        };
+        /** P2PFindingSummary */
+        P2PFindingSummary: {
+            /** Id */
+            id: string;
+            /** Invoiceid */
+            invoiceId: string;
+            /** Vendorname */
+            vendorName: string;
+            /** Vendorid */
+            vendorId: string;
+            /** Ruleid */
+            ruleId: string;
+            /** Severity */
+            severity: string;
+            /** Signal */
+            signal: string;
+            /** Exposureeur */
+            exposureEur: number;
+            /** Riskscore */
+            riskScore: number;
+            /** Evidence */
+            evidence?: {
+                [key: string]: unknown;
+            };
+        };
+        /** P2PGraphEdge */
+        P2PGraphEdge: {
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /** Kind */
+            kind: string;
+            /** Weight */
+            weight: number;
+            /** Findingids */
+            findingIds?: string[];
+        };
+        /** P2PGraphMetrics */
+        P2PGraphMetrics: {
+            /** Invoicecount */
+            invoiceCount: number;
+            /** Findingcount */
+            findingCount: number;
+            /** Vendorcount */
+            vendorCount: number;
+            /** Ibannodecount */
+            ibanNodeCount: number;
+            /** Edgecount */
+            edgeCount: number;
+            /** Sharedibanrings */
+            sharedIbanRings: number;
+            /** Vendorclusters */
+            vendorClusters: number;
+            /** Largestclustersize */
+            largestClusterSize: number;
+            /** Criticalfindings */
+            criticalFindings: number;
+            /** Highfindings */
+            highFindings: number;
+            /** Mediumfindings */
+            mediumFindings: number;
+            /** Signalcounts */
+            signalCounts?: {
+                [key: string]: number;
+            };
+            /** Exposureeur */
+            exposureEur: number;
+        };
+        /** P2PGraphNode */
+        P2PGraphNode: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Severity */
+            severity: string;
+            /** Riskscore */
+            riskScore: number;
+            /** Exposureeur */
+            exposureEur: number;
+            /** Maskedvalue */
+            maskedValue?: string | null;
+        };
+        /** P2PVendorSummary */
+        P2PVendorSummary: {
+            /** Id */
+            id: string;
+            /** Vendorid */
+            vendorId: string;
+            /** Name */
+            name: string;
+            /** Siren */
+            siren?: string | null;
+            /** Apecode */
+            apeCode?: string | null;
+            /** Severity */
+            severity: string;
+            /** Riskscore */
+            riskScore: number;
+            /** Exposureeur */
+            exposureEur: number;
+            /** Findingids */
+            findingIds?: string[];
         };
         /** RingsGraph */
         RingsGraph: {
@@ -1641,6 +1786,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    p2p_graph_dataset_api_v1_graph_get: {
+        parameters: {
+            query?: {
+                cluster_min_size?: number;
+                max_findings?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["P2PDemoDataset"];
                 };
             };
             /** @description Validation Error */

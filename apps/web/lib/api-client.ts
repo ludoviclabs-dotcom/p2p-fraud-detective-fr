@@ -13,6 +13,7 @@ import type {
   CockpitKPIs,
   DailyPoint,
   FindingOut,
+  P2PDemoDataset as BackendP2PDemoDataset,
   TimelineEvent,
   TopVendor,
   VendorSummary,
@@ -60,6 +61,7 @@ export type {
   CockpitKPIs,
   DailyPoint,
   FindingOut,
+  BackendP2PDemoDataset,
   TimelineEvent,
   TopVendor,
   VendorSummary,
@@ -81,6 +83,8 @@ export interface DemoGraphMetrics {
   signalBreakdown: DemoSignalBreakdown[];
 }
 
+export type BackendP2PGraphDataset = BackendP2PDemoDataset;
+
 // ─── Endpoints typés ────────────────────────────────────────────────────────
 
 export const getCockpitKpis = () =>
@@ -97,6 +101,17 @@ export async function getDemoGraphMetrics(): Promise<DemoGraphMetrics> {
   }
   return (await resp.json()) as DemoGraphMetrics;
 }
+
+export const getBackendP2PGraph = (params: {
+  cluster_min_size?: number;
+  max_findings?: number;
+} = {}) => {
+  const qs = new URLSearchParams();
+  if (params.cluster_min_size) qs.set("cluster_min_size", String(params.cluster_min_size));
+  if (params.max_findings) qs.set("max_findings", String(params.max_findings));
+  const q = qs.toString();
+  return api.get<BackendP2PGraphDataset>(`/api/v1/graph${q ? `?${q}` : ""}`);
+};
 
 export const listCases = (params: {
   case_id?: string;

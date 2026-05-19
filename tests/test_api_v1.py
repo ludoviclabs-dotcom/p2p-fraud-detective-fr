@@ -85,6 +85,29 @@ def test_cockpit_top_vendors_sorts_by_exposure(client: TestClient) -> None:
     assert rows[0]["exposure_eur"] >= 50000
 
 
+def test_graph_dataset_matches_public_contract(client: TestClient) -> None:
+    r = client.get("/api/v1/graph?max_findings=25")
+    assert r.status_code == 200
+    body = r.json()
+
+    assert body["generatedAt"]
+    assert body["nodes"]
+    assert body["edges"]
+    assert body["findings"]
+    assert body["vendors"]
+    assert body["metrics"]["findingCount"] == len(body["findings"])
+    assert body["metrics"]["edgeCount"] == len(body["edges"])
+
+    finding_ids = {finding["id"] for finding in body["findings"]}
+    node_ids = {node["id"] for node in body["nodes"]}
+    for node in body["nodes"]:
+        assert {"id", "kind", "label", "severity", "riskScore", "exposureEur"} <= set(node)
+    for edge in body["edges"]:
+        assert edge["source"] in node_ids
+        assert edge["target"] in node_ids
+        assert set(edge["findingIds"]) <= finding_ids
+
+
 # ───────────────────────── Findings ──────────────────────────────────────────
 
 

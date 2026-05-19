@@ -20,3 +20,6 @@ export type AuditPage = Schemas["AuditPage"];
 export type AuditVerifyResult = Schemas["AuditVerifyResult"];
 export type BulkResult = Schemas["BulkResult"];
 export type DailyPoint = Schemas["DailyPoint"];
+export type P2PDemoDataset = Schemas["P2PDemoDataset"];
+export type P2PGraphNode = Schemas["P2PGraphNode"];
+export type P2PGraphEdge = Schemas["P2PGraphEdge"];

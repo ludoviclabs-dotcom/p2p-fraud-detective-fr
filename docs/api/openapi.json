@@ -893,6 +893,64 @@
         }
       }
     },
+    "/api/v1/graph": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "P2P Graph Dataset",
+        "description": "Dataset graphe P2P public-safe, compatible avec la demo Vercel.\n\nLe frontend garde un JSON statique pour la demo publique, mais cet endpoint\nexpose le meme contrat cote FastAPI pour preparer une passerelle quasi-live\nsans changer les composants sigma.js.",
+        "operationId": "p2p_graph_dataset_api_v1_graph_get",
+        "parameters": [
+          {
+            "name": "cluster_min_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 2,
+              "default": 3,
+              "title": "Cluster Min Size"
+            }
+          },
+          {
+            "name": "max_findings",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 420,
+              "title": "Max Findings"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/P2PDemoDataset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rings": {
       "get": {
         "tags": [
@@ -2433,6 +2491,339 @@
           "vendor_id"
         ],
         "title": "NarrativeBody"
+      },
+      "P2PDemoDataset": {
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "title": "Generatedat"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/P2PGraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/P2PGraphEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/P2PFindingSummary"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "vendors": {
+            "items": {
+              "$ref": "#/components/schemas/P2PVendorSummary"
+            },
+            "type": "array",
+            "title": "Vendors"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/P2PGraphMetrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generatedAt",
+          "nodes",
+          "edges",
+          "findings",
+          "vendors",
+          "metrics"
+        ],
+        "title": "P2PDemoDataset"
+      },
+      "P2PFindingSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "invoiceId": {
+            "type": "string",
+            "title": "Invoiceid"
+          },
+          "vendorName": {
+            "type": "string",
+            "title": "Vendorname"
+          },
+          "vendorId": {
+            "type": "string",
+            "title": "Vendorid"
+          },
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "exposureEur": {
+            "type": "number",
+            "title": "Exposureeur"
+          },
+          "riskScore": {
+            "type": "number",
+            "title": "Riskscore"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoiceId",
+          "vendorName",
+          "vendorId",
+          "ruleId",
+          "severity",
+          "signal",
+          "exposureEur",
+          "riskScore"
+        ],
+        "title": "P2PFindingSummary"
+      },
+      "P2PGraphEdge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "findingIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Findingids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "weight"
+        ],
+        "title": "P2PGraphEdge"
+      },
+      "P2PGraphMetrics": {
+        "properties": {
+          "invoiceCount": {
+            "type": "integer",
+            "title": "Invoicecount"
+          },
+          "findingCount": {
+            "type": "integer",
+            "title": "Findingcount"
+          },
+          "vendorCount": {
+            "type": "integer",
+            "title": "Vendorcount"
+          },
+          "ibanNodeCount": {
+            "type": "integer",
+            "title": "Ibannodecount"
+          },
+          "edgeCount": {
+            "type": "integer",
+            "title": "Edgecount"
+          },
+          "sharedIbanRings": {
+            "type": "integer",
+            "title": "Sharedibanrings"
+          },
+          "vendorClusters": {
+            "type": "integer",
+            "title": "Vendorclusters"
+          },
+          "largestClusterSize": {
+            "type": "integer",
+            "title": "Largestclustersize"
+          },
+          "criticalFindings": {
+            "type": "integer",
+            "title": "Criticalfindings"
+          },
+          "highFindings": {
+            "type": "integer",
+            "title": "Highfindings"
+          },
+          "mediumFindings": {
+            "type": "integer",
+            "title": "Mediumfindings"
+          },
+          "signalCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Signalcounts"
+          },
+          "exposureEur": {
+            "type": "number",
+            "title": "Exposureeur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoiceCount",
+          "findingCount",
+          "vendorCount",
+          "ibanNodeCount",
+          "edgeCount",
+          "sharedIbanRings",
+          "vendorClusters",
+          "largestClusterSize",
+          "criticalFindings",
+          "highFindings",
+          "mediumFindings",
+          "exposureEur"
+        ],
+        "title": "P2PGraphMetrics"
+      },
+      "P2PGraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "riskScore": {
+            "type": "number",
+            "title": "Riskscore"
+          },
+          "exposureEur": {
+            "type": "number",
+            "title": "Exposureeur"
+          },
+          "maskedValue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maskedvalue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "severity",
+          "riskScore",
+          "exposureEur"
+        ],
+        "title": "P2PGraphNode"
+      },
+      "P2PVendorSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "vendorId": {
+            "type": "string",
+            "title": "Vendorid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "siren": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Siren"
+          },
+          "apeCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apecode"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "riskScore": {
+            "type": "number",
+            "title": "Riskscore"
+          },
+          "exposureEur": {
+            "type": "number",
+            "title": "Exposureeur"
+          },
+          "findingIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Findingids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "vendorId",
+          "name",
+          "severity",
+          "riskScore",
+          "exposureEur"
+        ],
+        "title": "P2PVendorSummary"
       },
       "RingsGraph": {
         "properties": {

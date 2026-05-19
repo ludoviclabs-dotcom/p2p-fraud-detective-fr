@@ -196,6 +196,74 @@ class NarrativeBody(BaseModel):
     api_key: str | None = None  # override env var (rarement utilisé)
 
 
+class P2PGraphNode(BaseModel):
+    id: str
+    kind: str
+    label: str
+    severity: str
+    riskScore: float
+    exposureEur: float
+    maskedValue: str | None = None
+
+
+class P2PGraphEdge(BaseModel):
+    source: str
+    target: str
+    kind: str
+    weight: float
+    findingIds: list[str] = Field(default_factory=list)
+
+
+class P2PFindingSummary(BaseModel):
+    id: str
+    invoiceId: str
+    vendorName: str
+    vendorId: str
+    ruleId: str
+    severity: str
+    signal: str
+    exposureEur: float
+    riskScore: float
+    evidence: dict[str, Any] = Field(default_factory=dict)
+
+
+class P2PVendorSummary(BaseModel):
+    id: str
+    vendorId: str
+    name: str
+    siren: str | None = None
+    apeCode: str | None = None
+    severity: str
+    riskScore: float
+    exposureEur: float
+    findingIds: list[str] = Field(default_factory=list)
+
+
+class P2PGraphMetrics(BaseModel):
+    invoiceCount: int
+    findingCount: int
+    vendorCount: int
+    ibanNodeCount: int
+    edgeCount: int
+    sharedIbanRings: int
+    vendorClusters: int
+    largestClusterSize: int
+    criticalFindings: int
+    highFindings: int
+    mediumFindings: int
+    signalCounts: dict[str, int] = Field(default_factory=dict)
+    exposureEur: float
+
+
+class P2PDemoDataset(BaseModel):
+    generatedAt: str
+    nodes: list[P2PGraphNode]
+    edges: list[P2PGraphEdge]
+    findings: list[P2PFindingSummary]
+    vendors: list[P2PVendorSummary]
+    metrics: P2PGraphMetrics
+
+
 # ─── 1. Cockpit ──────────────────────────────────────────────────────────────
 
 
@@ -631,6 +699,33 @@ def cases_bulk_close(
         except (CaseNotFoundError, CaseClosedError, ValueError):
             errors.append(cid)
     return BulkResult(n_ok=n_ok, n_errors=len(errors), error_case_ids=errors)
+
+
+@router.get("/graph", response_model=P2PDemoDataset)
+def p2p_graph_dataset(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    cluster_min_size: int = Query(3, ge=2, le=20),
+    max_findings: int = Query(420, ge=1, le=1000),
+) -> P2PDemoDataset:
+    """Dataset graphe P2P public-safe, compatible avec la demo Vercel.
+
+    Le frontend garde un JSON statique pour la demo publique, mais cet endpoint
+    expose le meme contrat cote FastAPI pour preparer une passerelle quasi-live
+    sans changer les composants sigma.js.
+    """
+    from p2p_fraud.services.p2p_graph_demo import load_default_dataset
+
+    try:
+        payload = load_default_dataset(
+            cluster_min_size=cluster_min_size,
+            max_findings=max_findings,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Dataset graphe indisponible: {exc}",
+        ) from exc
+    return P2PDemoDataset.model_validate(payload)
 
 
 class GraphNode(BaseModel):
