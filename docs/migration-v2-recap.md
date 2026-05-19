@@ -60,7 +60,9 @@
 ## Limitations connues
 
 - **OIDC cookies cross-domain** : non testé en production (le proxy Next.js → FastAPI fonctionne en local, mais les sessions HMAC cross-vercel.app/hf.space restent à valider en pilote).
-- **SSE alertes** : implémentation polling 5s pour Phase 5 (vrai SSE bout-en-bout reporté Phase 9 si volume ETI > 100 events/min).
+- **SSE alertes** : `GET /api/v1/alerts/stream` expose maintenant l'audit log
+  en Server-Sent Events, avec proxy Next.js `/api/alerts/stream` et fallback
+  polling 5s lorsque le backend public n'est pas configuré.
 - **Endpoint `/api/v1/vendors` (liste)** : agrégation client suffit < 1000 cases. À ajouter en backend si pilote > 1k cases.
 - **i18n contenu inline** : seules les clés `nav.*` et `common.*` sont traduites — les contenus pages restent FR. Migration progressive au fil du besoin.
 - **Tests Vitest côté front** : aucun tests JS pour le moment (le typecheck TS fait office de garantie). À ajouter Phase 9 si pilote critique.
@@ -111,7 +113,7 @@ Le plan d'origine prévoyait 6 mois à temps partiel. La livraison effective a t
 | Phase | Sujet | Effort | Priorité |
 |---|---|---|---|
 | 9 | Tests Vitest côté front (composants critiques) | 3 j | Si pilote ETI signé |
-| 10 | Vrai SSE bout-en-bout `/api/v1/alerts/stream` | 2 j | Si volume > 100 events/min |
+| 10 | Durcir SSE alertes (auth fine, replay durable, backpressure) | 2 j | Si volume > 100 events/min |
 | 11 | i18n complet contenu inline | 5 j | Si demande pilote international |
 | 12 | OIDC bout-en-bout production (cross-domain validé) | 3 j | Bloquant pilote bancaire |
 | 13 | Connecteur ERP natif (SAP/Sage) | 10 j | Sur appel d'offres |

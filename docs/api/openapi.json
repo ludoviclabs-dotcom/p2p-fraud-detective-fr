@@ -1078,6 +1078,84 @@
         }
       }
     },
+    "/api/v1/alerts/stream": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Alerts Stream",
+        "description": "Stream SSE des \u00e9v\u00e9nements d'audit r\u00e9cents pour la page Alertes.\n\nLe flux \u00e9met les entr\u00e9es `audit_log` sous forme d'\u00e9v\u00e9nements `audit`.\n`once=true` sert aux tests et aux clients qui veulent une r\u00e9ponse finie.",
+        "operationId": "alerts_stream_api_v1_alerts_stream_get",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "poll_seconds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 60.0,
+              "minimum": 1.0,
+              "default": 5.0,
+              "title": "Poll Seconds"
+            }
+          },
+          {
+            "name": "once",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Once"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/verify": {
       "get": {
         "tags": [
