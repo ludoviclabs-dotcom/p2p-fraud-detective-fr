@@ -24,4 +24,6 @@ test("rings drilldown reaches score and vendor detail pages", async ({ page }) =
   await page.getByRole("link", { name: "Ouvrir la fiche" }).click();
   await expect(page).toHaveURL(/\/vendors\//);
   await expect(page.getByText("Fiche fournisseur 360")).toBeVisible();
+  await expect(page.locator("[data-testid='vendor-signal-breakdown']")).toBeVisible();
+  await expect(page.locator("[data-testid='vendor-iban-connections']")).toBeVisible();
 });

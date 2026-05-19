@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "node ./scripts/run-playwright-e2e.mjs",
     "typecheck": "tsc --noEmit",
     "generate:p2p-demo": "python ../../scripts/export_p2p_graph_demo.py"
   },
