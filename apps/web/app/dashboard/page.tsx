@@ -401,7 +401,10 @@ function SignalBreakdownCard({
   ];
 
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+    <div
+      className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+      data-testid="dashboard-signal-breakdown"
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
@@ -516,7 +519,7 @@ function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
   };
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" data-testid="dashboard-top-vendors">
         <thead className="bg-[#f7f9fc] text-xs uppercase tracking-wider text-[#667085] dark:bg-white/[0.03]">
           <tr>
             <th className="px-5 py-3 text-left">Fournisseur</th>

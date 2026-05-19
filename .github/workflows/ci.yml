@@ -104,6 +104,15 @@ jobs:
       - name: Typecheck (apps/web)
         run: pnpm --filter @p2pfd/web typecheck
 
+      - name: Unit tests (apps/web)
+        run: pnpm --filter @p2pfd/web test
+
       - name: Build (apps/web)
         run: pnpm --filter @p2pfd/web build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @p2pfd/web exec playwright install --with-deps chromium
+
+      - name: E2E tests (apps/web)
+        run: pnpm --filter @p2pfd/web test:e2e
 

@@ -11,6 +11,8 @@
     "web:dev": "pnpm --filter @p2pfd/web dev",
     "web:build": "pnpm --filter @p2pfd/web build",
     "web:lint": "pnpm --filter @p2pfd/web lint",
+    "web:test": "pnpm --filter @p2pfd/web test",
+    "web:e2e": "pnpm --filter @p2pfd/web test:e2e",
     "web:typecheck": "pnpm --filter @p2pfd/web typecheck",
     "sdk:gen-types": "openapi-typescript docs/api/openapi.json --output packages/shared-types/src/api.ts"
   },

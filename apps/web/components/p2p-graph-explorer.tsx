@@ -230,7 +230,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
             b.riskScore - a.riskScore ||
             b.exposureEur - a.exposureEur,
         )
-        .slice(0, 5),
+        .slice(0, 10),
     [filtered.nodes],
   );
 
@@ -281,7 +281,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
         </div>
 
         {filtered.nodes.length > 0 ? (
-          <div className="graph-frame relative bg-white">
+          <div className="graph-frame relative bg-white" data-testid="graph-frame">
             <div ref={containerRef} className="h-full w-full" />
             {graphError ? (
               <div className="absolute inset-0 grid place-items-center bg-white px-6 text-center">
@@ -346,13 +346,15 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
           <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
             Nœuds prioritaires
           </h3>
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2" data-testid="graph-priority-list">
             {priorityNodes.map((node) => (
               <button
                 key={node.id}
                 type="button"
                 onClick={() => setSelectedNodeId(node.id)}
                 aria-pressed={selectedNodeId === node.id}
+                data-node-kind={node.kind}
+                data-testid="priority-node"
                 className="w-full rounded-md border border-[#D8DEE9] bg-white p-3 text-left text-sm transition hover:border-[#1F3A6E] hover:bg-[#F6F7FB] aria-pressed:border-[#1F3A6E] aria-pressed:bg-[#EAF1FF]"
               >
                 <span className="flex items-center justify-between gap-3">
@@ -370,7 +372,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
           </div>
         </section>
 
-        <section className="panel rounded-md p-5">
+        <section className="panel rounded-md p-5" data-testid="graph-selection-panel">
           <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
             Sélection
           </h3>
