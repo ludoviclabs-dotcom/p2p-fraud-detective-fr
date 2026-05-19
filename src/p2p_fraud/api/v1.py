@@ -16,6 +16,7 @@ Le router est monté sur l'app principal dans `api/main.py`.
 from __future__ import annotations
 
 import json
+import time
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
@@ -168,6 +169,19 @@ class AuditEntryOut(BaseModel):
     prev_hash: str
     hash: str
     signature: str = ""
+
+
+def _to_audit_entry_out(entry: Any) -> AuditEntryOut:
+    return AuditEntryOut(
+        seq=entry.seq,
+        at=entry.at,
+        actor=entry.actor,
+        kind=entry.kind,
+        payload=entry.payload,
+        prev_hash=entry.prev_hash,
+        hash=entry.hash,
+        signature=entry.signature,
+    )
 
 
 class AuditPage(BaseModel):
@@ -860,21 +874,69 @@ def audit_list(
     filtered = [e for e in entries if e.seq > cursor][:limit]
     cursor_next = filtered[-1].seq if filtered and len(filtered) == limit else None
     return AuditPage(
-        entries=[
-            AuditEntryOut(
-                seq=e.seq,
-                at=e.at,
-                actor=e.actor,
-                kind=e.kind,
-                payload=e.payload,
-                prev_hash=e.prev_hash,
-                hash=e.hash,
-                signature=e.signature or "",
-            )
-            for e in filtered
-        ],
+        entries=[_to_audit_entry_out(e) for e in filtered],
         total=len(entries),
         cursor_next=cursor_next,
+    )
+
+
+def _sse_event(event: str, payload: dict[str, Any], *, event_id: int | None = None) -> bytes:
+    lines = []
+    if event_id is not None:
+        lines.append(f"id: {event_id}")
+    lines.append(f"event: {event}")
+    lines.append(f"data: {json.dumps(payload, ensure_ascii=False, default=str)}")
+    return ("\n".join(lines) + "\n\n").encode("utf-8")
+
+
+@router.get(
+    "/alerts/stream",
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+def alerts_stream(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+    cursor: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
+    poll_seconds: float = Query(5.0, ge=1.0, le=60.0),
+    once: bool = Query(False),
+) -> StreamingResponse:
+    """Stream SSE des événements d'audit récents pour la page Alertes.
+
+    Le flux émet les entrées `audit_log` sous forme d'événements `audit`.
+    `once=true` sert aux tests et aux clients qui veulent une réponse finie.
+    """
+
+    def event_stream():
+        last_seq = cursor
+        while True:
+            entries = [entry for entry in service.audit_log.all() if entry.seq > last_seq]
+            for entry in entries[:limit]:
+                last_seq = max(last_seq, entry.seq)
+                yield _sse_event(
+                    "audit",
+                    _to_audit_entry_out(entry).model_dump(mode="json"),
+                    event_id=entry.seq,
+                )
+            if once:
+                break
+            yield _sse_event(
+                "heartbeat",
+                {
+                    "at": datetime.now(UTC).isoformat(),
+                    "cursor": last_seq,
+                },
+            )
+            time.sleep(poll_seconds)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

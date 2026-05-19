@@ -1,17 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listAudit, type AuditEntryOut } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { Bell, Activity } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
-// Polling 5 secondes — équivalent fonctionnel d'un SSE pour la démo
-// (vrai SSE Server-Sent Events à brancher en Phase 5b quand backend
-// expose /api/v1/alerts/stream).
 const REFETCH_MS = 5_000;
+type StreamState = "connecting" | "open" | "fallback";
 
 const SEVERITY_BG: Record<string, string> = {
   critical: "border-l-4 border-l-[#a23e48]",
@@ -21,14 +19,58 @@ const SEVERITY_BG: Record<string, string> = {
 };
 
 export default function AlertsPage() {
+  const [streamState, setStreamState] = useState<StreamState>("connecting");
+  const [streamEvents, setStreamEvents] = useState<AuditEntryOut[]>([]);
+  const [streamMessage, setStreamMessage] = useState("Connexion SSE...");
+
   const query = useQuery({
     queryKey: ["alerts-feed"],
     queryFn: () => listAudit(0, 50),
+    enabled: streamState !== "open",
     refetchInterval: REFETCH_MS,
     refetchIntervalInBackground: false,
   });
 
-  const events = useMemo(() => query.data?.entries ?? [], [query.data?.entries]);
+  useEffect(() => {
+    const source = new EventSource("/api/alerts/stream?limit=50");
+
+    source.onopen = () => {
+      setStreamState("open");
+      setStreamMessage("SSE connecte");
+    };
+
+    source.addEventListener("audit", (event) => {
+      const next = JSON.parse((event as MessageEvent<string>).data) as AuditEntryOut;
+      setStreamEvents((prev) => {
+        const deduped = prev.filter((item) => item.seq !== next.seq);
+        return [next, ...deduped].sort((a, b) => b.seq - a.seq).slice(0, 50);
+      });
+    });
+
+    source.addEventListener("heartbeat", () => {
+      setStreamMessage("SSE actif");
+    });
+
+    source.addEventListener("backend_error", (event) => {
+      const payload = JSON.parse((event as MessageEvent<string>).data) as { hint?: string };
+      setStreamState("fallback");
+      setStreamMessage(payload.hint ?? "Backend SSE indisponible, fallback polling.");
+      source.close();
+    });
+
+    source.onerror = () => {
+      setStreamState("fallback");
+      setStreamMessage("Flux SSE interrompu, fallback polling.");
+      source.close();
+    };
+
+    return () => source.close();
+  }, []);
+
+  const events = useMemo(
+    () => (streamState === "open" ? streamEvents : query.data?.entries ?? []),
+    [query.data?.entries, streamEvents, streamState],
+  );
 
   // Stats temps réel sur les 50 derniers events
   const stats = useMemo(() => {
@@ -56,19 +98,25 @@ export default function AlertsPage() {
         <div className="flex items-center gap-1 text-xs text-[#5a6478]">
           <span
             className={`h-2 w-2 rounded-full ${
-              query.isFetching ? "bg-[#3e7c5a] animate-pulse" : "bg-[#9aa3b2]"
+              streamState === "open" || query.isFetching
+                ? "bg-[#3e7c5a] animate-pulse"
+                : "bg-[#9aa3b2]"
             }`}
           />
-          {query.isFetching ? "Live · refresh en cours…" : `Live · ${REFETCH_MS / 1000}s`}
+          {streamState === "open"
+            ? "Live SSE"
+            : query.isFetching
+              ? "Polling · refresh en cours..."
+              : `Fallback polling · ${REFETCH_MS / 1000}s`}
         </div>
       </div>
       <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
         Alertes &amp; monitoring
       </h1>
       <p className="mb-6 text-sm text-[#5a6478]">
-        Flux d'événements en temps réel depuis l'audit log immutable. Polling
-        TanStack Query 5 secondes (équivalent fonctionnel SSE — vraie connexion
-        Server-Sent Events à brancher Phase 5b si charge le justifie).
+        Flux d'événements depuis l'audit log immutable. La page utilise un flux
+        Server-Sent Events quand FastAPI est configure, puis retombe en polling
+        5 secondes pour garder la demo Vercel utilisable.
       </p>
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -172,7 +220,10 @@ export default function AlertsPage() {
           <CardTitle>🔔 Flux d'événements (live)</CardTitle>
         </CardHeader>
         <div className="p-4">
-          {query.isLoading ? (
+          <div className="mb-3 rounded-md bg-[#f4f6fa] px-3 py-2 text-xs text-[#5a6478]">
+            {streamMessage}
+          </div>
+          {streamState !== "open" && query.isLoading ? (
             <div className="text-sm text-[#5a6478]">Connexion au flux…</div>
           ) : !events.length ? (
             <div className="text-sm text-[#5a6478]">Aucun événement.</div>

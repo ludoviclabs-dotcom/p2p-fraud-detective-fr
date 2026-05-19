@@ -344,6 +344,16 @@ def test_audit_verify_returns_valid(client: TestClient) -> None:
     assert body["n_total"] >= 3
 
 
+def test_alerts_stream_emits_sse_audit_events(client: TestClient) -> None:
+    with client.stream("GET", "/api/v1/alerts/stream?once=true&limit=3") as r:
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/event-stream")
+        body = r.read().decode("utf-8")
+
+    assert "event: audit" in body
+    assert 'data: {"seq":' in body
+
+
 # ───────────────────────── Exports PDF ───────────────────────────────────────
 
 
