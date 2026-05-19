@@ -46,3 +46,14 @@ du front.
 - Le prochain chantier technique utile n'est pas un proxy immediat, mais la
   stabilisation du contrat de donnees et un endpoint FastAPI equivalent cote
   backend.
+
+## Note d'implementation 2026-05-19
+
+Le contrat est expose cote backend via `GET /api/v1/graph`. Il reutilise le
+meme builder Python que `scripts/export_p2p_graph_demo.py`, renvoie les noeuds,
+liens, findings, fournisseurs et metriques au format `P2PDemoDataset`, et garde
+les IBAN masques avant publication.
+
+La decision produit ne change pas : le frontend Vercel public continue de lire
+le JSON statique tant que les sujets d'authentification, cache, tenant et URL
+backend ne sont pas valides.
