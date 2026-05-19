@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.models import CaseStatus
 from p2p_fraud.cases.service import CaseClosedError, CaseNotFoundError, CaseService
+from p2p_fraud.schema import Finding, Severity
 
 router = APIRouter(prefix="/api/v1", tags=["v1 (Next.js)"])
 
@@ -113,6 +114,20 @@ class StatusBody(BaseModel):
     actor: str = Field(..., min_length=1, max_length=128)
     reason: str | None = Field(default=None, max_length=2000)
     channel: str | None = Field(default=None, max_length=128)
+
+
+class CaseBootstrapBody(BaseModel):
+    finding_id: str = Field(..., min_length=1, max_length=128)
+    invoice_id: str = Field(..., min_length=1, max_length=128)
+    vendor_id: str = Field(..., min_length=1, max_length=128)
+    vendor_name: str = Field(..., min_length=1, max_length=256)
+    rule_id: str = Field(..., min_length=1, max_length=128)
+    signal: str = Field(..., min_length=1, max_length=256)
+    severity: str = Field(..., description='"low" | "medium" | "high" | "critical"')
+    exposure_eur: float = Field(default=0, ge=0)
+    risk_score: float = Field(default=0, ge=0, le=100)
+    actor: str = Field(..., min_length=1, max_length=128)
+    title: str | None = Field(default=None, max_length=256)
 
 
 class BulkAssignBody(BaseModel):
@@ -447,6 +462,53 @@ def case_comment(
     except CaseNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"ok": True, "case_id": case_id}
+
+
+@router.post("/cases/bootstrap", response_model=CaseOutV1)
+def case_bootstrap(
+    body: CaseBootstrapBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> CaseOutV1:
+    token = f"{body.rule_id}::{body.invoice_id}"
+    for case in service.list_cases():
+        if token in (case.finding_ids or []):
+            return _to_case_out_v1(case)
+        if case.invoice_id == body.invoice_id and case.vendor_id == body.vendor_id:
+            return _to_case_out_v1(case)
+
+    try:
+        severity = Severity(body.severity)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"severity invalide : {body.severity}. "
+                'Choisir parmi ["low", "medium", "high", "critical"].'
+            ),
+        ) from exc
+
+    finding = Finding(
+        invoice_id=body.invoice_id,
+        detector="workflow",
+        signal=body.signal,
+        severity=severity,
+        rule_id=body.rule_id,
+        evidence={
+            "vendor_id": body.vendor_id,
+            "vendor_name": body.vendor_name,
+            "exposure_eur": body.exposure_eur,
+            "risk_score": body.risk_score,
+            "finding_id": body.finding_id,
+        },
+    )
+    case = service.create_case_from_finding(
+        finding,
+        actor=body.actor,
+        title=body.title or f"{body.rule_id} - {body.invoice_id}",
+        vendor_id=body.vendor_id,
+    )
+    return _to_case_out_v1(case)
 
 
 _STATUS_UPDATE_MAP = {

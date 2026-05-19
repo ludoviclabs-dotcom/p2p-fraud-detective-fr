@@ -231,6 +231,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cases/bootstrap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Case Bootstrap */
+        post: operations["case_bootstrap_api_v1_cases_bootstrap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Case Status Update */
+        post: operations["case_status_update_api_v1_cases__case_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cases/bulk/assign": {
         parameters: {
             query?: never;
@@ -672,6 +706,40 @@ export interface components {
             /** Error Case Ids */
             error_case_ids?: string[];
         };
+        /** CaseBootstrapBody */
+        CaseBootstrapBody: {
+            /** Finding Id */
+            finding_id: string;
+            /** Invoice Id */
+            invoice_id: string;
+            /** Vendor Id */
+            vendor_id: string;
+            /** Vendor Name */
+            vendor_name: string;
+            /** Rule Id */
+            rule_id: string;
+            /** Signal */
+            signal: string;
+            /**
+             * Severity
+             * @description "low" | "medium" | "high" | "critical"
+             */
+            severity: string;
+            /**
+             * Exposure Eur
+             * @default 0
+             */
+            exposure_eur: number;
+            /**
+             * Risk Score
+             * @default 0
+             */
+            risk_score: number;
+            /** Actor */
+            actor: string;
+            /** Title */
+            title?: string | null;
+        };
         /** CaseOut */
         CaseOut: {
             /** Case Id */
@@ -933,6 +1001,20 @@ export interface components {
             findings_count: number;
             /** Reason Codes Fr */
             reason_codes_fr: string[];
+        };
+        /** StatusBody */
+        StatusBody: {
+            /**
+             * Status
+             * @description "new" | "triaged" | "in_progress" | "escalated"
+             */
+            status: string;
+            /** Actor */
+            actor: string;
+            /** Reason */
+            reason?: string | null;
+            /** Channel */
+            channel?: string | null;
         };
         /** TimelineEvent */
         TimelineEvent: {
@@ -1306,6 +1388,9 @@ export interface operations {
     list_cases_v1_api_v1_cases_get: {
         parameters: {
             query?: {
+                case_id?: string | null;
+                invoice_id?: string | null;
+                vendor_id?: string | null;
                 status?: string | null;
                 severity?: string | null;
                 assignee?: string | null;
@@ -1361,6 +1446,74 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_bootstrap_api_v1_cases_bootstrap_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseBootstrapBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOutV1"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_status_update_api_v1_cases__case_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOutV1"];
                 };
             };
             /** @description Validation Error */

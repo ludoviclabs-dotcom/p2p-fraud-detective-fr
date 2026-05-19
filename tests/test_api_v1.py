@@ -202,6 +202,50 @@ def test_case_status_update_escalates(client: TestClient) -> None:
     assert body["status"] == "escalated"
 
 
+def test_case_bootstrap_creates_new_case(client: TestClient) -> None:
+    before = len(_case_service().list_cases())
+    r = client.post(
+        "/api/v1/cases/bootstrap",
+        json={
+            "finding_id": "finding-demo-001",
+            "invoice_id": "INV-DEMO-100",
+            "vendor_id": "VBOOT",
+            "vendor_name": "Bootstrap Vendor",
+            "rule_id": "SHARED_IBAN_RING",
+            "signal": "shared_iban_ring",
+            "severity": "high",
+            "exposure_eur": 4200,
+            "risk_score": 82,
+            "actor": "auditeur.web",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["invoice_id"] == "INV-DEMO-100"
+    assert body["vendor_id"] == "VBOOT"
+    assert len(_case_service().list_cases()) == before + 1
+
+
+def test_case_bootstrap_reuses_existing_case(client: TestClient) -> None:
+    payload = {
+        "finding_id": "finding-demo-002",
+        "invoice_id": "INV-DEMO-101",
+        "vendor_id": "VBOOT2",
+        "vendor_name": "Bootstrap Vendor 2",
+        "rule_id": "DUPLICATE_FUZZY",
+        "signal": "duplicate_fuzzy",
+        "severity": "medium",
+        "exposure_eur": 900,
+        "risk_score": 51,
+        "actor": "auditeur.web",
+    }
+    first = client.post("/api/v1/cases/bootstrap", json=payload)
+    second = client.post("/api/v1/cases/bootstrap", json=payload)
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["case_id"] == second.json()["case_id"]
+
+
 def test_bulk_close_invalid_status_returns_400(client: TestClient) -> None:
     cases = _case_service().list_cases()
     r = client.post(
