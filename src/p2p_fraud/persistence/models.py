@@ -33,6 +33,7 @@ class CaseRow(Base):
     severity: Mapped[str] = mapped_column(String(16), nullable=False)
     exposure_eur: Mapped[float | None] = mapped_column()
     status: Mapped[str] = mapped_column(String(32), nullable=False)
+    decision: Mapped[str | None] = mapped_column(String(64))
     assignee: Mapped[str | None] = mapped_column(String(128))
     sla_deadline: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(String(128), nullable=False)

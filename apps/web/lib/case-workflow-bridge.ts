@@ -4,6 +4,7 @@ import {
   commentCase,
   createCaseFromWorkflow,
   listCases,
+  setCaseDecision,
   setCaseStatus,
   type CaseOutV1,
 } from "@/lib/api-client";
@@ -63,7 +64,7 @@ export async function loadCaseWorkflowRecord(
 
   const merged: CaseWorkflowRecord = {
     ...remoteRecord,
-    decision: local.decision,
+    decision: remoteRecord.decision !== "pending" ? remoteRecord.decision : local.decision,
     note: local.note,
     updatedAt: local.updatedAt,
     source: "hybrid",
@@ -107,6 +108,16 @@ export async function saveCaseWorkflowRecord(
     await bulkAssignCases({
       case_ids: [ensuredRemoteCase.case_id],
       assignee: localSaved.assignee,
+      actor: CASE_WORKFLOW_ACTOR,
+    });
+  }
+
+  if (
+    localSaved.decision !== mapApiDecision(ensuredRemoteCase) &&
+    !ensuredRemoteCase.closed_at
+  ) {
+    await setCaseDecision(ensuredRemoteCase.case_id, {
+      decision: localSaved.decision,
       actor: CASE_WORKFLOW_ACTOR,
     });
   }
@@ -252,6 +263,8 @@ function mapApiStatus(apiCase: CaseOutV1): CaseStatus {
 }
 
 function mapApiDecision(apiCase: CaseOutV1): CaseDecision {
+  if (isCaseDecision(apiCase.decision)) return apiCase.decision;
+
   switch (apiCase.status) {
     case "closed_false_positive":
       return "close_false_positive";
@@ -260,6 +273,16 @@ function mapApiDecision(apiCase: CaseOutV1): CaseDecision {
     default:
       return "pending";
   }
+}
+
+function isCaseDecision(value: unknown): value is CaseDecision {
+  return (
+    value === "pending" ||
+    value === "monitor" ||
+    value === "request_documents" ||
+    value === "block_payment" ||
+    value === "close_false_positive"
+  );
 }
 
 function mapWorkflowStatusToApi(
