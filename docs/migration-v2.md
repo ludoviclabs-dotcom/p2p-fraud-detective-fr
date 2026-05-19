@@ -19,8 +19,9 @@ Approche : **strangler fig**, Streamlit Cloud reste actif jusqu'à 80% de parit�
   de fond et la cible d'architecture.
 - Le repo a depuis livre la base `apps/web` et les principales routes Next.js.
 - Cote qualite front, la baseline automatisee existe deja : Vitest couvre la
-  logique pure alertes/cockpit/workflow et Playwright couvre deja plusieurs
-  parcours reels (`/dashboard`, `/rings`, `/score`, `/alerts`).
+  logique pure alertes/cockpit/workflow/demo-investigation et Playwright couvre
+  deja plusieurs parcours reels (`/dashboard`, `/rings`, `/score`, `/alerts`,
+  `/cases`, `/audit`, `/upload`).
 - Le travail restant n'est plus d'initialiser la migration, mais d'elargir la
   couverture DOM/composants et de fermer les derniers golden paths.
 
@@ -264,7 +265,7 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 - [ ] Audit trail avec chain verification UI
 - [ ] Gouvernance (RBAC + RGPD + weights editor Monaco)
 - [ ] Méthodologie (MDX, reprise contenu v0.4)
-- [ ] Etendre Playwright de la baseline actuelle a 6 golden paths complets
+- [ ] Etendre Playwright de la baseline actuelle a des golden paths relies a un backend reel
 
 ### Phase 7 — Tour guidé + LLM + polish (semaines 14-15, 6 j)
 
@@ -276,7 +277,7 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 ### Phase 8 — Bascule + retrait Streamlit (semaines 16-17, 6 j)
 
 - [ ] Pages restantes (Collaboration, etc.)
-- [ ] Completer la couverture Playwright bout-en-bout au-dela de la baseline actuelle
+- [ ] Completer la couverture Playwright bout-en-bout sur les flux avec backend reel, auth et persistence
 - [ ] Streamlit Cloud → `legacy.votredomaine.com` avec 301 / bannière
 - [ ] README bilingue (FR doctrine, EN stack)
 - [ ] Vidéo démo 90s
@@ -288,8 +289,8 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 
 - **274 tests Python existants** : **aucun à toucher**. La logique métier reste sur FastAPI. ✅
 - **Tests E2E Playwright** : baseline deja livree sur plusieurs parcours
-  cockpit/rings/score/alerts ; cible restante = 6 golden paths couvrant aussi
-  upload, triage et audit verify.
+  cockpit/rings/score/alerts/cases/audit/upload ; cible restante = les flux
+  relies a un backend reel, l'auth et les integrations.
 - **Vitest** cote Next.js : logique pure deja couverte sur alertes, cockpit demo
   et workflow case ; a etendre aux composants critiques (`<Money>`,
   `<DataTable>`, `<SeverityBadge>`, `<ChartContainer>`)

@@ -51,7 +51,7 @@ export default function AuditPage() {
             <Fingerprint size={18} /> Vérification d'intégrité
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
+        <CardContent data-testid="audit-verify-panel" className="flex flex-wrap items-center gap-3">
           <Button onClick={() => setVerifyRun(true)} disabled={verifyQuery.isFetching}>
             {verifyQuery.isFetching ? "Vérification…" : "Recalculer la chaîne"}
           </Button>
@@ -104,7 +104,7 @@ export default function AuditPage() {
               API indisponible : {(auditQuery.error as Error).message}
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table data-testid="audit-table" className="w-full text-sm">
               <thead className="bg-[#f4f6fa] text-[#5a6478]">
                 <tr>
                   <th className="px-3 py-2 text-left">Seq</th>

@@ -66,11 +66,12 @@
 - **Endpoint `/api/v1/vendors` (liste)** : agrégation client suffit < 1000 cases. À ajouter en backend si pilote > 1k cases.
 - **i18n contenu inline** : seules les clés `nav.*` et `common.*` sont traduites — les contenus pages restent FR. Migration progressive au fil du besoin.
 - **Tests front automatises** : socle Vitest en place sur la logique pure
-  alertes, cockpit demo et workflow case
-  (`apps/web/lib/alerts-feed.ts`, `demo-cockpit.ts`, `case-workflow.ts`).
-  Baseline Playwright deja posee sur les parcours cockpit, rings, score et
-  alerts. Les prochaines extensions utiles concernent surtout les composants
-  critiques cote DOM et les derniers golden paths metier.
+  alertes, cockpit demo, workflow case et demo investigation
+  (`apps/web/lib/alerts-feed.ts`, `demo-cockpit.ts`, `case-workflow.ts`,
+  `demo-investigation.ts`). Baseline Playwright etendue aux parcours cockpit,
+  rings, score, alerts, cases, audit et upload. Les prochaines extensions
+  utiles concernent surtout les composants critiques cote DOM et les parcours
+  relies a un backend reel (OIDC, SSE durci, upload live FastAPI).
 
 ## Effort réel vs plan d'origine
 
@@ -117,7 +118,7 @@ Le plan d'origine prévoyait 6 mois à temps partiel. La livraison effective a t
 
 | Phase | Sujet | Effort | Priorité |
 |---|---|---|---|
-| 9 | Etendre la couverture front automatisee (Vitest composants/DOM + Playwright golden paths) | 3 j | Si pilote ETI signe |
+| 9 | Etendre la couverture front automatisee (Vitest composants/DOM + Playwright golden paths) | 2 j | Si pilote ETI signe |
 | 10 | Durcir SSE alertes (auth fine, replay durable, backpressure) | 2 j | Si volume > 100 events/min |
 | 11 | i18n complet contenu inline | 5 j | Si demande pilote international |
 | 12 | OIDC bout-en-bout production (cross-domain validé) | 3 j | Bloquant pilote bancaire |
