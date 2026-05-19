@@ -202,6 +202,31 @@ def test_case_status_update_escalates(client: TestClient) -> None:
     assert body["status"] == "escalated"
 
 
+def test_case_decision_update_persists(client: TestClient) -> None:
+    case = _case_service().list_cases()[0]
+    r = client.post(
+        f"/api/v1/cases/{case.case_id}/decision",
+        json={"decision": "request_documents", "actor": "auditeur.web"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["case_id"] == case.case_id
+    assert body["decision"] == "request_documents"
+
+    listed = client.get(f"/api/v1/cases?case_id={case.case_id}")
+    assert listed.status_code == 200
+    assert listed.json()[0]["decision"] == "request_documents"
+
+
+def test_case_decision_update_rejects_invalid_value(client: TestClient) -> None:
+    case = _case_service().list_cases()[0]
+    r = client.post(
+        f"/api/v1/cases/{case.case_id}/decision",
+        json={"decision": "pay_now", "actor": "auditeur.web"},
+    )
+    assert r.status_code == 400
+
+
 def test_case_bootstrap_creates_new_case(client: TestClient) -> None:
     before = len(_case_service().list_cases())
     r = client.post(

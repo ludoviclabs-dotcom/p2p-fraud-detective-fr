@@ -265,6 +265,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cases/{case_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Case Decision Update */
+        post: operations["case_decision_update_api_v1_cases__case_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cases/bulk/assign": {
         parameters: {
             query?: never;
@@ -777,6 +794,8 @@ export interface components {
             invoice_id?: string | null;
             /** Exposure Eur */
             exposure_eur?: number | null;
+            /** Decision */
+            decision?: string | null;
             /** Assignee */
             assignee?: string | null;
             /** Created At */
@@ -836,6 +855,13 @@ export interface components {
             date: string;
             /** Value */
             value: number;
+        };
+        /** DecisionBody */
+        DecisionBody: {
+            /** Decision */
+            decision: string;
+            /** Actor */
+            actor: string;
         };
         /** DetectRequest */
         DetectRequest: {
@@ -1504,6 +1530,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["StatusBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOutV1"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_decision_update_api_v1_cases__case_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionBody"];
             };
         };
         responses: {

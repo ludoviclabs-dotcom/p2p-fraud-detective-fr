@@ -759,6 +759,58 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/decision": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Case Decision Update",
+        "operationId": "case_decision_update_api_v1_cases__case_id__decision_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOutV1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/bulk/assign": {
       "post": {
         "tags": [
@@ -1890,6 +1942,17 @@
             ],
             "title": "Exposure Eur"
           },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
           "assignee": {
             "anyOf": [
               {
@@ -2059,6 +2122,28 @@
           "value"
         ],
         "title": "DailyPoint"
+      },
+      "DecisionBody": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Decision"
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "actor"
+        ],
+        "title": "DecisionBody"
       },
       "DetectRequest": {
         "properties": {

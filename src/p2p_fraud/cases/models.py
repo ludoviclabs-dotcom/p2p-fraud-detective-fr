@@ -52,6 +52,7 @@ class Case(BaseModel):
     severity: str
     exposure_eur: float | None = None
     status: CaseStatus = CaseStatus.NEW
+    decision: str | None = None
     assignee: str | None = None
     sla_deadline: datetime | None = None
     created_by: str

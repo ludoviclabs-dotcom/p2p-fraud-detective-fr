@@ -41,9 +41,17 @@ def _new_id(prefix: str) -> str:
 
 _CASE_COLUMNS = (
     "case_id, finding_ids, invoice_id, vendor_id, title, severity, "
-    "exposure_eur, status, assignee, sla_deadline, created_by, created_at, "
+    "exposure_eur, status, decision, assignee, sla_deadline, created_by, created_at, "
     "closed_at, closure_reason, closure_evidence_path"
 )
+
+ALLOWED_CASE_DECISIONS = {
+    "pending",
+    "monitor",
+    "request_documents",
+    "block_payment",
+    "close_false_positive",
+}
 
 
 class CaseService:
@@ -72,6 +80,7 @@ class CaseService:
     ) -> None:
         self._engine = engine or make_engine(db_path=db_path)
         Base.metadata.create_all(self._engine, checkfirst=True)
+        self._ensure_decision_column()
         self._audit = audit_log or AuditLog(":memory:")
         self._sla_default = timedelta(hours=sla_hours_default)
         self._sla = sla_config or DEFAULT_SLA
@@ -215,6 +224,21 @@ class CaseService:
         self._record_event(case_id, "status_changed", actor, {"to": status.value})
         return case
 
+    def set_decision(self, case_id: str, decision: str, *, actor: str) -> Case:
+        decision = decision.strip()
+        if decision not in ALLOWED_CASE_DECISIONS:
+            raise ValueError(
+                f"Decision invalide : {decision}. Choisir parmi {sorted(ALLOWED_CASE_DECISIONS)}."
+            )
+        case = self._fetch_or_raise(case_id)
+        self._assert_not_closed(case)
+        if case.decision == decision:
+            return case
+        case.decision = decision
+        self._persist(case)
+        self._record_event(case_id, "decision_changed", actor, {"decision": decision})
+        return case
+
     def close(
         self,
         case_id: str,
@@ -338,6 +362,7 @@ class CaseService:
             "severity": case.severity,
             "exposure_eur": case.exposure_eur,
             "status": case.status.value,
+            "decision": case.decision,
             "assignee": case.assignee,
             "sla_deadline": case.sla_deadline.isoformat() if case.sla_deadline else None,
             "created_by": case.created_by,
@@ -351,7 +376,7 @@ class CaseService:
                 text(
                     f"INSERT INTO cases ({_CASE_COLUMNS}) "
                     "VALUES (:case_id, :finding_ids, :invoice_id, :vendor_id, :title, "
-                    ":severity, :exposure_eur, :status, :assignee, :sla_deadline, "
+                    ":severity, :exposure_eur, :status, :decision, :assignee, :sla_deadline, "
                     ":created_by, :created_at, :closed_at, :closure_reason, "
                     ":closure_evidence_path) "
                     "ON CONFLICT(case_id) DO UPDATE SET "
@@ -362,6 +387,7 @@ class CaseService:
                     "severity=excluded.severity, "
                     "exposure_eur=excluded.exposure_eur, "
                     "status=excluded.status, "
+                    "decision=excluded.decision, "
                     "assignee=excluded.assignee, "
                     "sla_deadline=excluded.sla_deadline, "
                     "closed_at=excluded.closed_at, "
@@ -392,6 +418,7 @@ class CaseService:
             severity,
             exposure_eur,
             status,
+            decision,
             assignee,
             sla_deadline,
             created_by,
@@ -409,6 +436,7 @@ class CaseService:
             severity=severity,
             exposure_eur=exposure_eur,
             status=CaseStatus(status),
+            decision=decision,
             assignee=assignee,
             sla_deadline=datetime.fromisoformat(sla_deadline) if sla_deadline else None,
             created_by=created_by,
@@ -453,6 +481,18 @@ class CaseService:
         # d'audit — l'audit log local fait foi en cas d'incident webhook.
         self._dispatch_webhook(kind=kind, case_id=case_id, actor=actor, payload=payload)
         return event
+
+    def _ensure_decision_column(self) -> None:
+        """Ajoute `cases.decision` sur les bases SQLite/legacy non migrées."""
+        try:
+            with self._engine.begin() as conn:
+                conn.execute(text("SELECT decision FROM cases LIMIT 1"))
+        except Exception:
+            try:
+                with self._engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE cases ADD COLUMN decision VARCHAR(64)"))
+            except Exception:
+                pass
 
     def _dispatch_webhook(self, *, kind: str, case_id: str, actor: str, payload: dict) -> None:
         """Envoie l'event au dispatcher si configuré. Catch-all defensive."""

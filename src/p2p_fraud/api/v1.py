@@ -26,7 +26,12 @@ from pydantic import BaseModel, Field
 
 from p2p_fraud.cases.audit_log import AuditLog
 from p2p_fraud.cases.models import CaseStatus
-from p2p_fraud.cases.service import CaseClosedError, CaseNotFoundError, CaseService
+from p2p_fraud.cases.service import (
+    ALLOWED_CASE_DECISIONS,
+    CaseClosedError,
+    CaseNotFoundError,
+    CaseService,
+)
 from p2p_fraud.schema import Finding, Severity
 
 router = APIRouter(prefix="/api/v1", tags=["v1 (Next.js)"])
@@ -114,6 +119,11 @@ class StatusBody(BaseModel):
     actor: str = Field(..., min_length=1, max_length=128)
     reason: str | None = Field(default=None, max_length=2000)
     channel: str | None = Field(default=None, max_length=128)
+
+
+class DecisionBody(BaseModel):
+    decision: str = Field(..., min_length=1, max_length=64)
+    actor: str = Field(..., min_length=1, max_length=128)
 
 
 class CaseBootstrapBody(BaseModel):
@@ -391,6 +401,7 @@ class CaseOutV1(BaseModel):
     vendor_id: str | None = None
     invoice_id: str | None = None
     exposure_eur: float | None = None
+    decision: str | None = None
     assignee: str | None = None
     created_at: str
     closed_at: str | None = None
@@ -406,6 +417,7 @@ def _to_case_out_v1(case: Any) -> CaseOutV1:
         vendor_id=case.vendor_id,
         invoice_id=case.invoice_id,
         exposure_eur=case.exposure_eur,
+        decision=case.decision,
         assignee=case.assignee,
         created_at=case.created_at.isoformat() if case.created_at else "",
         closed_at=case.closed_at.isoformat() if case.closed_at else None,
@@ -548,6 +560,29 @@ def case_status_update(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (CaseClosedError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_case_out_v1(case)
+
+
+@router.post("/cases/{case_id}/decision", response_model=CaseOutV1)
+def case_decision_update(
+    case_id: str,
+    body: DecisionBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> CaseOutV1:
+    try:
+        case = service.set_decision(case_id, body.decision, actor=body.actor)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (CaseClosedError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                str(exc)
+                if not isinstance(exc, ValueError)
+                else f"{exc} Decisions valides: {sorted(ALLOWED_CASE_DECISIONS)}."
+            ),
+        ) from exc
     return _to_case_out_v1(case)
 
 

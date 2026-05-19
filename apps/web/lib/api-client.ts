@@ -179,5 +179,17 @@ export const setCaseStatus = (
 ) =>
   api.post<CaseOutV1>(`/api/v1/cases/${encodeURIComponent(caseId)}/status`, body);
 
+export const setCaseDecision = (
+  caseId: string,
+  body: {
+    decision: string;
+    actor: string;
+  },
+) =>
+  api.post<CaseOutV1>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/decision`,
+    body,
+  );
+
 export const createCaseFromWorkflow = (body: CaseBootstrapBody) =>
   api.post<CaseOutV1>("/api/v1/cases/bootstrap", body);
