@@ -8,6 +8,7 @@ import {
   BookOpen,
   BriefcaseBusiness,
   CircleDollarSign,
+  Crosshair,
   Database,
   FileCheck2,
   FileSearch,
@@ -46,6 +47,16 @@ const SECTIONS: NavSection[] = [
       { href: "/dashboard", labelKey: "nav.cockpit", Icon: Gauge, badge: "live" },
       { href: "/sandbox", labelKey: "nav.sandbox", Icon: Play, badge: "new" },
       { href: "/tour", labelKey: "nav.tour", Icon: BookOpen },
+    ],
+  },
+  {
+    titleKey: "nav.section_workbench",
+    items: [
+      { href: "/p2p-scenarios", labelKey: "nav.p2p_scenarios", Icon: Crosshair, badge: "new" },
+      { href: "/risk-test-lab", labelKey: "nav.risk_test_lab", Icon: FileCheck2, badge: "new" },
+      { href: "/detection-studio", labelKey: "nav.detection_studio", Icon: ShieldCheck, badge: "new" },
+      { href: "/fraud-case-360/CASE-APP-BANK-001", labelKey: "nav.case_360", Icon: GitBranch, badge: "new" },
+      { href: "/risk-docs", labelKey: "nav.risk_docs", Icon: BookOpen, badge: "new" },
     ],
   },
   {
