@@ -154,7 +154,7 @@ export default function AlertsPage() {
           <CardTitle>📡 Configuration canaux d'alerte (statut)</CardTitle>
         </CardHeader>
         <CardContent>
-          <table className="w-full text-sm">
+          <table data-testid="alerts-channel-table" className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
                 <th className="py-2">Canal</th>
@@ -207,7 +207,10 @@ export default function AlertsPage() {
           <CardTitle>🔔 Flux d'événements (live)</CardTitle>
         </CardHeader>
         <div className="p-4">
-          <div className="mb-3 rounded-md bg-[#f4f6fa] px-3 py-2 text-xs text-[#5a6478]">
+          <div
+            data-testid="alerts-stream-message"
+            className="mb-3 rounded-md bg-[#f4f6fa] px-3 py-2 text-xs text-[#5a6478]"
+          >
             {streamMessage}
           </div>
           {streamState !== "open" && query.isLoading ? (

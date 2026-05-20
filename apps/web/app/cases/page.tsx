@@ -17,6 +17,7 @@ import { formatEur, formatDate } from "@/lib/utils";
 const STATUS_LABELS: Record<string, string> = {
   new: "Nouveau",
   triaged: "Trié",
+  in_progress: "En cours",
   investigating: "En cours",
   escalated: "Escaladé",
   closed_confirmed: "Clos — confirmé",
@@ -116,6 +117,7 @@ export default function CasesPage() {
               Sévérité
             </label>
             <select
+              data-testid="cases-severity-filter"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
               className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
@@ -132,6 +134,7 @@ export default function CasesPage() {
               Statut
             </label>
             <select
+              data-testid="cases-status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
@@ -139,7 +142,7 @@ export default function CasesPage() {
               <option value="">Tous</option>
               <option value="new">Nouveau</option>
               <option value="triaged">Trié</option>
-              <option value="investigating">En cours</option>
+              <option value="in_progress">En cours</option>
               <option value="escalated">Escaladé</option>
               <option value="closed_confirmed">Clos — confirmé</option>
               <option value="closed_rejected">Clos — rejeté</option>
@@ -158,7 +161,7 @@ export default function CasesPage() {
 
       {/* Bulk ops */}
       {selected.size >= 2 ? (
-        <Card className="mb-4 border-l-4 border-l-[#e5a93a]">
+        <Card data-testid="cases-bulk-panel" className="mb-4 border-l-4 border-l-[#e5a93a]">
           <CardHeader>
             <CardTitle>
               🧰 Actions groupées sur {selected.size} cases
@@ -253,7 +256,7 @@ function CasesTable({
     );
   }
   return (
-    <table className="w-full text-sm">
+    <table data-testid="cases-table" className="w-full text-sm">
       <thead className="bg-[#f4f6fa] text-[#5a6478]">
         <tr>
           <th className="w-8 px-3 py-2">

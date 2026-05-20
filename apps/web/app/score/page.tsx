@@ -55,7 +55,7 @@ export default function ScoreIndexPage() {
           <ShieldAlert aria-hidden className="h-5 w-5 text-[#A23E48]" />
         </CardHeader>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table data-testid="score-index-table" className="w-full text-sm">
             <thead className="bg-[#F6F7FB] text-[#5A6478]">
               <tr>
                 <th className="px-4 py-3 text-left">Invoice</th>

@@ -1,6 +1,8 @@
 # Migration v2 — Streamlit → Next.js 15 + FastAPI
 
-> **Statut** : plan d'architecture validé, implémentation non démarrée.
+> **Statut** : document historique du plan initial. L'implementation Next.js est
+> desormais livree sur `main`; l'etat courant et la roadmap active vivent dans
+> [`migration-v2-recap.md`](./migration-v2-recap.md).
 > **Cible** : v2.0.0 — démonstrateur Next.js sur Vercel + FastAPI sur Hugging Face Spaces.
 > **Date** : mai 2026. **Auteur** : Ludovic L. (avec assistance Claude Code).
 > **Contrainte structurante** : free tier strict (0 €/mois), 6 mois à temps partiel, OIDC existant conservé.
@@ -10,6 +12,18 @@
 Migration du démonstrateur **P2P Fraud Detective FR** d'une UI Streamlit (v0.4.0) vers une plateforme Next.js 15 + FastAPI étendu. Le **cœur métier Python reste intact** : 8 détecteurs, scoring engine, audit log SHA-256, OIDC, cases service, exports PDF, scheduler — soit 274 tests à préserver. Seule l'**UI** est refondue.
 
 Approche : **strangler fig**, Streamlit Cloud reste actif jusqu'à 80% de parité fonctionnelle puis bascule sur `legacy.*`. Effort total estimé : **~95 jours-homme sur 6 mois** (cadence ~4 j/sem à temps partiel).
+
+## Mise a jour mai 2026
+
+- Ce document conserve le plan initial, utile pour comprendre les arbitrages
+  de fond et la cible d'architecture.
+- Le repo a depuis livre la base `apps/web` et les principales routes Next.js.
+- Cote qualite front, la baseline automatisee existe deja : Vitest couvre la
+  logique pure alertes/cockpit/workflow/demo-investigation et Playwright couvre
+  deja plusieurs parcours reels (`/dashboard`, `/rings`, `/score`, `/alerts`,
+  `/cases`, `/audit`, `/upload`).
+- Le travail restant n'est plus d'initialiser la migration, mais d'elargir la
+  couverture DOM/composants et de fermer les derniers golden paths.
 
 ## Contexte et motivation
 
@@ -251,7 +265,7 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 - [ ] Audit trail avec chain verification UI
 - [ ] Gouvernance (RBAC + RGPD + weights editor Monaco)
 - [ ] Méthodologie (MDX, reprise contenu v0.4)
-- [ ] Playwright sur 6 golden paths
+- [ ] Etendre Playwright de la baseline actuelle a des golden paths relies a un backend reel
 
 ### Phase 7 — Tour guidé + LLM + polish (semaines 14-15, 6 j)
 
@@ -263,7 +277,7 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 ### Phase 8 — Bascule + retrait Streamlit (semaines 16-17, 6 j)
 
 - [ ] Pages restantes (Collaboration, etc.)
-- [ ] Tests Playwright bout-en-bout (5 specs)
+- [ ] Completer la couverture Playwright bout-en-bout sur les flux avec backend reel, auth et persistence
 - [ ] Streamlit Cloud → `legacy.votredomaine.com` avec 301 / bannière
 - [ ] README bilingue (FR doctrine, EN stack)
 - [ ] Vidéo démo 90s
@@ -274,8 +288,12 @@ Effort : **3 j**. La logique métier existe déjà côté services, c'est de l'e
 ## Tests et non-régression
 
 - **274 tests Python existants** : **aucun à toucher**. La logique métier reste sur FastAPI. ✅
-- **Tests E2E Playwright** : 5 specs minimum (upload → détection → triage → export → audit verify)
-- **Vitest** côté Next.js : socle logique alertes en place, à étendre aux composants critiques (`<Money>`, `<DataTable>`, `<SeverityBadge>`, `<ChartContainer>`)
+- **Tests E2E Playwright** : baseline deja livree sur plusieurs parcours
+  cockpit/rings/score/alerts/cases/audit/upload ; cible restante = les flux
+  relies a un backend reel, l'auth et les integrations.
+- **Vitest** cote Next.js : logique pure deja couverte sur alertes, cockpit demo
+  et workflow case ; a etendre aux composants critiques (`<Money>`,
+  `<DataTable>`, `<SeverityBadge>`, `<ChartContainer>`)
 - **Contract tests** : `openapi-typescript` régénéré à chaque PR + CI check de drift schéma
 
 ## Décisions structurantes — synthèse

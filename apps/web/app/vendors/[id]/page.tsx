@@ -118,7 +118,7 @@ export default async function VendorDetailPage({
             <CardTitle>Findings relies au fournisseur</CardTitle>
           </CardHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table data-testid="vendor-findings-table" className="w-full text-sm">
               <thead className="bg-[#F6F7FB] text-[#5A6478]">
                 <tr>
                   <th className="px-4 py-3 text-left">Invoice</th>
@@ -186,7 +186,7 @@ export default async function VendorDetailPage({
             <CardHeader>
               <CardTitle>Breakdown signaux</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent data-testid="vendor-signal-breakdown" className="space-y-3">
               {Object.entries(signalCounts)
                 .sort((a, b) => b[1] - a[1])
                 .map(([signal, count]) => (
@@ -210,7 +210,7 @@ export default async function VendorDetailPage({
             <CardHeader>
               <CardTitle>Connexions IBAN</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent data-testid="vendor-iban-connections" className="space-y-3">
               {ibanConnections.length ? (
                 ibanConnections.slice(0, 8).map(({ edge, node }) => (
                   <div

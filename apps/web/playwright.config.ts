@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const useWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER !== "1";
+const nextStartCommand = `"${process.execPath}" ./node_modules/next/dist/bin/next start --port 3100`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,7 +15,7 @@ export default defineConfig({
   },
   webServer: useWebServer
     ? {
-        command: "npx next start --port 3100",
+        command: nextStartCommand,
         cwd: ".",
         port: 3100,
         reuseExistingServer: !process.env.CI,
