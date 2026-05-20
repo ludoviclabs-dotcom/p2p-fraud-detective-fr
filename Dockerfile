@@ -43,8 +43,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src/ /app/src/
 COPY data/ /app/data/
 COPY pyproject.toml /app/
+COPY README.md /app/
 
-RUN pip install --no-cache-dir -e /app
+RUN pip install --no-cache-dir --no-deps -e /app
 
 # Utilisateur non-root pour la sécurité
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
