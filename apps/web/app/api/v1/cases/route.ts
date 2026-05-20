@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { filterDemoCases, getDemoInvestigationState } from "@/lib/demo-investigation";
+import { proxyApiV1Request } from "@/lib/api-v1-proxy";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
+  const upstream = await proxyApiV1Request(request, "/api/v1/cases");
+  if (upstream) return upstream;
+
   const { searchParams } = new URL(request.url);
   const limitParam = searchParams.get("limit");
   const limit = limitParam ? Number(limitParam) : undefined;

@@ -21,15 +21,28 @@ import type {
 } from "@p2pfd/shared-types";
 import type { P2PMetrics } from "@/types/p2p";
 
-const _BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-const _SECRET = process.env.FRAUD_API_SECRET ?? "";
-
 type FetchOpts = Omit<RequestInit, "body"> & { body?: unknown };
 
+export function resolveApiUrl(
+  path: string,
+  options: { apiBase?: string; isBrowser?: boolean } = {},
+): string {
+  if (path.startsWith("http")) return path;
+
+  const isBrowser = options.isBrowser ?? typeof window !== "undefined";
+  const apiBase =
+    options.apiBase ?? (isBrowser ? "" : process.env.NEXT_PUBLIC_API_URL ?? "");
+
+  if (!isBrowser && apiBase) return `${apiBase}${path}`;
+  return path;
+}
+
 async function _fetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
-  const url = path.startsWith("http") ? path : `${_BASE}${path}`;
+  const isBrowser = typeof window !== "undefined";
+  const url = resolveApiUrl(path, { isBrowser });
   const headers = new Headers(opts.headers);
-  if (_SECRET) headers.set("Authorization", `Bearer ${_SECRET}`);
+  const serverSecret = isBrowser ? "" : process.env.FRAUD_API_SECRET ?? "";
+  if (serverSecret) headers.set("Authorization", `Bearer ${serverSecret}`);
   if (opts.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
