@@ -22,10 +22,10 @@ import {
 type ScenarioMeta = Schemas["ScenarioMeta"];
 
 const SEVERITY_TONE: Record<string, string> = {
-  critical: "border-[#e5484d] bg-[#fff0f1]",
+  critical: "border-[#b42318] bg-[#fff0f1]",
   high: "border-[#f5a524] bg-[#fff7e8]",
   medium: "border-[#f5a524] bg-[#fff7e8]",
-  low: "border-[#12a876] bg-[#e8f8f1]",
+  low: "border-[#027a48] bg-[#e8f8f1]",
 };
 
 const DETECTOR_TO_PAGE: Record<string, string> = {

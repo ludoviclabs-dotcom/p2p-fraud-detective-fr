@@ -125,10 +125,11 @@ export default function DetectionStudioPage() {
             <CardTitle>Transaction de test</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
+            <label htmlFor="detection-studio-scenario" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
               Scénario
             </label>
             <select
+              id="detection-studio-scenario"
               value={scenarioId}
               onChange={(event) => setScenarioId(event.target.value)}
               className="h-10 w-full rounded-md border border-[#e6ebf2] bg-white px-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
@@ -209,8 +210,38 @@ export default function DetectionStudioPage() {
             </div>
             <div className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                Reason codes générés
+                Signaux et reason codes générés
               </div>
+              {selectedDetector.signals.length || selectedDetector.dataUsed.length ? (
+                <div className="mb-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
+                      Signaux détectés
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedDetector.signals.length ? (
+                        selectedDetector.signals.map((signal) => (
+                          <Badge key={signal} severity="medium">
+                            {signal}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-[#667085]">Aucun signal.</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
+                      Données utilisées
+                    </div>
+                    <ul className="mt-2 space-y-1 text-sm text-[#667085]">
+                      {selectedDetector.dataUsed.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : null}
               {selectedDetector.reasonCodes.length ? (
                 <div className="space-y-2">
                   {selectedDetector.reasonCodes.map((reasonCode) => (
@@ -291,7 +322,7 @@ function ModuleCard({
               {score ? `${score.score}/${score.maxScore}` : "n/a"}
             </div>
           </div>
-          <BadgeCheck size={18} className="text-[#12a876]" />
+          <BadgeCheck size={18} className="text-[#027a48]" />
         </div>
         <Button type="button" variant={active ? "primary" : "outline"} onClick={onTest}>
           Tester le module

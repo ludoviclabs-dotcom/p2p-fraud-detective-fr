@@ -35,9 +35,9 @@ const toneClasses: Record<KpiTone, { icon: string; ring: string; text: string }>
     text: "text-[#2f6bff]",
   },
   risk: {
-    icon: "bg-[#fff0f1] text-[#e5484d]",
-    ring: "border-l-[#e5484d]",
-    text: "text-[#e5484d]",
+    icon: "bg-[#fff0f1] text-[#b42318]",
+    ring: "border-l-[#b42318]",
+    text: "text-[#b42318]",
   },
   amber: {
     icon: "bg-[#fff7e8] text-[#b56b00]",
@@ -45,9 +45,9 @@ const toneClasses: Record<KpiTone, { icon: string; ring: string; text: string }>
     text: "text-[#b56b00]",
   },
   green: {
-    icon: "bg-[#e8f8f1] text-[#12a876]",
-    ring: "border-l-[#12a876]",
-    text: "text-[#12a876]",
+    icon: "bg-[#e8f8f1] text-[#027a48]",
+    ring: "border-l-[#027a48]",
+    text: "text-[#027a48]",
   },
 };
 
@@ -198,7 +198,7 @@ export default function DashboardPage() {
                 Réduire l'exposition critique
               </div>
             </div>
-            <div className="grid h-11 w-11 place-items-center rounded-md bg-[#fff0f1] text-[#e5484d]">
+            <div className="grid h-11 w-11 place-items-center rounded-md bg-[#fff0f1] text-[#b42318]">
               <ShieldAlert size={22} />
             </div>
           </div>
@@ -323,12 +323,12 @@ function KpiGrid({ data }: { data: CockpitKPIs }) {
         <TrendCard
           title="Cases clôturés"
           points={data.trend_cases_closed ?? []}
-          color="#12a876"
+          color="#027a48"
         />
         <TrendCard
           title="Alertes critiques"
           points={data.trend_critical_alerts ?? []}
-          color="#e5484d"
+          color="#b42318"
         />
         <TrendCard
           title="Activité audit"
@@ -395,7 +395,7 @@ function SignalBreakdownCard({
   }
 
   const severityRows = [
-    ["Critical", data.metrics.criticalFindings, "#e5484d"],
+    ["Critical", data.metrics.criticalFindings, "#b42318"],
     ["High", data.metrics.highFindings, "#d35f2a"],
     ["Medium", data.metrics.mediumFindings, "#c97b1f"],
   ];
@@ -512,10 +512,10 @@ function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
     );
   }
   const severityColor: Record<string, string> = {
-    critical: "bg-[#fff0f1] text-[#e5484d]",
+    critical: "bg-[#fff0f1] text-[#b42318]",
     high: "bg-[#fff7e8] text-[#b56b00]",
     medium: "bg-[#fff7e8] text-[#9a5b00]",
-    low: "bg-[#e8f8f1] text-[#12a876]",
+    low: "bg-[#e8f8f1] text-[#027a48]",
   };
   return (
     <div className="overflow-x-auto">

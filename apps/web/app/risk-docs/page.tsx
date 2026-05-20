@@ -54,14 +54,14 @@ export default function RiskDocsPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/risk-test-lab"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white sm:w-auto"
           >
             Ouvrir le Test Lab
             <ArrowRight size={15} />
           </Link>
           <Link
             href="/p2p-scenarios"
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff]"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff] sm:w-auto"
           >
             Scénarios guidés
             <ArrowRight size={15} />
@@ -190,10 +190,62 @@ export default function RiskDocsPage() {
         </Card>
       </section>
 
-      <Card id="limits" className="mt-6 border-l-4 border-l-[#e5484d]">
+      <section className="mt-6 grid gap-5 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TerminalSquare size={18} className="text-[#2f6bff]" />
+              Tests & validation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm leading-7 text-[#667085]">
+            <p>
+              Parcours conseillé : choisir un scénario, lancer l'analyse, ouvrir
+              Fraud Case 360, ajouter une note analyste puis exporter l'evidence pack.
+            </p>
+            <div className="grid gap-2">
+              {[
+                "GET /api/risk/scenarios doit retourner 6 scénarios synthétiques.",
+                "POST /api/risk/score doit retourner score, décision, typologie, reason codes et détecteurs.",
+                "POST /api/evidence/export doit retourner evidencePack et printableHtml.",
+                "Les routes visibles ne doivent pas mener à une 404.",
+              ].map((item) => (
+                <div key={item} className="rounded-md bg-[#f7f9fc] p-3 dark:bg-white/[0.03]">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-[#027a48]" />
+              Configuration Hugging Face / Vercel
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm leading-7 text-[#667085]">
+            <p>
+              La source Hugging Face reste optionnelle. Sans variable serveur valide,
+              l'application affiche un fallback local explicite et ne bloque pas la démo.
+            </p>
+            <pre className="overflow-auto rounded-md bg-[#08111f] p-4 text-xs leading-6 text-white">
+{`HF_SYNTHETIC_SCENARIOS_URL=https://...
+HF_TOKEN=hf_... # uniquement si dataset privé`}
+            </pre>
+            <p>
+              Le token ne doit jamais être exposé au navigateur. Les datasets doivent
+              rester synthétiques.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card id="limits" className="mt-6 border-l-4 border-l-[#b42318]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Info size={18} className="text-[#e5484d]" />
+            <Info size={18} className="text-[#b42318]" />
             Limites et gouvernance
           </CardTitle>
         </CardHeader>

@@ -56,8 +56,9 @@ export default function FindingsPage() {
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs text-[#5a6478]">Sévérité</label>
+            <label htmlFor="findings-severity-filter" className="mb-1 block text-xs text-[#5a6478]">Sévérité</label>
             <select
+              id="findings-severity-filter"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
               className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
@@ -70,18 +71,20 @@ export default function FindingsPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#5a6478]">Rule ID</label>
+            <label htmlFor="findings-rule-filter" className="mb-1 block text-xs text-[#5a6478]">Rule ID</label>
             <Input
+              id="findings-rule-filter"
               placeholder="ex. SANCTION_MATCH"
               value={ruleId}
               onChange={(e) => setRuleId(e.target.value)}
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#5a6478]">
+            <label htmlFor="findings-free-search" className="mb-1 block text-xs text-[#5a6478]">
               Recherche libre
             </label>
             <Input
+              id="findings-free-search"
               placeholder="signal, invoice_id, vendor_id"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

@@ -241,20 +241,27 @@ export default function RiskTestLabPage() {
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Code2 size={18} className="text-[#2f6bff]" />
-                Transaction JSON éditable
+                <label htmlFor="risk-lab-transaction-json">
+                  Transaction JSON éditable
+                </label>
               </CardTitle>
               <Badge severity="neutral">POST /api/risk/score</Badge>
             </CardHeader>
             <CardContent>
               <textarea
+                id="risk-lab-transaction-json"
                 value={jsonInput}
                 onChange={(event) => setJsonInput(event.target.value)}
                 rows={18}
                 spellCheck={false}
+                aria-describedby={error ? "risk-lab-json-error" : "risk-lab-json-help"}
                 className="w-full rounded-md border border-[#e6ebf2] bg-[#08111f] p-4 font-mono text-xs leading-6 text-white outline-none focus:border-[#2f6bff] dark:border-white/10"
               />
+              <p id="risk-lab-json-help" className="mt-2 text-xs leading-5 text-[#667085]">
+                Utilisez uniquement des données synthétiques. Le JSON est envoyé à /api/risk/score.
+              </p>
               {error ? (
-                <div className="mt-3 rounded-md border border-[#fff0f1] bg-[#fff0f1] p-3 text-sm text-[#e5484d]">
+                <div id="risk-lab-json-error" role="alert" className="mt-3 rounded-md border border-[#fff0f1] bg-[#fff0f1] p-3 text-sm text-[#b42318]">
                   {error}
                 </div>
               ) : null}
@@ -274,7 +281,7 @@ function ScoreResultPanel({ result }: { result: RiskScoreResult }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <CheckCircle2 size={18} className="text-[#12a876]" />
+          <CheckCircle2 size={18} className="text-[#027a48]" />
           Résultat moteur
         </CardTitle>
         <SeverityBadge value={result.level} />

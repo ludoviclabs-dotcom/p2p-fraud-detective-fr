@@ -44,7 +44,7 @@ const SECTIONS: NavSection[] = [
     titleKey: "nav.section_command",
     items: [
       { href: "/", labelKey: "nav.home", Icon: Home },
-      { href: "/dashboard", labelKey: "nav.cockpit", Icon: Gauge, badge: "live" },
+      { href: "/dashboard", labelKey: "nav.cockpit", Icon: Gauge },
       { href: "/sandbox", labelKey: "nav.sandbox", Icon: Play, badge: "new" },
       { href: "/tour", labelKey: "nav.tour", Icon: BookOpen },
     ],
@@ -146,7 +146,7 @@ export function Sidebar({
                 {t("shell.vendor_score")}
               </div>
             </div>
-            <div className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-semibold text-[#e5484d]">
+            <div className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-semibold text-[#b42318]">
               CRITICAL
             </div>
           </div>
@@ -235,9 +235,9 @@ function NavBadge({
         active
           ? "bg-[#eaf1ff] text-[#2f6bff]"
           : value === "risk"
-            ? "bg-[#fff0f1] text-[#e5484d]"
+            ? "bg-[#fff0f1] text-[#b42318]"
             : value === "live"
-              ? "bg-[#e8f8f1] text-[#12a876]"
+              ? "bg-[#e8f8f1] text-[#027a48]"
               : "bg-[#eaf1ff] text-[#2f6bff]",
       )}
     >

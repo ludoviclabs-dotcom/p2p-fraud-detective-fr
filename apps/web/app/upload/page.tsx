@@ -88,6 +88,10 @@ export default function UploadPage() {
         <CardContent>
           <div
             data-testid="upload-dropzone"
+            role="button"
+            tabIndex={0}
+            aria-controls="upload-input"
+            aria-label="Choisir un fichier CSV ou Excel synthétique à analyser"
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -95,6 +99,12 @@ export default function UploadPage() {
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
             onClick={() => inputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
             className={`flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed transition-colors ${
               dragOver
                 ? "border-[#1f3a6e] bg-[#f4f6fa]"
@@ -119,9 +129,11 @@ export default function UploadPage() {
             <div className="text-xs text-[#9aa3b2]">CSV, XLSX — max 50 Mo</div>
           </div>
           <input
+            id="upload-input"
             data-testid="upload-input"
             ref={inputRef}
             type="file"
+            aria-label="Fichier de factures synthétiques"
             accept=".csv,.xlsx,.xls,.tsv,.parquet"
             onChange={onSelect}
             className="hidden"

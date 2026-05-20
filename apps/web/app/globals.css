@@ -11,9 +11,9 @@
   --color-blue-signal: #2f6bff;
   --color-blue-soft: #eaf1ff;
   --color-amber-signal: #f5a524;
-  --color-risk: #e5484d;
+  --color-risk: #b42318;
   --color-risk-soft: #fff0f1;
-  --color-verified: #12a876;
+  --color-verified: #027a48;
   --color-verified-soft: #e8f8f1;
   --color-panel-dark: #0c1729;
 
@@ -64,7 +64,7 @@
   }
 
   .metric-number {
-    font-size: clamp(1.85rem, 3vw, 2.35rem);
+    font-size: 1.75rem;
     line-height: 1;
     letter-spacing: 0;
   }

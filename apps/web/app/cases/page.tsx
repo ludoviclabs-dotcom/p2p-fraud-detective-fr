@@ -113,10 +113,11 @@ export default function CasesPage() {
       <Card className="mb-4">
         <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[#5a6478]">
+            <label htmlFor="cases-severity-filter" className="mb-1 block text-xs font-medium text-[#5a6478]">
               Sévérité
             </label>
             <select
+              id="cases-severity-filter"
               data-testid="cases-severity-filter"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
@@ -130,10 +131,11 @@ export default function CasesPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[#5a6478]">
+            <label htmlFor="cases-status-filter" className="mb-1 block text-xs font-medium text-[#5a6478]">
               Statut
             </label>
             <select
+              id="cases-status-filter"
               data-testid="cases-status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -170,6 +172,7 @@ export default function CasesPage() {
           <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex gap-2">
               <Input
+                aria-label="Assigner les cases sélectionnées à une adresse email"
                 placeholder="Assigner à (email)"
                 value={bulkAssignee}
                 onChange={(e) => setBulkAssignee(e.target.value)}
@@ -183,6 +186,7 @@ export default function CasesPage() {
             </div>
             <div className="flex gap-2">
               <Input
+                aria-label="Motif de clôture faux positif pour les cases sélectionnées"
                 placeholder="Motif clôture (faux positif)"
                 value={bulkReason}
                 onChange={(e) => setBulkReason(e.target.value)}

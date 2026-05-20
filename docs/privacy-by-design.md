@@ -18,6 +18,14 @@ Les variables `HF_SYNTHETIC_SCENARIOS_URL` et `HF_SYNTHETIC_CASES_URL` peuvent
 pointer vers des datasets JSON synthétiques. Si un dataset privé est utilisé,
 `HF_TOKEN` doit rester côté serveur dans l'environnement Vercel ou local.
 
+Checklist Vercel :
+
+- définir `HF_SYNTHETIC_SCENARIOS_URL` uniquement si le dataset est synthétique ;
+- définir `HF_TOKEN` côté serveur si le dataset est privé ;
+- vérifier que l'interface affiche `Hugging Face`, `Fallback local` ou
+  `Fallback local non configuré` ;
+- ne jamais exposer le token dans une variable `NEXT_PUBLIC_*`.
+
 ## Evidence Pack
 
 L'evidence pack exporté contient les champs nécessaires à la démonstration :

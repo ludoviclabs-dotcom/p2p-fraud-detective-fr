@@ -98,7 +98,7 @@ export default function Home() {
 
           <div className="mt-5 flex flex-wrap gap-3 text-sm text-[#667085]">
             <span className="inline-flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-[#12a876]" />
+              <CheckCircle2 size={16} className="text-[#027a48]" />
               Aucun fichier requis
             </span>
             <span className="inline-flex items-center gap-2">
@@ -115,7 +115,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-3 md:grid-cols-4">
           {TRUST_POINTS.map((item) => (
             <div key={item.label} className="flex items-start gap-3">
-              <BadgeCheck className="mt-0.5 text-[#12a876]" size={18} />
+              <BadgeCheck className="mt-0.5 text-[#027a48]" size={18} />
               <div>
                 <div className="text-sm font-semibold text-[#111827] dark:text-white">
                   {item.label}
@@ -153,8 +153,8 @@ export default function Home() {
               className="premium-panel rounded-md p-5 transition-transform hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-3">
-                <Bell size={18} className="text-[#e5484d]" />
-                <span className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-bold text-[#e5484d]">
+                <Bell size={18} className="text-[#b42318]" />
+                <span className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-bold text-[#b42318]">
                   {item.risk}
                 </span>
               </div>
@@ -242,7 +242,7 @@ export default function Home() {
 function FraudOperationsPreview() {
   return (
     <div className="premium-panel relative overflow-hidden rounded-md bg-white p-4 dark:bg-[#0c1729]">
-      <div className="absolute right-5 top-5 rounded bg-[#e8f8f1] px-2 py-1 text-xs font-semibold text-[#12a876]">
+      <div className="absolute right-5 top-5 rounded bg-[#e8f8f1] px-2 py-1 text-xs font-semibold text-[#027a48]">
         Sources vérifiées
       </div>
       <div className="rounded-md border border-[#e6ebf2] bg-[#08111f] p-4 text-white shadow-xl shadow-[#08111f]/20 dark:border-white/10">
@@ -255,7 +255,7 @@ function FraudOperationsPreview() {
               Command Center P2P
             </div>
           </div>
-          <div className="rounded-md bg-[#fff0f1] px-3 py-2 text-right text-[#e5484d]">
+          <div className="rounded-md bg-[#fff0f1] px-3 py-2 text-right text-[#b42318]">
             <div className="text-[11px] font-semibold uppercase">Risque</div>
             <div className="text-2xl font-bold leading-none">87</div>
           </div>
@@ -265,7 +265,7 @@ function FraudOperationsPreview() {
           {[
             ["Exposition", "2,4 M€", "#2f6bff"],
             ["Cases ouverts", "34", "#f5a524"],
-            ["SLA en retard", "7", "#e5484d"],
+            ["SLA en retard", "7", "#b42318"],
           ].map(([label, value, color]) => (
             <div key={label} className="rounded-md bg-white/[0.06] p-3">
               <div className="text-xs text-white/45">{label}</div>
@@ -302,7 +302,7 @@ function FraudOperationsPreview() {
                   <div className="font-mono text-xs font-semibold">{vendor}</div>
                   <div className="truncate text-xs text-[#667085]">{reason}</div>
                 </div>
-                <span className="rounded bg-[#fff0f1] px-2 py-1 text-[10px] font-bold text-[#e5484d]">
+                <span className="rounded bg-[#fff0f1] px-2 py-1 text-[10px] font-bold text-[#b42318]">
                   {severity}
                 </span>
               </div>
@@ -321,9 +321,9 @@ function FraudOperationsPreview() {
               <line x1="120" y1="78" x2="176" y2="122" stroke="#d7deea" strokeWidth="2" />
               <circle cx="120" cy="78" r="24" fill="#2f6bff" />
               <circle cx="58" cy="42" r="17" fill="#eaf1ff" stroke="#2f6bff" />
-              <circle cx="186" cy="42" r="17" fill="#fff0f1" stroke="#e5484d" />
+              <circle cx="186" cy="42" r="17" fill="#fff0f1" stroke="#b42318" />
               <circle cx="70" cy="124" r="17" fill="#eaf1ff" stroke="#2f6bff" />
-              <circle cx="176" cy="122" r="17" fill="#e8f8f1" stroke="#12a876" />
+              <circle cx="176" cy="122" r="17" fill="#e8f8f1" stroke="#027a48" />
               <LockKeyhole x="112" y="70" width="16" height="16" color="#fff" />
             </svg>
           </div>
@@ -336,7 +336,7 @@ function FraudOperationsPreview() {
           <div className="text-xs text-[#667085]">5 facteurs principaux</div>
         </div>
         <div className="rounded-md border border-[#e6ebf2] bg-white p-3">
-          <ShieldCheck size={16} className="text-[#12a876]" />
+          <ShieldCheck size={16} className="text-[#027a48]" />
           <div className="mt-2 text-sm font-semibold">Preuve d'audit</div>
           <div className="text-xs text-[#667085]">Chaîne vérifiable</div>
         </div>
