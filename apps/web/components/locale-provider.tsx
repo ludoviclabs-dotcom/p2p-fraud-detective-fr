@@ -7,57 +7,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  isLocale,
+  LOCALE_STORAGE_KEY,
+  translate,
+  type Locale,
+} from "@/lib/i18n";
 
-export type Locale = "fr" | "en";
-
-const STORAGE_KEY = "p2pfd_locale";
-
-type Translations = Record<string, Record<Locale, string>>;
-
-const TRANSLATIONS: Translations = {
-  "common.app_name": {
-    fr: "P2P Fraud Detective FR",
-    en: "P2P Fraud Detective FR",
-  },
-  "common.language": { fr: "Langue", en: "Language" },
-  "nav.section_command": { fr: "Command center", en: "Command center" },
-  "nav.section_investigation": { fr: "Investigation", en: "Investigation" },
-  "nav.section_controls": { fr: "Contrôles", en: "Controls" },
-  "nav.section_data": { fr: "Données", en: "Data" },
-  "nav.section_governance": { fr: "Gouvernance", en: "Governance" },
-  "nav.home": { fr: "Accueil", en: "Home" },
-  "nav.cockpit": { fr: "Cockpit", en: "Cockpit" },
-  "nav.tour": { fr: "Démo guidée", en: "Guided demo" },
-  "nav.sandbox": { fr: "Scénarios fraude", en: "Fraud scenarios" },
-  "nav.cases": { fr: "File d'investigation", en: "Investigation queue" },
-  "nav.alerts": { fr: "Alertes & monitoring", en: "Alerts & monitoring" },
-  "nav.collab": { fr: "Collaboration", en: "Collaboration" },
-  "nav.upload": { fr: "Import des données", en: "Data import" },
-  "nav.master_history": {
-    fr: "Historique référentiel",
-    en: "Master data history",
-  },
-  "nav.sirene": { fr: "Contrôle Sirene", en: "Sirene check" },
-  "nav.benford": { fr: "Loi de Benford", en: "Benford's Law" },
-  "nav.duplicates": { fr: "Doublons", en: "Duplicates" },
-  "nav.structuring": { fr: "Fractionnement", en: "Structuring" },
-  "nav.sanctions": { fr: "Sanctions & PEP", en: "Sanctions & PEP" },
-  "nav.decp_rbe": { fr: "DECP & RBE INPI", en: "DECP & RBE INPI" },
-  "nav.anomalies": { fr: "Anomalies ML", en: "ML anomalies" },
-  "nav.rings": { fr: "Anneaux de fraude", en: "Fraud rings" },
-  "nav.score": { fr: "Explorateur de score", en: "Score explorer" },
-  "nav.findings": { fr: "Findings", en: "Findings" },
-  "nav.vendors": { fr: "Fournisseur 360", en: "Vendor 360" },
-  "nav.exports": { fr: "Synthèse & export", en: "Summary export" },
-  "nav.audit": { fr: "Piste d'audit", en: "Audit trail" },
-  "nav.methodology": { fr: "Méthodologie", en: "Methodology" },
-  "nav.governance": { fr: "Conformité", en: "Compliance" },
-};
+export type { Locale } from "@/lib/i18n";
 
 type LocaleContextValue = {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -67,22 +29,19 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "fr" || stored === "en") setLocaleState(stored);
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (isLocale(stored)) setLocaleState(stored);
   }, []);
 
-  const setLocale = (l: Locale) => {
-    setLocaleState(l);
+  const setLocale = (nextLocale: Locale) => {
+    setLocaleState(nextLocale);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, l);
+      window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
     }
   };
 
-  const t = (key: string): string => {
-    const entry = TRANSLATIONS[key];
-    if (!entry) return key;
-    return entry[locale] ?? entry.fr ?? key;
-  };
+  const t = (key: string, params?: Record<string, string | number>): string =>
+    translate(key, locale, params);
 
   return (
     <LocaleContext.Provider value={{ locale, setLocale, t }}>
@@ -97,7 +56,8 @@ export function useLocale(): LocaleContextValue {
     return {
       locale: "fr",
       setLocale: () => {},
-      t: (key: string) => TRANSLATIONS[key]?.fr ?? key,
+      t: (key: string, params?: Record<string, string | number>) =>
+        translate(key, "fr", params),
     };
   }
   return ctx;

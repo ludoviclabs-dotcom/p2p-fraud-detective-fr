@@ -21,14 +21,15 @@ import { useLocale, type Locale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 const MOBILE_NAV = [
-  { href: "/", label: "Accueil", Icon: Home },
-  { href: "/dashboard", label: "Cockpit", Icon: BarChart3 },
-  { href: "/sandbox", label: "Démo", Icon: Play },
-  { href: "/cases", label: "Cases", Icon: FileSearch },
+  { href: "/", labelKey: "nav.home", Icon: Home },
+  { href: "/dashboard", labelKey: "nav.cockpit", Icon: BarChart3 },
+  { href: "/sandbox", labelKey: "shell.badge_new", Icon: Play },
+  { href: "/cases", labelKey: "nav.cases", Icon: FileSearch },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useLocale();
 
   return (
     <div className="flex min-h-dvh bg-[#f7f9fc] text-[#111827] dark:bg-[#08111f] dark:text-white">
@@ -37,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            aria-label="Fermer la navigation"
+            aria-label={t("shell.close_nav")}
             className="absolute inset-0 bg-[#08111f]/45"
             onClick={() => setMobileOpen(false)}
           />
@@ -60,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function Topbar({ onMenu }: { onMenu: () => void }) {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const isDark = mounted && resolvedTheme === "dark";
@@ -74,7 +75,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Ouvrir la navigation"
+          aria-label={t("shell.open_nav")}
           onClick={onMenu}
           className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#e6ebf2] bg-white text-[#111827] lg:hidden"
         >
@@ -83,9 +84,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 
         <div className="hidden min-w-0 flex-1 items-center gap-3 rounded-md border border-[#e6ebf2] bg-[#f7f9fc] px-3 py-2 text-sm text-[#667085] shadow-inner dark:border-white/10 dark:bg-white/[0.04] md:flex">
           <Search size={16} />
-          <span className="truncate">
-            Rechercher un SIREN, fournisseur, IBAN, case ou alerte...
-          </span>
+          <span className="truncate">{t("shell.search_placeholder")}</span>
           <span className="ml-auto inline-flex items-center gap-1 rounded border border-[#d7deea] bg-white px-1.5 py-0.5 font-mono text-[11px] text-[#667085] dark:border-white/10 dark:bg-white/5">
             <Command size={11} /> K
           </span>
@@ -93,7 +92,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 
         <div className="ml-auto hidden items-center gap-2 rounded-md border border-[#d7deea] bg-white px-3 py-2 text-xs font-medium text-[#12a876] dark:border-white/10 dark:bg-white/[0.04] sm:flex">
           <ShieldCheck size={14} />
-          Sources publiques actives
+          {t("shell.public_sources")}
         </div>
 
         <LangSwitch locale={locale} setLocale={setLocale} />
@@ -102,7 +101,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
           type="button"
           onClick={() => setTheme(isDark ? "light" : "dark")}
           className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#e6ebf2] bg-white text-[#667085] transition-colors hover:text-[#111827] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
-          aria-label="Changer de thème"
+          aria-label={t("shell.toggle_theme")}
         >
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
@@ -112,7 +111,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
           className="focus-ring hidden h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2457d6] sm:inline-flex"
         >
           <Play size={15} />
-          Demander une démo
+          {t("shell.request_demo")}
         </Link>
       </div>
     </header>
@@ -149,6 +148,7 @@ function LangSwitch({
 
 function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e6ebf2] bg-white/94 px-2 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-[#08111f]/94 lg:hidden">
@@ -167,7 +167,7 @@ function MobileBottomNav() {
               )}
             >
               <item.Icon size={16} />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
