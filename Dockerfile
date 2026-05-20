@@ -3,7 +3,7 @@
 # Run   : docker run -p 8000:8000 -e FRAUD_API_SECRET=secret p2p-fraud-detective
 
 # ─── Stage 1 : builder ────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # ─── Stage 2 : runtime ────────────────────────────────────────────────────────
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
 
