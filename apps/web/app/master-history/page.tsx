@@ -55,6 +55,7 @@ export default function MasterHistoryPage() {
       <Card className="mb-4">
         <CardContent>
           <Input
+            aria-label="Rechercher dans actor, kind ou payload"
             placeholder="Rechercher dans actor/kind/payload…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

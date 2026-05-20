@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
   BadgeEuro,
+  BookOpen,
   FileSearch,
   Network,
   ShieldAlert,
@@ -24,7 +24,7 @@ export default async function VendorDetailPage({
 }) {
   const { id } = await params;
   const vendor = getVendor(id);
-  if (!vendor) notFound();
+  if (!vendor) return <UnknownVendorDetail requestedId={id} />;
 
   const dataset = getP2PDataset();
   const findings = getVendorFindings(id);
@@ -251,6 +251,74 @@ export default async function VendorDetailPage({
           </Card>
         </aside>
       </section>
+    </div>
+  );
+}
+
+function UnknownVendorDetail({ requestedId }: { requestedId: string }) {
+  const dataset = getP2PDataset();
+  const fallbackVendors = [...dataset.vendors]
+    .sort((left, right) => right.riskScore - left.riskScore)
+    .slice(0, 3);
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href="/sandbox"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F3A6E]"
+      >
+        <ArrowLeft aria-hidden className="h-4 w-4" />
+        Retour à la démo
+      </Link>
+
+      <section className="mt-6 rounded-md border border-[#D8DEE9] bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
+          Fiche fournisseur 360
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold text-[#141927]">
+          Fournisseur synthétique non chargé
+        </h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#5A6478]">
+          L'identifiant <span className="mono font-semibold">{requestedId}</span> vient
+          probablement d'un scénario backend ou d'une ancienne démo. La route reste
+          volontairement accessible pour préserver le parcours, mais seules les fiches
+          synthétiques ci-dessous contiennent des données complètes.
+        </p>
+      </section>
+
+      <section className="mt-5 grid gap-4 md:grid-cols-3">
+        {fallbackVendors.map((vendor) => (
+          <Link
+            key={vendor.vendorId}
+            href={`/vendors/${encodeURIComponent(vendor.vendorId)}`}
+            className="rounded-md border border-[#D8DEE9] bg-white p-5 shadow-sm transition-colors hover:border-[#1F3A6E]"
+          >
+            <SeverityBadge value={vendor.severity} />
+            <div className="mt-3 font-semibold text-[#141927]">{vendor.name}</div>
+            <div className="mt-1 mono text-xs text-[#5A6478]">{vendor.vendorId}</div>
+            <div className="mt-3 text-sm text-[#5A6478]">
+              Score {vendor.riskScore}/100 · {formatEuro(vendor.exposureEur)}
+            </div>
+          </Link>
+        ))}
+      </section>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <Link
+          href="/p2p-scenarios"
+          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#1F3A6E] px-4 text-sm font-semibold text-white"
+        >
+          <FileSearch aria-hidden className="h-4 w-4" />
+          Tester les scénarios P2P
+        </Link>
+        <Link
+          href="/risk-docs"
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8DEE9] bg-white px-4 text-sm font-semibold text-[#5A6478]"
+        >
+          <BookOpen aria-hidden className="h-4 w-4" />
+          Lire les limites de démo
+        </Link>
+      </div>
     </div>
   );
 }

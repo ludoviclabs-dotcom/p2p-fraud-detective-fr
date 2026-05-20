@@ -51,6 +51,7 @@ export function FraudCase360Client({
     { at: string; actor: string; action: string; detail: string }[]
   >([]);
   const [evidence, setEvidence] = useState<EvidencePack | null>(null);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(storageKey);
@@ -108,10 +109,12 @@ export function FraudCase360Client({
       detail: ACTION_LABELS[action],
     };
     setAuditTrail((previous) => [entry, ...previous]);
+    return entry;
   }
 
   async function exportEvidence() {
-    record("export_evidence");
+    const exportEntry = record("export_evidence");
+    setExportStatus("Génération de l'evidence pack en cours...");
     const response = await fetch("/api/evidence/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -119,10 +122,13 @@ export function FraudCase360Client({
         caseId: scenario.caseId,
         transaction: scenario.transaction,
         analystNotes: notes,
-        auditTrail,
+        auditTrail: [exportEntry, ...auditTrail],
       }),
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setExportStatus("Export impossible pour le moment.");
+      return;
+    }
     const payload = (await response.json()) as {
       evidencePack: EvidencePack;
       printableHtml: string;
@@ -138,6 +144,7 @@ export function FraudCase360Client({
     anchor.download = `${scenario.caseId}-evidence-pack.json`;
     anchor.click();
     window.URL.revokeObjectURL(url);
+    setExportStatus(`Evidence pack JSON généré pour ${scenario.caseId}.`);
   }
 
   return (
@@ -181,10 +188,11 @@ export function FraudCase360Client({
             <CardTitle>Analyst Action Bar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
+            <label htmlFor="case-360-assignee" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
               Assigné à
             </label>
             <input
+              id="case-360-assignee"
               value={assignee}
               onChange={(event) => setAssignee(event.target.value)}
               className="h-10 w-full rounded-md border border-[#e6ebf2] bg-white px-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
@@ -215,6 +223,11 @@ export function FraudCase360Client({
               <Download size={15} />
               Exporter evidence pack
             </Button>
+            {exportStatus ? (
+              <div role="status" className="rounded-md bg-[#eaf1ff] p-3 text-sm font-medium text-[#111827]">
+                {exportStatus}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </section>
@@ -451,7 +464,11 @@ function EvidencePanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        <label htmlFor="case-360-analyst-notes" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
+          Notes analyste
+        </label>
         <textarea
+          id="case-360-analyst-notes"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={5}

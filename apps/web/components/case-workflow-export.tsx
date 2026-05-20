@@ -165,12 +165,14 @@ export function CaseWorkflowExport({
           <div>
             <div className="grid gap-3 border-b border-[#e6ebf2] px-5 py-4 md:grid-cols-[minmax(0,1fr)_180px_220px]">
               <input
+                aria-label="Filtrer les cases exportables"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Filtrer invoice, fournisseur, responsable, note..."
                 className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927] placeholder:text-[#9aa3b2]"
               />
               <select
+                aria-label="Filtrer par statut de case"
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927]"
@@ -183,6 +185,7 @@ export function CaseWorkflowExport({
                 <option value="cleared">Cloture</option>
               </select>
               <select
+                aria-label="Filtrer par decision"
                 value={decisionFilter}
                 onChange={(event) => setDecisionFilter(event.target.value)}
                 className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927]"

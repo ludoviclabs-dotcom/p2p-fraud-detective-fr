@@ -43,3 +43,13 @@ Le moteur utilise uniquement des données synthétiques :
 Le moteur n'est pas production-grade. Il ne remplace pas une revue humaine, ne
 fait pas de fingerprinting réel, ne fait pas de dark web scraping et ne fournit
 pas de certification réglementaire.
+
+## Gouvernance de démonstration
+
+- Version du moteur : `risk-engine-demo-v1`.
+- Données : synthétiques, locales ou chargées côté serveur depuis Hugging Face.
+- Décision : recommandation de revue uniquement, décision finale humaine.
+- Export : evidence pack JSON/HTML pour documenter le raisonnement, pas pour
+  exécuter un vrai blocage bancaire.
+- Qualité minimale : score borné 0-100, scénarios critiques attendus,
+  reason codes explicables, route de case et export vérifiés.

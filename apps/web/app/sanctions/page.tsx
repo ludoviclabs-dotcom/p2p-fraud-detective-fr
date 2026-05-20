@@ -111,6 +111,7 @@ export default function SanctionsPage() {
       <Card className="mb-4">
         <CardContent>
           <Input
+            aria-label="Rechercher un fournisseur, une case ou un titre sanctions PEP"
             placeholder="Rechercher vendor / case / titre…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

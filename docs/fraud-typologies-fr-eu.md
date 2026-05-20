@@ -17,3 +17,10 @@ Le Workbench couvre les typologies synthétiques suivantes :
 
 Ces typologies servent uniquement à la démonstration et à la documentation d'un
 processus d'investigation. Elles ne constituent pas un avis réglementaire.
+
+## Parcours de test attendu
+
+Chaque typologie doit pouvoir être testée dans `/p2p-scenarios`, expliquée dans
+`/detection-studio`, investiguée dans `/fraud-case-360/[caseId]` et documentée
+via l'evidence pack. Les actions analyste restent simulées et ne déclenchent
+aucun vrai flux bancaire.
