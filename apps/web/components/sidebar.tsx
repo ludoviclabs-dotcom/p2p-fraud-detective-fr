@@ -117,19 +117,23 @@ export function Sidebar({
           <div className="text-sm font-semibold leading-tight">
             P2P Fraud Detective
           </div>
-          <div className="mt-0.5 text-xs text-white/50">Command Center</div>
+          <div className="mt-0.5 text-xs text-white/50">
+            {t("shell.brand_subtitle")}
+          </div>
         </div>
       </Link>
 
       <div className="border-b border-white/10 px-4 py-3">
         <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
           <div className="text-[11px] font-medium uppercase tracking-wider text-white/45">
-            Risque prioritaire
+            {t("shell.priority_risk")}
           </div>
           <div className="mt-2 flex items-end justify-between gap-3">
             <div>
               <div className="text-2xl font-bold leading-none">87</div>
-              <div className="mt-1 text-xs text-white/55">Score fournisseur</div>
+              <div className="mt-1 text-xs text-white/55">
+                {t("shell.vendor_score")}
+              </div>
             </div>
             <div className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-semibold text-[#e5484d]">
               CRITICAL
@@ -164,9 +168,7 @@ export function Sidebar({
                       <item.Icon
                         size={17}
                         strokeWidth={2}
-                        className={cn(
-                          active ? "text-[#2f6bff]" : "text-white/42",
-                        )}
+                        className={cn(active ? "text-[#2f6bff]" : "text-white/42")}
                         aria-hidden
                       />
                       <span className="min-w-0 flex-1 truncate">
@@ -189,19 +191,32 @@ export function Sidebar({
           className="flex items-center justify-center gap-2 rounded-md bg-[#2f6bff] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#2f6bff]/20 transition-colors hover:bg-[#2457d6]"
         >
           <Play size={15} />
-          Demander une démo
+          {t("shell.request_demo")}
         </Link>
         <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-white/48">
           <span>RGPD-ready</span>
-          <span className="text-right">Audit signé</span>
+          <span className="text-right">{t("shell.audit_signed")}</span>
         </div>
       </div>
     </aside>
   );
 }
 
-function NavBadge({ value, active }: { value: "live" | "risk" | "new"; active: boolean }) {
-  const label = value === "live" ? "Live" : value === "risk" ? "Risque" : "Démo";
+function NavBadge({
+  value,
+  active,
+}: {
+  value: "live" | "risk" | "new";
+  active: boolean;
+}) {
+  const { t } = useLocale();
+  const label =
+    value === "live"
+      ? t("shell.badge_live")
+      : value === "risk"
+        ? t("shell.badge_risk")
+        : t("shell.badge_new");
+
   return (
     <span
       className={cn(

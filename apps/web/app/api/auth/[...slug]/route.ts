@@ -1,64 +1,90 @@
 /**
- * OIDC proxy route — forward toutes les requêtes `/api/auth/*` vers
- * le backend FastAPI `/oidc/*` (Phase 4 P4-3 existant).
- *
- * Pourquoi un proxy plutôt qu'un appel direct depuis le navigateur :
- * 1. Cookies SameSite=Strict côté `vercel.app` uniquement (pas cross-domain HF Spaces).
- * 2. Le state PKCE et la session HMAC vivent côté backend — on ne touche pas
- *    aux cookies sensibles côté client.
- * 3. CORS simplifié : un seul domaine côté navigateur.
- *
- * Mapping :
- *   GET  /api/auth/login         → 302 vers IdP via FastAPI /oidc/login
- *   GET  /api/auth/callback?code → callback FastAPI /oidc/callback
- *   POST /api/auth/logout        → FastAPI POST /oidc/logout
- *   GET  /api/auth/me            → FastAPI /oidc/me (session active)
+ * OIDC proxy route. It keeps the browser on the Vercel domain while forwarding
+ * the actual OIDC flow to FastAPI `/oidc/*`.
  */
 
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  buildOidcProxyUrl,
+  forwardOidcHeaders,
+  getSetCookies,
+  rewriteAuthLocation,
+  rewriteAuthSetCookie,
+  validateAuthProxyRoute,
+} from "@/lib/oidc-proxy";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 type Params = Promise<{ slug: string[] }>;
 
 async function handle(req: NextRequest, ctx: { params: Params }) {
+  const { slug } = await ctx.params;
+  const route = validateAuthProxyRoute(req.method, slug);
+  if (!route.ok) {
+    const headers = new Headers();
+    if (route.allow) headers.set("Allow", route.allow);
+    return NextResponse.json({ error: route.error }, { status: route.status, headers });
+  }
+
   if (!API_BASE) {
+    if (route.subpath === "me") {
+      return NextResponse.json(
+        {
+          authenticated: false,
+          error: "NEXT_PUBLIC_API_URL non configure cote Vercel",
+        },
+        { status: 401 },
+      );
+    }
+
     return NextResponse.json(
       {
-        error: "NEXT_PUBLIC_API_URL non configuré côté Vercel",
-        hint: "Ajouter la variable d'env pointant vers HF Spaces ou backend FastAPI",
+        error: "NEXT_PUBLIC_API_URL non configure cote Vercel",
+        hint: "Ajouter la variable d'env pointant vers HF Spaces ou backend FastAPI.",
       },
       { status: 503 },
     );
   }
 
-  const { slug } = await ctx.params;
-  const subpath = slug.join("/");
-  const url = new URL(`${API_BASE}/oidc/${subpath}`);
-  // Forward des query params
-  req.nextUrl.searchParams.forEach((v, k) => url.searchParams.set(k, v));
+  const upstreamUrl = buildOidcProxyUrl({
+    apiBase: API_BASE,
+    subpath: route.subpath,
+    requestUrl: req.url,
+  });
 
   const init: RequestInit = {
     method: req.method,
-    headers: forwardHeaders(req.headers),
+    headers: forwardOidcHeaders(req.headers, req.url),
     redirect: "manual",
   };
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     init.body = await req.text();
   }
 
-  const upstream = await fetch(url, init);
-
-  // Préserver les Set-Cookie pour la session HMAC + state PKCE
-  const setCookies = upstream.headers.getSetCookie?.() ?? [];
+  const upstream = await fetch(upstreamUrl, init);
   const headers = new Headers();
-  for (const cookie of setCookies) headers.append("set-cookie", cookie);
+  const secureCookies = req.nextUrl.protocol === "https:";
+
+  for (const cookie of getSetCookies(upstream.headers)) {
+    headers.append("set-cookie", rewriteAuthSetCookie(cookie, secureCookies));
+  }
+
   const contentType = upstream.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
-  // Préserver les redirects 302 (login → IdP)
+
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = upstream.headers.get("location");
-    if (location) headers.set("location", location);
+    if (location) {
+      headers.set(
+        "location",
+        rewriteAuthLocation({
+          location,
+          apiBase: API_BASE,
+          requestUrl: req.url,
+        }),
+      );
+    }
   }
 
   const body = await upstream.arrayBuffer();
@@ -66,16 +92,6 @@ async function handle(req: NextRequest, ctx: { params: Params }) {
     status: upstream.status,
     headers,
   });
-}
-
-function forwardHeaders(reqHeaders: Headers): Headers {
-  const out = new Headers();
-  // Forward cookies + auth, drop host pour éviter conflits
-  const allow = new Set(["cookie", "authorization", "content-type"]);
-  reqHeaders.forEach((value, key) => {
-    if (allow.has(key.toLowerCase())) out.set(key, value);
-  });
-  return out;
 }
 
 export const GET = handle;

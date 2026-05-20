@@ -116,6 +116,31 @@ Le plan d'origine prévoyait 6 mois à temps partiel. La livraison effective a t
 
 ## Roadmap post-v0.6.0
 
+### Avancement code post-PR #55
+
+- **Phase 9** : baseline Playwright etendue aux golden paths cockpit, rings,
+  score, alerts, cases, audit et upload, avec Vitest sur les helpers critiques.
+- **Phase 10** : socle SSE durci cote Next.js (`/api/alerts/stream`) :
+  cursor replay via `Last-Event-ID`/localStorage, bornage `limit` et
+  `poll_seconds`, forwarding cookie, header bearer serveur, fallback SSE
+  explicite et option `P2P_ALERTS_STREAM_REQUIRE_SESSION=1`.
+- **Phase 11** : dictionnaire inline FR/EN centralise dans `apps/web/lib/i18n.ts`,
+  utilise par le shell, la navigation mobile/sidebar et la page alertes.
+- **Phase 12** : proxy OIDC durci : surface de routes bornee
+  (`login`, `callback`, `logout`, `me`), methodes autorisees par route,
+  headers forwards controles, `X-Forwarded-*`, reecriture des cookies
+  `Path=/oidc` vers `Path=/api/auth`, et reecriture des redirects backend
+  `/oidc/*` vers le proxy Vercel.
+
+Ce qui reste hors code pour valider Phase 12 en production : configurer un vrai
+IdP OIDC, poser `OIDC_REDIRECT_URI` sur l'URL Vercel `/api/auth/callback`,
+aligner `NEXT_PUBLIC_API_URL`/`FRAUD_API_SECRET`, puis tester login/callback/logout
+sur preview et production.
+
+Le tableau ci-dessous conserve la roadmap globale : les phases 10 a 12 ne sont
+plus des chantiers de code bloquants, mais demandent encore une validation
+production reelle avec backend et IdP.
+
 | Phase | Sujet | Effort | Priorité |
 |---|---|---|---|
 | 9 | Etendre la couverture front automatisee (Vitest composants/DOM + Playwright golden paths) | 2 j | Si pilote ETI signe |
