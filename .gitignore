@@ -19,6 +19,7 @@ node_modules/
 apps/*/node_modules/
 apps/*/.next/
 apps/*/out/
+.pnpm-store/
 npm-debug.log*
 
 # IDE

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Lock, Users, FileCheck2, Brain } from "lucide-react";
+import { AlertTriangle, Shield, Lock, Users, FileCheck2, Brain } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Gouvernance — P2P Fraud Detective FR",
@@ -21,6 +21,26 @@ export default function GovernancePage() {
       </p>
 
       <div className="mb-4 grid gap-4 md:grid-cols-2">
+        <Card className="border-l-4 border-l-[#2f6bff] md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle size={18} /> P2P Fraud Detection Workbench
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm md:grid-cols-2">
+            <p>
+              <strong>Statut</strong> : démonstrateur professionnel fondé sur des
+              scénarios et datasets synthétiques, avec fallback local si Hugging
+              Face est indisponible.
+            </p>
+            <p>
+              <strong>Limites</strong> : pas de décision bancaire réelle, pas de
+              certification conformité, pas de fingerprinting réel, pas de dark
+              web scraping. La décision finale reste humaine.
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
