@@ -1,247 +1,173 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  Bell,
-  BookOpen,
-  BriefcaseBusiness,
-  CircleDollarSign,
-  Crosshair,
-  Database,
-  FileCheck2,
-  FileSearch,
-  Gauge,
-  GitBranch,
-  Home,
-  Landmark,
-  Network,
-  Play,
-  Scale,
-  ShieldCheck,
-  Upload,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/locale-provider";
 
-type NavItem = {
-  href: string;
-  labelKey: string;
-  Icon: LucideIcon;
-  badge?: "live" | "risk" | "new";
-};
-
-type NavSection = {
-  titleKey: string;
-  items: NavItem[];
-};
+type Badge = "live" | "risk" | "new";
+type NavItem = { href: string; labelKey: string; glyph: string; badge?: Badge };
+type NavSection = { code: string; titleKey: string; items: NavItem[] };
 
 const SECTIONS: NavSection[] = [
   {
+    code: "01",
     titleKey: "nav.section_command",
     items: [
-      { href: "/", labelKey: "nav.home", Icon: Home },
-      { href: "/dashboard", labelKey: "nav.cockpit", Icon: Gauge },
-      { href: "/sandbox", labelKey: "nav.sandbox", Icon: Play, badge: "new" },
-      { href: "/tour", labelKey: "nav.tour", Icon: BookOpen },
+      { href: "/", labelKey: "nav.home", glyph: "◉" },
+      { href: "/dashboard", labelKey: "nav.cockpit", glyph: "▤" },
+      { href: "/sandbox", labelKey: "nav.sandbox", glyph: "▶", badge: "new" },
+      { href: "/tour", labelKey: "nav.tour", glyph: "→" },
     ],
   },
   {
+    code: "02",
     titleKey: "nav.section_workbench",
     items: [
-      { href: "/p2p-scenarios", labelKey: "nav.p2p_scenarios", Icon: Crosshair, badge: "new" },
-      { href: "/risk-test-lab", labelKey: "nav.risk_test_lab", Icon: FileCheck2, badge: "new" },
-      { href: "/detection-studio", labelKey: "nav.detection_studio", Icon: ShieldCheck, badge: "new" },
-      { href: "/fraud-case-360/CASE-APP-BANK-001", labelKey: "nav.case_360", Icon: GitBranch, badge: "new" },
-      { href: "/risk-docs", labelKey: "nav.risk_docs", Icon: BookOpen, badge: "new" },
+      { href: "/p2p-scenarios", labelKey: "nav.p2p_scenarios", glyph: "⊞", badge: "new" },
+      { href: "/risk-test-lab", labelKey: "nav.risk_test_lab", glyph: "⊟", badge: "new" },
+      { href: "/detection-studio", labelKey: "nav.detection_studio", glyph: "✦", badge: "new" },
+      { href: "/fraud-case-360/CASE-APP-BANK-001", labelKey: "nav.case_360", glyph: "◎", badge: "new" },
+      { href: "/risk-docs", labelKey: "nav.risk_docs", glyph: "≡", badge: "new" },
     ],
   },
   {
+    code: "03",
     titleKey: "nav.section_investigation",
     items: [
-      { href: "/cases", labelKey: "nav.cases", Icon: FileSearch, badge: "risk" },
-      { href: "/vendors", labelKey: "nav.vendors", Icon: BriefcaseBusiness },
-      { href: "/alerts", labelKey: "nav.alerts", Icon: Bell },
-      { href: "/collab", labelKey: "nav.collab", Icon: Users },
+      { href: "/cases", labelKey: "nav.cases", glyph: "▣", badge: "risk" },
+      { href: "/vendors", labelKey: "nav.vendors", glyph: "◫" },
+      { href: "/alerts", labelKey: "nav.alerts", glyph: "!" },
+      { href: "/collab", labelKey: "nav.collab", glyph: "⌘" },
     ],
   },
   {
+    code: "04",
     titleKey: "nav.section_controls",
     items: [
-      { href: "/anomalies", labelKey: "nav.anomalies", Icon: BarChart3 },
-      { href: "/duplicates", labelKey: "nav.duplicates", Icon: FileCheck2 },
-      { href: "/structuring", labelKey: "nav.structuring", Icon: CircleDollarSign },
-      { href: "/sanctions", labelKey: "nav.sanctions", Icon: Scale, badge: "risk" },
-      { href: "/rings", labelKey: "nav.rings", Icon: Network },
-      { href: "/score", labelKey: "nav.score", Icon: GitBranch },
+      { href: "/anomalies", labelKey: "nav.anomalies", glyph: "△" },
+      { href: "/duplicates", labelKey: "nav.duplicates", glyph: "□" },
+      { href: "/structuring", labelKey: "nav.structuring", glyph: "⌒" },
+      { href: "/sanctions", labelKey: "nav.sanctions", glyph: "✕", badge: "risk" },
+      { href: "/rings", labelKey: "nav.rings", glyph: "◇" },
+      { href: "/score", labelKey: "nav.score", glyph: "Σ" },
     ],
   },
   {
+    code: "05",
     titleKey: "nav.section_data",
     items: [
-      { href: "/upload", labelKey: "nav.upload", Icon: Upload },
-      { href: "/sirene", labelKey: "nav.sirene", Icon: ShieldCheck, badge: "live" },
-      { href: "/decp-rbe", labelKey: "nav.decp_rbe", Icon: Landmark, badge: "live" },
-      { href: "/master-history", labelKey: "nav.master_history", Icon: Database },
+      { href: "/upload", labelKey: "nav.upload", glyph: "↥" },
+      { href: "/sirene", labelKey: "nav.sirene", glyph: "✓", badge: "live" },
+      { href: "/decp-rbe", labelKey: "nav.decp_rbe", glyph: "✓", badge: "live" },
+      { href: "/master-history", labelKey: "nav.master_history", glyph: "↺" },
     ],
   },
   {
+    code: "06",
     titleKey: "nav.section_governance",
     items: [
-      { href: "/methodology", labelKey: "nav.methodology", Icon: BookOpen },
-      { href: "/audit", labelKey: "nav.audit", Icon: FileCheck2 },
-      { href: "/exports", labelKey: "nav.exports", Icon: FileSearch },
-      { href: "/governance", labelKey: "nav.governance", Icon: ShieldCheck },
+      { href: "/methodology", labelKey: "nav.methodology", glyph: "§" },
+      { href: "/audit", labelKey: "nav.audit", glyph: "✓" },
+      { href: "/exports", labelKey: "nav.exports", glyph: "↓" },
+      { href: "/governance", labelKey: "nav.governance", glyph: "★" },
     ],
   },
 ];
 
-export function Sidebar({
-  className,
-  onNavigate,
-}: {
-  className?: string;
-  onNavigate?: () => void;
-}) {
+export function Sidebar() {
   const pathname = usePathname();
   const { t } = useLocale();
+  const [open, setOpen] = useState(false);
+
+  const close = () => setOpen(false);
 
   return (
-    <aside
-      className={cn(
-        "flex h-dvh w-72 shrink-0 flex-col border-r border-white/10 bg-[#08111f] text-white",
-        className,
-      )}
-    >
-      <Link
-        href="/"
-        onClick={onNavigate}
-        className="flex items-center gap-3 border-b border-white/10 px-5 py-5"
-      >
-        <div className="grid h-10 w-10 place-items-center rounded-md bg-[#2f6bff] text-sm font-black text-white shadow-lg shadow-[#2f6bff]/25">
-          FD
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold leading-tight">
-            P2P Fraud Detective
-          </div>
-          <div className="mt-0.5 text-xs text-white/50">
-            {t("shell.brand_subtitle")}
-          </div>
-        </div>
-      </Link>
+    <>
+      <button className="sb-toggle" onClick={() => setOpen(!open)} aria-label="Menu">
+        ☰ MENU
+      </button>
 
-      <div className="border-b border-white/10 px-4 py-3">
-        <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-white/45">
-            {t("shell.priority_risk")}
+      <aside className={`sidebar ${open ? "open" : ""}`} aria-label="Navigation produit">
+        <Link href="/" className="sb-head" onClick={close}>
+          <div className="sb-mark" aria-hidden>
+            <span className="corner tl" />
+            <span className="corner br" />
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <line x1="12" y1="3" x2="12" y2="9" stroke="currentColor" strokeWidth="1" />
+              <line x1="12" y1="15" x2="12" y2="21" stroke="currentColor" strokeWidth="1" />
+              <line x1="3" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1" />
+              <line x1="15" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="1" />
+              <circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" strokeWidth="1" />
+              <circle cx="12" cy="12" r="2.2" fill="var(--risk)" />
+            </svg>
           </div>
-          <div className="mt-2 flex items-end justify-between gap-3">
-            <div>
-              <div className="text-2xl font-bold leading-none">87</div>
-              <div className="mt-1 text-xs text-white/55">
-                {t("shell.vendor_score")}
+          <div className="sb-brand-lines">
+            <div className="top">P2P FRAUD DETECTIVE</div>
+            <div>FR · v2.1 · MIT</div>
+          </div>
+        </Link>
+
+        <div className="sb-status">
+          <div>
+            <div className="lbl">{t("shell.priority_risk")}</div>
+            <div className="val">92</div>
+            <div className="sub">ALPHACOM SERVICES</div>
+          </div>
+          <div className="pill">CRIT</div>
+        </div>
+
+        <nav className="sb-nav">
+          {SECTIONS.map((sec) => (
+            <div key={sec.code}>
+              <div className="sb-section">
+                <span>
+                  §{sec.code} · {t(sec.titleKey)}
+                </span>
+                <span className="filet" />
               </div>
-            </div>
-            <div className="rounded bg-[#fff0f1] px-2 py-1 text-xs font-semibold text-[#b42318]">
-              CRITICAL
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4 text-sm">
-        {SECTIONS.map((section) => (
-          <div key={section.titleKey} className="mb-5">
-            <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-white/38">
-              {t(section.titleKey)}
-            </div>
-            <ul className="space-y-1">
-              {section.items.map((item) => {
+              {sec.items.map((it) => {
                 const active =
-                  pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+                  pathname === it.href ||
+                  (it.href !== "/" && pathname.startsWith(`${it.href}/`));
                 return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-md px-3 py-2.5 text-white/68 transition-colors",
-                        active
-                          ? "bg-white text-[#08111f] shadow-sm"
-                          : "hover:bg-white/[0.07] hover:text-white",
-                      )}
-                    >
-                      <item.Icon
-                        size={17}
-                        strokeWidth={2}
-                        className={cn(active ? "text-[#2f6bff]" : "text-white/42")}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1 truncate">
-                        {t(item.labelKey)}
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    className={`sb-item ${active ? "active" : ""}`}
+                    title={t(it.labelKey)}
+                    onClick={close}
+                  >
+                    <span className="sb-icon">{it.glyph}</span>
+                    <span>{t(it.labelKey)}</span>
+                    {it.badge && (
+                      <span className={`sb-badge ${it.badge}`}>
+                        {it.badge === "risk"
+                          ? t("shell.badge_risk")
+                          : it.badge === "live"
+                            ? t("shell.badge_live")
+                            : t("shell.badge_new")}
                       </span>
-                      {item.badge ? <NavBadge value={item.badge} active={active} /> : null}
-                    </Link>
-                  </li>
+                    )}
+                  </Link>
                 );
               })}
-            </ul>
+            </div>
+          ))}
+        </nav>
+
+        <div className="sb-foot">
+          <Link href="/sandbox" className="quick" onClick={close}>
+            ▶ {t("shell.request_demo")}
+          </Link>
+          <div className="meta">
+            <span>
+              <span className="dot">●</span> RGPD-ready
+            </span>
+            <span>{t("shell.audit_signed")}</span>
           </div>
-        ))}
-      </nav>
-
-      <div className="border-t border-white/10 p-4">
-        <Link
-          href="/sandbox"
-          onClick={onNavigate}
-          className="flex items-center justify-center gap-2 rounded-md bg-[#2f6bff] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#2f6bff]/20 transition-colors hover:bg-[#2457d6]"
-        >
-          <Play size={15} />
-          {t("shell.request_demo")}
-        </Link>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-white/48">
-          <span>RGPD-ready</span>
-          <span className="text-right">{t("shell.audit_signed")}</span>
         </div>
-      </div>
-    </aside>
-  );
-}
-
-function NavBadge({
-  value,
-  active,
-}: {
-  value: "live" | "risk" | "new";
-  active: boolean;
-}) {
-  const { t } = useLocale();
-  const label =
-    value === "live"
-      ? t("shell.badge_live")
-      : value === "risk"
-        ? t("shell.badge_risk")
-        : t("shell.badge_new");
-
-  return (
-    <span
-      className={cn(
-        "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-        active
-          ? "bg-[#eaf1ff] text-[#2f6bff]"
-          : value === "risk"
-            ? "bg-[#fff0f1] text-[#b42318]"
-            : value === "live"
-              ? "bg-[#e8f8f1] text-[#027a48]"
-              : "bg-[#eaf1ff] text-[#2f6bff]",
-      )}
-    >
-      {label}
-    </span>
+      </aside>
+    </>
   );
 }
