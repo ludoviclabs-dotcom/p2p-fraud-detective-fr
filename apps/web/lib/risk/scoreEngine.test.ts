@@ -65,9 +65,15 @@ describe("risk-engine-demo-v1", () => {
     expect(pack.detectorScores.length).toBeGreaterThan(0);
     expect(pack.timeline.length).toBeGreaterThan(0);
     expect(pack.graphSummary.nodes.length).toBeGreaterThan(0);
+    expect(pack.sourceRefs.length).toBeGreaterThan(0);
     expect(pack.recommendedActions.length).toBeGreaterThan(0);
     expect(pack.analystNotes).toContain("Synthetic");
     expect(pack.auditTrail.length).toBeGreaterThan(0);
+    expect(pack.auditTrail[0]?.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(pack.integrity.rootHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(pack.integrity.chainValid).toBe(true);
+    expect(pack.transaction.beneficiary.iban).toContain("••••");
+    expect(pack.transaction.beneficiary.iban).not.toBe(item.transaction.beneficiary.iban);
     expect(pack.disclaimer).toContain("Démonstrateur");
   });
 });

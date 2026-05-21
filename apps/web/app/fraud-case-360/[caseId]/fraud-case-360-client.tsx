@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
+import { maskSensitiveValue } from "@/lib/risk/evidence-redaction";
 
 type AnalystAction =
   | "assign"
@@ -111,6 +112,7 @@ export function FraudCase360Client({
         transaction: scenario.transaction,
         analystNotes: notes,
         auditTrail: [exportEntry, ...auditTrail],
+        timeline,
       }),
     });
     if (!response.ok) {
@@ -179,6 +181,17 @@ export function FraudCase360Client({
                 </p>
               </div>
               <SeverityBadge value={score.level} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/rings" className="fx-btn-ghost sm">
+                Graphe rings <span>↗</span>
+              </Link>
+              <Link href="/audit" className="fx-btn-ghost sm">
+                Piste audit <span>↗</span>
+              </Link>
+              <Link href="/exports" className="fx-btn-ghost sm">
+                Exports <span>↗</span>
+              </Link>
             </div>
           </div>
           <div className="fx-panel-body">
@@ -276,7 +289,7 @@ export function FraudCase360Client({
               <Detail label="Rail" value={scenario.transaction.rail} />
               <Detail label="Payeur" value={scenario.transaction.payer.displayName} />
               <Detail label="Bénéficiaire" value={scenario.transaction.beneficiary.name} />
-              <Detail label="IBAN" value={scenario.transaction.beneficiary.iban} />
+              <Detail label="IBAN" value={maskSensitiveValue(scenario.transaction.beneficiary.iban)} />
               <Detail label="Canal" value={scenario.transaction.channel ?? "n/a"} />
             </dl>
           </div>
@@ -333,6 +346,7 @@ export function FraudCase360Client({
           <DetectorPanel glyph="▦" title="QR Analyzer Panel" detector="qrRisk" score={score} />
         ) : null}
         <FraudGraphPanel scenario={scenario} />
+        <AuditChainPanel evidence={evidence} auditTrail={auditTrail} />
         <EvidencePanel evidence={evidence} notes={notes} setNotes={setNotes} />
       </div>
     </ForensicPage>
@@ -545,6 +559,72 @@ function FraudGraphPanel({ scenario }: { scenario: RiskScenario }) {
   );
 }
 
+function AuditChainPanel({
+  evidence,
+  auditTrail,
+}: {
+  evidence: EvidencePack | null;
+  auditTrail: { at: string; actor: string; action: string; detail: string }[];
+}) {
+  const visibleEntries = evidence?.auditTrail ?? auditTrail;
+  return (
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div className="flex items-center gap-2">
+          <span className="glyph">§</span>
+          <h2>Audit Chain Panel</h2>
+        </div>
+      </div>
+      <div className="fx-panel-body space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Kpi label="État" value={evidence?.integrity.chainValid ? "Vérifié" : "En attente"} />
+          <Kpi label="Entrées" value={`${visibleEntries.length}`} />
+          <Kpi label="Signées" value={`${evidence?.integrity.signedEntries ?? 0}`} />
+        </div>
+        {evidence ? (
+          <div
+            className="fx-mono"
+            style={{
+              background: "var(--bg)",
+              border: "1px solid var(--border-strong)",
+              color: "var(--fg-2)",
+              fontSize: 11,
+              padding: "12px 14px",
+              wordBreak: "break-all",
+            }}
+          >
+            Root hash · {evidence.integrity.rootHash}
+          </div>
+        ) : (
+          <p className="fx-mono" style={{ fontSize: 12, lineHeight: 1.65, color: "var(--muted)" }}>
+            Les actions analyste sont horodatées localement. L’export Evidence Pack les transforme en
+            chaîne SHA-256 vérifiable.
+          </p>
+        )}
+        <div className="space-y-2">
+          {visibleEntries.slice(0, 4).map((entry) => (
+            <div
+              key={`${entry.at}-${entry.action}-${entry.detail}`}
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--border)",
+                padding: "10px 12px",
+              }}
+            >
+              <div className="fx-mono" style={{ fontSize: 11, color: "var(--fg)" }}>
+                {entry.action}
+              </div>
+              <div className="fx-mono" style={{ marginTop: 4, fontSize: 10, color: "var(--muted)" }}>
+                {entry.actor} · {new Date(entry.at).toLocaleString("fr-FR")}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EvidencePanel({
   evidence,
   notes,
@@ -589,23 +669,48 @@ function EvidencePanel({
           }}
         />
         {evidence ? (
-          <pre
-            style={{
-              maxHeight: 288,
-              overflowY: "auto",
-              background: "var(--bg)",
-              border: "1px solid var(--border-strong)",
-              padding: "14px 16px",
-              fontSize: 11,
-              lineHeight: 1.6,
-              color: "var(--fg-2)",
-              fontFamily: "var(--font-mono)",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-            }}
-          >
-            {JSON.stringify(evidence, null, 2)}
-          </pre>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Kpi label="Sources" value={`${evidence.sourceRefs.length}`} />
+              <Kpi label="Root hash" value={evidence.integrity.rootHash.slice(0, 12)} />
+            </div>
+            <div className="space-y-2">
+              {evidence.sourceRefs.map((source) => (
+                <div
+                  key={source.id}
+                  style={{
+                    background: "var(--bg-2)",
+                    border: "1px solid var(--border)",
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div className="fx-mono" style={{ fontSize: 11, color: "var(--fg)" }}>
+                    {source.label}
+                  </div>
+                  <p className="fx-mono" style={{ marginTop: 4, fontSize: 10, lineHeight: 1.5, color: "var(--muted)" }}>
+                    {source.claim}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <pre
+              style={{
+                maxHeight: 288,
+                overflowY: "auto",
+                background: "var(--bg)",
+                border: "1px solid var(--border-strong)",
+                padding: "14px 16px",
+                fontSize: 11,
+                lineHeight: 1.6,
+                color: "var(--fg-2)",
+                fontFamily: "var(--font-mono)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+              }}
+            >
+              {JSON.stringify(evidence, null, 2)}
+            </pre>
+          </>
         ) : (
           <p
             className="fx-mono"

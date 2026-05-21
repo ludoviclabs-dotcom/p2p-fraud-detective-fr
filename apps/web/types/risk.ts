@@ -171,6 +171,42 @@ export interface RiskScenario {
   graphSummary: RiskGraphSummary;
 }
 
+export interface EvidenceSourceRef {
+  id: string;
+  label: string;
+  kind: "transaction" | "detector" | "graph" | "audit" | "analyst_note";
+  claim: string;
+  confidence: "synthetic" | "demo" | "derived";
+  method?: string;
+}
+
+export interface EvidenceTimelineEvent {
+  at: string;
+  actor: string;
+  event: string;
+  detail: string;
+}
+
+export interface EvidenceAuditEntry {
+  at: string;
+  actor: string;
+  action: string;
+  detail: string;
+  prevHash?: string;
+  hash?: string;
+  signature?: string;
+  integrityStatus?: "verified" | "unsigned";
+}
+
+export interface EvidenceIntegrity {
+  algorithm: "sha256-demo-chain";
+  rootHash: string;
+  chainValid: boolean;
+  signedEntries: number;
+  verificationRoute: "/audit";
+  generatedBy: "risk-engine-demo-v1";
+}
+
 export interface EvidencePack {
   caseId: string;
   generatedAt: string;
@@ -180,10 +216,12 @@ export interface EvidencePack {
   decision: RiskDecision;
   reasonCodes: ReasonCode[];
   detectorScores: DetectorScore[];
-  timeline: { at: string; actor: string; event: string; detail: string }[];
+  timeline: EvidenceTimelineEvent[];
   graphSummary: RiskGraphSummary;
+  sourceRefs: EvidenceSourceRef[];
   recommendedActions: string[];
   analystNotes: string;
-  auditTrail: { at: string; actor: string; action: string; detail: string }[];
+  auditTrail: EvidenceAuditEntry[];
+  integrity: EvidenceIntegrity;
   disclaimer: string;
 }

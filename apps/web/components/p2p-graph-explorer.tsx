@@ -10,6 +10,7 @@ import {
   SEVERITY_ORDER,
   SIGNAL_ORDER,
 } from "@/lib/p2p-demo-taxonomy";
+import { case360Href, getScenarioForP2PFindingSignal } from "@/lib/risk/case-links";
 import type { GraphNode, P2PDemoDataset, Severity } from "@/types/p2p";
 
 const NODE_COLORS = {
@@ -594,6 +595,13 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
                     style={{ marginTop: 10 }}
                   >
                     Ouvrir le score ↗
+                  </Link>
+                  <Link
+                    href={case360Href(getScenarioForP2PFindingSignal(details.finding.signal).caseId)}
+                    className="fx-link"
+                    style={{ marginTop: 8 }}
+                  >
+                    Ouvrir Case 360 →
                   </Link>
                 </div>
               ) : null}
