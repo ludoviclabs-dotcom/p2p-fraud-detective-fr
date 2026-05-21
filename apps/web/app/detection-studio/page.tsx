@@ -2,89 +2,74 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  Activity,
-  ArrowRight,
-  BadgeCheck,
-  Binary,
-  FileScan,
-  Gauge,
-  GitBranch,
-  Landmark,
-  MonitorSmartphone,
-  QrCode,
-  SearchCheck,
-  ShieldAlert,
-} from "lucide-react";
 import { RISK_SCENARIOS } from "@/data/risk-scenarios";
 import { scoreTransaction } from "@/lib/risk/scoreEngine";
 import type { DetectorId, DetectorScore } from "@/types/risk";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
+import { ForensicPage } from "@/components/forensic-page";
 
 const MODULES: {
   id: DetectorId;
   title: string;
   status: "active" | "demo" | "mock";
   dataUsed: string;
-  icon: typeof Gauge;
+  glyph: string;
 }[] = [
   {
     id: "beneficiaryTrust",
     title: "Beneficiary / IBAN Trust Check",
     status: "active",
     dataUsed: "Nom bénéficiaire, IBAN, historique, pays, changement RIB.",
-    icon: Landmark,
+    glyph: "▣",
   },
   {
     id: "scamNarrative",
     title: "APP Fraud & Scam Narrative Detector",
     status: "active",
     dataUsed: "Texte narratif, urgence, autorité, secret, investissement.",
-    icon: SearchCheck,
+    glyph: "§",
   },
   {
     id: "velocity",
     title: "Velocity Checks",
     status: "active",
     dataUsed: "Montant, 24h, seuil, instant payment, fractionnement.",
-    icon: Activity,
+    glyph: "∿",
   },
   {
     id: "qrRisk",
     title: "QR Code Fraud Analyzer",
     status: "demo",
     dataUsed: "Payload textuel, URL, IBAN extrait, domaine attendu.",
-    icon: QrCode,
+    glyph: "◇",
   },
   {
     id: "deviceSession",
     title: "Device & Session Risk Lite",
     status: "demo",
     dataUsed: "Nouvel appareil, pays IP, remote access, impossible travel.",
-    icon: MonitorSmartphone,
+    glyph: "□",
   },
   {
     id: "graphRisk",
     title: "Mule Account / Fraud Graph",
     status: "demo",
     dataUsed: "Clusters, IBAN partagé, appareils, payeurs reliés.",
-    icon: GitBranch,
+    glyph: "◫",
   },
   {
     id: "documentRibRisk",
     title: "Document / RIB / Invoice Fraud Check",
     status: "demo",
     dataUsed: "Facture, RIB, IBAN attendu, nom fournisseur, format.",
-    icon: FileScan,
+    glyph: "△",
   },
   {
     id: "sanctionsRisk",
     title: "Sanctions / PEP / AML Screening",
     status: "mock",
     dataUsed: "Match sanctions/PEP synthétique, pays sensible.",
-    icon: ShieldAlert,
+    glyph: "▲",
   },
 ];
 
@@ -96,81 +81,93 @@ export default function DetectionStudioPage() {
   const selectedDetector = result.detectorScores.find((item) => item.detector === tested);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085]">
-            P2P Fraud Detection Workbench
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#08111f] dark:text-white">
-            Detection Studio
+          <div className="fx-eyebrow">P2P Fraud Detection Workbench</div>
+          <h1 style={{ marginTop: 9 }}>
+            Detection <span className="italic">Studio</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
+          <p className="sub">
             Modules de détection explicables pour paiements P2P, virements SEPA, QR code,
             fournisseurs et conformité. Données 100% synthétiques.
           </p>
         </div>
-        <Link
-          href="/p2p-scenarios"
-          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white"
-        >
-          Lancer les scénarios
-          <ArrowRight size={15} />
-        </Link>
+        <div className="fx-head-actions">
+          <Link href="/p2p-scenarios" className="fx-btn">
+            Lancer les scénarios ↗
+          </Link>
+        </div>
       </div>
 
-      <section className="mt-6 grid gap-4 lg:grid-cols-[0.72fr_1.28fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Transaction de test</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <label htmlFor="detection-studio-scenario" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
-              Scénario
-            </label>
-            <select
-              id="detection-studio-scenario"
-              value={scenarioId}
-              onChange={(event) => setScenarioId(event.target.value)}
-              className="h-10 w-full rounded-md border border-[#e6ebf2] bg-white px-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
-            >
-              {RISK_SCENARIOS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
+      <section className="grid gap-4 lg:grid-cols-[0.72fr_1.28fr]">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Transaction de test</h2>
+            <span className="glyph">◷</span>
+          </div>
+          <div className="fx-panel-body space-y-4">
+            <div>
+              <label
+                htmlFor="detection-studio-scenario"
+                className="fx-eyebrow"
+                style={{ display: "block", marginBottom: 6 }}
+              >
+                Scénario
+              </label>
+              <select
+                id="detection-studio-scenario"
+                value={scenarioId}
+                onChange={(event) => setScenarioId(event.target.value)}
+                style={{
+                  height: 38,
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  padding: "0 12px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--fg)",
+                  outline: "none",
+                }}
+              >
+                {RISK_SCENARIOS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <div className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "14px 16px" }}>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-[#667085]">
-                    Score global
-                  </div>
-                  <div className="mt-1 text-3xl font-bold text-[#08111f] dark:text-white">
+                  <div className="fx-eyebrow">Score global</div>
+                  <div
+                    style={{ fontFamily: "var(--font-display)", fontSize: 36, lineHeight: 1, color: "var(--fg)", marginTop: 6 }}
+                  >
                     {result.score}/100
                   </div>
                 </div>
                 <SeverityBadge value={result.level} />
               </div>
-              <div className="mt-3 text-sm text-[#667085]">{result.typology}</div>
-              <div className="mt-2 text-sm font-semibold text-[#111827] dark:text-white">
+              <div className="fx-mono" style={{ marginTop: 10, fontSize: 11, color: "var(--muted)" }}>
+                {result.typology}
+              </div>
+              <div className="fx-mono" style={{ marginTop: 4, fontSize: 12, color: "var(--fg)" }}>
                 {result.decision}
               </div>
             </div>
 
-            <div className="rounded-md bg-[#08111f] p-4 text-white">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Binary size={16} className="text-[#f5a524]" />
-                Décision humaine finale
-              </div>
-              <p className="mt-2 text-sm leading-6 text-white/65">
+            <div className="fx-card-accent">
+              <div className="fx-eyebrow" style={{ marginBottom: 6 }}>★ Décision humaine finale</div>
+              <p className="fx-mono" style={{ fontSize: 11, lineHeight: 1.65, color: "var(--muted)", marginTop: 6 }}>
                 Le moteur est un démonstrateur explicable. Il documente les signaux, mais
                 ne prend aucune décision bancaire réelle.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           {MODULES.map((module) => {
@@ -189,36 +186,36 @@ export default function DetectionStudioPage() {
       </section>
 
       {selectedDetector ? (
-        <Card className="mt-6">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Résultat du test module</CardTitle>
+        <div className="fx-panel mt-6">
+          <div className="fx-panel-head">
+            <div>
+              <h2>Résultat du test module</h2>
+            </div>
             <Badge severity={selectedDetector.score > 0 ? "high" : "low"}>
               {selectedDetector.status}
             </Badge>
-          </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+          </div>
+          <div className="fx-panel-body grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
-              <div className="text-sm font-semibold text-[#111827] dark:text-white">
+              <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500 }}>
                 {selectedDetector.label}
               </div>
-              <div className="mt-2 text-4xl font-bold text-[#2f6bff]">
+              <div
+                style={{ fontFamily: "var(--font-display)", fontSize: 42, lineHeight: 1, color: "var(--info)", marginTop: 10 }}
+              >
                 {selectedDetector.score}/{selectedDetector.maxScore}
               </div>
-              <p className="mt-3 text-sm leading-6 text-[#667085]">
+              <p className="fx-mono" style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6, color: "var(--muted)" }}>
                 {selectedDetector.explanation}
               </p>
             </div>
-            <div className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                Signaux et reason codes générés
-              </div>
+            <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "14px 16px" }}>
+              <div className="fx-eyebrow" style={{ marginBottom: 12 }}>Signaux et reason codes générés</div>
               {selectedDetector.signals.length || selectedDetector.dataUsed.length ? (
                 <div className="mb-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                      Signaux détectés
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                  <div style={{ background: "var(--panel)", border: "1px solid var(--border)", padding: "10px 12px" }}>
+                    <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Signaux détectés</div>
+                    <div className="flex flex-wrap gap-2">
                       {selectedDetector.signals.length ? (
                         selectedDetector.signals.map((signal) => (
                           <Badge key={signal} severity="medium">
@@ -226,17 +223,15 @@ export default function DetectionStudioPage() {
                           </Badge>
                         ))
                       ) : (
-                        <span className="text-sm text-[#667085]">Aucun signal.</span>
+                        <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>Aucun signal.</span>
                       )}
                     </div>
                   </div>
-                  <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                      Données utilisées
-                    </div>
-                    <ul className="mt-2 space-y-1 text-sm text-[#667085]">
+                  <div style={{ background: "var(--panel)", border: "1px solid var(--border)", padding: "10px 12px" }}>
+                    <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Données utilisées</div>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }} className="space-y-1">
                       {selectedDetector.dataUsed.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item} className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -247,32 +242,32 @@ export default function DetectionStudioPage() {
                   {selectedDetector.reasonCodes.map((reasonCode) => (
                     <div
                       key={reasonCode.code}
-                      className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]"
+                      style={{ background: "var(--panel)", border: "1px solid var(--border)", padding: "10px 12px" }}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <code className="text-xs font-semibold text-[#2f6bff]">
+                        <code className="fx-mono" style={{ fontSize: 11, color: "var(--info)" }}>
                           {reasonCode.code}
                         </code>
-                        <span className="text-xs font-semibold text-[#667085]">
+                        <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
                           +{reasonCode.weight}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-[#111827] dark:text-white">
+                      <p style={{ marginTop: 4, fontSize: 13, color: "var(--fg-2)" }}>
                         {reasonCode.label}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-[#667085]">
+                <div className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
                   Aucun reason code pour ce module sur ce scénario.
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
-    </div>
+    </ForensicPage>
   );
 }
 
@@ -287,47 +282,36 @@ function ModuleCard({
   active: boolean;
   onTest: () => void;
 }) {
-  const Icon = module.icon;
+  const statusTone = module.status === "active" ? "ok" : module.status === "demo" ? "warn" : "";
   return (
-    <Card className={active ? "border-[#2f6bff]" : undefined}>
-      <CardContent className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-md bg-[#eaf1ff] text-[#2f6bff]">
-            <Icon size={20} />
-          </div>
-          <Badge
-            severity={
-              module.status === "active"
-                ? "low"
-                : module.status === "demo"
-                  ? "medium"
-                  : "neutral"
-            }
-          >
-            {module.status}
-          </Badge>
+    <div
+      className={`fx-stat ${statusTone}`}
+      style={active ? { borderColor: "var(--risk)", borderLeftColor: "var(--risk)" } : undefined}
+    >
+      <div className="fx-stat-top">
+        <span className="glyph">{module.glyph}</span>
+        <span className="fx-tag" style={{ fontSize: 10 }}>{module.status}</span>
+      </div>
+      <div className="fx-mono" style={{ marginTop: 12, fontSize: 13, color: "var(--fg)", fontWeight: 500, lineHeight: 1.3 }}>
+        {module.title}
+      </div>
+      <p className="fx-mono" style={{ marginTop: 6, fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>
+        {module.dataUsed}
+      </p>
+      <div style={{ marginTop: 12, background: "var(--bg-2)", border: "1px solid var(--border)", padding: "8px 10px" }}>
+        <div className="fx-eyebrow">Score partiel</div>
+        <div className="fx-mono" style={{ fontSize: 16, color: "var(--fg)", marginTop: 4, fontWeight: 500 }}>
+          {score ? `${score.score}/${score.maxScore}` : "n/a"}
         </div>
-        <div>
-          <h2 className="text-base font-semibold text-[#111827] dark:text-white">
-            {module.title}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-[#667085]">{module.dataUsed}</p>
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-md bg-[#f7f9fc] p-3 dark:bg-white/[0.03]">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-[#667085]">
-              Score partiel
-            </div>
-            <div className="mt-1 font-mono text-lg font-semibold text-[#08111f] dark:text-white">
-              {score ? `${score.score}/${score.maxScore}` : "n/a"}
-            </div>
-          </div>
-          <BadgeCheck size={18} className="text-[#027a48]" />
-        </div>
-        <Button type="button" variant={active ? "primary" : "outline"} onClick={onTest}>
-          Tester le module
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+      <button
+        type="button"
+        className={active ? "fx-btn sm" : "fx-btn-ghost sm"}
+        style={{ marginTop: 12 }}
+        onClick={onTest}
+      >
+        Tester le module
+      </button>
+    </div>
   );
 }

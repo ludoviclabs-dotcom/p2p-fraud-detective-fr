@@ -89,18 +89,25 @@ export function RingsGraphView({
       labelSize: 12,
       labelDensity: 0.5,
       labelGridCellSize: 200,
-      defaultEdgeColor: "#c8ccd6",
-      labelColor: { color: "#1a1f2c" },
+      defaultEdgeColor: "#1f242e",
+      labelColor: { color: "#e9e6dc" },
     }),
     [],
   );
 
   return (
-    <SigmaContainer
-      style={{ height: 600, background: "#f9fafc" }}
-      settings={settings}
+    <div
+      style={{
+        border: "1px solid var(--border)",
+        background: "var(--bg-2)",
+      }}
     >
-      <LoadGraph data={data} onNodeClick={onSelect} />
-    </SigmaContainer>
+      <SigmaContainer
+        style={{ height: 600, background: "var(--bg-2)" }}
+        settings={settings}
+      >
+        <LoadGraph data={data} onNodeClick={onSelect} />
+      </SigmaContainer>
+    </div>
   );
 }

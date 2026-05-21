@@ -2,23 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Download,
-  FileClock,
-  FileJson,
-  Landmark,
-  MessageSquareWarning,
-  Network,
-  QrCode,
-  Smartphone,
-} from "lucide-react";
 import type { EvidencePack, RiskScenario, RiskScoreResult } from "@/types/risk";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 type AnalystAction =
   | "assign"
@@ -148,54 +136,89 @@ export function FraudCase360Client({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/p2p-scenarios"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#2f6bff]"
-      >
-        <ArrowLeft size={16} />
-        Retour aux scénarios
+    <ForensicPage>
+      <Link href="/p2p-scenarios" className="fx-link" style={{ marginBottom: 18, display: "inline-flex" }}>
+        ← Retour aux scénarios
       </Link>
 
-      <section className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]">
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-[#08111f] text-white">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div
+          className="fx-panel"
+          style={{ overflow: "hidden" }}
+        >
+          <div
+            className="fx-panel-head"
+            style={{ background: "var(--bg)", borderBottom: "1px solid var(--border-strong)", padding: "22px 24px" }}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between w-full">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-white/45">
-                  Fraud Case 360
-                </div>
-                <h1 className="mt-2 text-3xl font-bold">{scenario.title}</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/65">
+                <div className="fx-eyebrow">Fraud Case 360</div>
+                <h1
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "clamp(24px, 2.5vw, 36px)",
+                    fontWeight: 400,
+                    letterSpacing: "-0.015em",
+                    lineHeight: 1.04,
+                    color: "var(--fg)",
+                    margin: "10px 0 8px",
+                  }}
+                >
+                  {scenario.title}
+                </h1>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                    lineHeight: 1.65,
+                    color: "var(--muted)",
+                    maxWidth: 600,
+                  }}
+                >
                   {scenario.businessContext}
                 </p>
               </div>
               <SeverityBadge value={score.level} />
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="fx-panel-body">
             <div className="grid gap-3 sm:grid-cols-4">
               <Kpi label="Score" value={`${score.score}/100`} />
               <Kpi label="Décision" value={score.decision} />
               <Kpi label="Typologie" value={score.typology} />
               <Kpi label="Montant" value={formatEur(scenario.transaction.amount)} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Analyst Action Bar</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <label htmlFor="case-360-assignee" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Analyst Action Bar</h2>
+            <span className="glyph">▣</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <label
+              htmlFor="case-360-assignee"
+              className="fx-eyebrow"
+              style={{ display: "block", marginBottom: 6 }}
+            >
               Assigné à
             </label>
             <input
               id="case-360-assignee"
               value={assignee}
               onChange={(event) => setAssignee(event.target.value)}
-              className="h-10 w-full rounded-md border border-[#e6ebf2] bg-white px-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
+              style={{
+                height: 38,
+                width: "100%",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                padding: "0 12px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+                color: "var(--fg)",
+                outline: "none",
+              }}
             />
             <div className="grid grid-cols-2 gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => record("assign")}>
@@ -220,24 +243,34 @@ export function FraudCase360Client({
               Recommander blocage
             </Button>
             <Button type="button" variant="secondary" className="w-full" onClick={exportEvidence}>
-              <Download size={15} />
-              Exporter evidence pack
+              ↓ Exporter evidence pack
             </Button>
             {exportStatus ? (
-              <div role="status" className="rounded-md bg-[#eaf1ff] p-3 text-sm font-medium text-[#111827]">
+              <div
+                role="status"
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border-strong)",
+                  padding: "12px 14px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--fg)",
+                }}
+              >
                 {exportStatus}
               </div>
             ) : null}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Transaction details</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Transaction details</h2>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-panel-body">
             <dl className="grid gap-3 sm:grid-cols-2">
               <Detail label="Transaction" value={scenario.transaction.transactionId} />
               <Detail label="Rail" value={scenario.transaction.rail} />
@@ -246,61 +279,80 @@ export function FraudCase360Client({
               <Detail label="IBAN" value={scenario.transaction.beneficiary.iban} />
               <Detail label="Canal" value={scenario.transaction.channel ?? "n/a"} />
             </dl>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Timeline</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Timeline</h2>
+            <span className="glyph">◷</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
             {timeline.map((item) => (
               <div
                 key={`${item.at}-${item.event}-${item.detail}`}
-                className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]"
+                style={{
+                  background: "var(--bg-2)",
+                  border: "1px solid var(--border)",
+                  padding: "12px 14px",
+                }}
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#667085]">
-                  <FileClock size={14} />
-                  {new Date(item.at).toLocaleString("fr-FR")} · {item.actor}
+                <div
+                  className="fx-mono"
+                  style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}
+                >
+                  ◷ {new Date(item.at).toLocaleString("fr-FR")} · {item.actor}
                 </div>
-                <div className="mt-1 text-sm font-semibold text-[#111827] dark:text-white">
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
                   {item.event}
                 </div>
-                <p className="mt-1 text-sm leading-6 text-[#667085]">{item.detail}</p>
+                <p
+                  className="fx-mono"
+                  style={{ marginTop: 4, fontSize: 11, lineHeight: 1.6, color: "var(--muted)" }}
+                >
+                  {item.detail}
+                </p>
               </div>
             ))}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <ReasonCodesPanel score={score} />
         <BeneficiaryTrustPanel score={score} />
         <DetectorPanel
-          icon={MessageSquareWarning}
+          glyph="⚠"
           title="Scam Narrative Panel"
           detector="scamNarrative"
           score={score}
         />
-        <DetectorPanel icon={CheckCircle2} title="Velocity Signals Panel" detector="velocity" score={score} />
-        <DetectorPanel icon={Smartphone} title="Device Risk Panel" detector="deviceSession" score={score} />
+        <DetectorPanel glyph="∿" title="Velocity Signals Panel" detector="velocity" score={score} />
+        <DetectorPanel glyph="□" title="Device Risk Panel" detector="deviceSession" score={score} />
         {scenario.transaction.qr ? (
-          <DetectorPanel icon={QrCode} title="QR Analyzer Panel" detector="qrRisk" score={score} />
+          <DetectorPanel glyph="▦" title="QR Analyzer Panel" detector="qrRisk" score={score} />
         ) : null}
         <FraudGraphPanel scenario={scenario} />
         <EvidencePanel evidence={evidence} notes={notes} setNotes={setNotes} />
-      </section>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
-        {label}
-      </div>
-      <div className="mt-1 truncate font-mono text-sm font-semibold text-[#111827] dark:text-white">
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--border)",
+        padding: "12px 14px",
+      }}
+    >
+      <div className="fx-eyebrow">{label}</div>
+      <div
+        className="fx-mono"
+        style={{ marginTop: 6, fontSize: 13, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+      >
         {value}
       </div>
     </div>
@@ -310,10 +362,11 @@ function Kpi({ label, value }: { label: string; value: string }) {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
-        {label}
-      </dt>
-      <dd className="mt-1 break-words font-mono text-sm text-[#111827] dark:text-white">
+      <dt className="fx-eyebrow">{label}</dt>
+      <dd
+        className="fx-mono"
+        style={{ marginTop: 6, fontSize: 13, color: "var(--fg)", wordBreak: "break-word" }}
+      >
         {value}
       </dd>
     </div>
@@ -322,38 +375,48 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function ReasonCodesPanel({ score }: { score: RiskScoreResult }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Reason codes cliquables</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <h2>Reason codes cliquables</h2>
+        <span className="glyph">§</span>
+      </div>
+      <div className="fx-panel-body space-y-2">
         {score.reasonCodes.map((reasonCode) => (
           <details
             key={`${reasonCode.detector}-${reasonCode.code}`}
-            className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]"
+            style={{
+              background: "var(--bg-2)",
+              border: "1px solid var(--border)",
+              padding: "12px 14px",
+            }}
           >
-            <summary className="cursor-pointer list-none">
-              <span className="font-mono text-xs font-semibold text-[#2f6bff]">
+            <summary
+              style={{ cursor: "pointer", listStyle: "none" }}
+            >
+              <span className="fx-link" style={{ marginRight: 8 }}>
                 {reasonCode.code}
               </span>
-              <span className="ml-2 text-sm font-semibold text-[#111827] dark:text-white">
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
                 {reasonCode.label}
               </span>
             </summary>
-            <p className="mt-2 text-sm leading-6 text-[#667085]">
+            <p
+              className="fx-mono"
+              style={{ marginTop: 8, fontSize: 11, lineHeight: 1.65, color: "var(--muted)" }}
+            >
               {reasonCode.description}
             </p>
           </details>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function BeneficiaryTrustPanel({ score }: { score: RiskScoreResult }) {
   return (
     <DetectorPanel
-      icon={Landmark}
+      glyph="★"
       title="Beneficiary Trust Card"
       detector="beneficiaryTrust"
       score={score}
@@ -362,38 +425,52 @@ function BeneficiaryTrustPanel({ score }: { score: RiskScoreResult }) {
 }
 
 function DetectorPanel({
-  icon: Icon,
+  glyph,
   title,
   detector,
   score,
 }: {
-  icon: typeof Landmark;
+  glyph: string;
   title: string;
   detector: RiskScoreResult["detectorScores"][number]["detector"];
   score: RiskScoreResult;
 }) {
   const detectorScore = score.detectorScores.find((item) => item.detector === detector);
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Icon size={18} className="text-[#2f6bff]" />
-          {title}
-        </CardTitle>
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div className="flex items-center gap-2">
+          <span className="glyph">{glyph}</span>
+          <h2>{title}</h2>
+        </div>
         {detectorScore ? <Badge>{detectorScore.status}</Badge> : null}
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="fx-panel-body">
         {detectorScore ? (
           <>
-            <div className="font-mono text-2xl font-bold text-[#08111f] dark:text-white">
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 32,
+                fontWeight: 400,
+                color: "var(--fg)",
+                marginBottom: 8,
+              }}
+            >
               {detectorScore.score}/{detectorScore.maxScore}
             </div>
-            <p className="mt-2 text-sm leading-6 text-[#667085]">
+            <p
+              className="fx-mono"
+              style={{ fontSize: 12, lineHeight: 1.65, color: "var(--muted)" }}
+            >
               {detectorScore.explanation}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {detectorScore.reasonCodes.map((item) => (
-                <Badge key={item.code} severity={item.severity.toLowerCase() as "critical" | "high" | "medium" | "low"}>
+                <Badge
+                  key={item.code}
+                  severity={item.severity.toLowerCase() as "critical" | "high" | "medium" | "low"}
+                >
                   {item.code}
                 </Badge>
               ))}
@@ -401,48 +478,70 @@ function DetectorPanel({
             </div>
           </>
         ) : (
-          <div className="text-sm text-[#667085]">Module non exécuté.</div>
+          <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+            Module non exécuté.
+          </span>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function FraudGraphPanel({ scenario }: { scenario: RiskScenario }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Network size={18} className="text-[#2f6bff]" />
-          Fraud Graph Panel
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-3 text-sm text-[#667085]">
-          {scenario.graphSummary.suspiciousPath}
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div className="flex items-center gap-2">
+          <span className="glyph">◫</span>
+          <h2>Fraud Graph Panel</h2>
         </div>
+      </div>
+      <div className="fx-panel-body">
+        <p
+          className="fx-mono"
+          style={{ fontSize: 12, lineHeight: 1.6, color: "var(--muted)", marginBottom: 12 }}
+        >
+          {scenario.graphSummary.suspiciousPath}
+        </p>
         <div className="grid gap-2">
           {scenario.graphSummary.nodes.map((node) => (
             <div
               key={node.id}
-              className="flex items-center justify-between rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]"
+              className="flex items-center justify-between"
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--border)",
+                padding: "12px 14px",
+              }}
             >
               <div>
-                <div className="text-sm font-semibold text-[#111827] dark:text-white">
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
                   {node.label}
                 </div>
-                <div className="text-xs text-[#667085]">{node.kind}</div>
+                <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                  {node.kind}
+                </div>
               </div>
               {node.risk ? <SeverityBadge value={node.risk} /> : null}
             </div>
           ))}
         </div>
-        <div className="mt-3 rounded-md bg-[#08111f] p-3 text-sm text-white">
+        <div
+          className="fx-mono"
+          style={{
+            marginTop: 12,
+            background: "var(--bg)",
+            border: "1px solid var(--border-strong)",
+            padding: "12px 14px",
+            fontSize: 12,
+            color: "var(--fg-2)",
+          }}
+        >
           Score graphe: {scenario.graphSummary.graphScore}/100 · Clusters:{" "}
           {scenario.graphSummary.clusters.join(", ")}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -456,15 +555,19 @@ function EvidencePanel({
   setNotes: (value: string) => void;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileJson size={18} className="text-[#2f6bff]" />
-          Evidence Pack Panel
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <label htmlFor="case-360-analyst-notes" className="block text-xs font-semibold uppercase tracking-wider text-[#667085]">
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div className="flex items-center gap-2">
+          <span className="glyph">□</span>
+          <h2>Evidence Pack Panel</h2>
+        </div>
+      </div>
+      <div className="fx-panel-body space-y-3">
+        <label
+          htmlFor="case-360-analyst-notes"
+          className="fx-eyebrow"
+          style={{ display: "block", marginBottom: 6 }}
+        >
           Notes analyste
         </label>
         <textarea
@@ -473,19 +576,46 @@ function EvidencePanel({
           onChange={(event) => setNotes(event.target.value)}
           rows={5}
           placeholder="Notes analyste synthétiques..."
-          className="w-full rounded-md border border-[#e6ebf2] bg-white p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
+          style={{
+            width: "100%",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            padding: "10px 12px",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--fg)",
+            outline: "none",
+            resize: "vertical",
+          }}
         />
         {evidence ? (
-          <pre className="max-h-72 overflow-auto rounded-md bg-[#08111f] p-4 text-xs leading-6 text-white">
+          <pre
+            style={{
+              maxHeight: 288,
+              overflowY: "auto",
+              background: "var(--bg)",
+              border: "1px solid var(--border-strong)",
+              padding: "14px 16px",
+              fontSize: 11,
+              lineHeight: 1.6,
+              color: "var(--fg-2)",
+              fontFamily: "var(--font-mono)",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+            }}
+          >
             {JSON.stringify(evidence, null, 2)}
           </pre>
         ) : (
-          <p className="text-sm leading-6 text-[#667085]">
-            Exportez le dossier pour générer un JSON incluant transaction, score,
-            reason codes, graphe, timeline, notes et audit trail.
+          <p
+            className="fx-mono"
+            style={{ fontSize: 12, lineHeight: 1.65, color: "var(--muted)" }}
+          >
+            Exportez le dossier pour générer un JSON incluant transaction, score, reason codes,
+            graphe, timeline, notes et audit trail.
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

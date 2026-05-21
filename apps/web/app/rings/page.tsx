@@ -1,78 +1,103 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraphExplorer } from "@/components/p2p-graph-explorer";
 import { getP2PDataset } from "@/data/get-dataset";
 import { formatDate, formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { SEVERITY_COLORS } from "@/lib/p2p-demo-taxonomy";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function RingsPage() {
   const dataset = getP2PDataset();
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Détection ML · démo statique
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Détection ML · démo statique</div>
+          <h1 style={{ marginTop: 9 }}>
+            Anneaux de <span className="italic">fraude</span>
+          </h1>
+          <p className="sub">
+            Graphe vendor ↔ IBAN ↔ finding généré depuis le détecteur Python NetworkX. Les IBAN
+            sont masqués avant publication ; la page reste utilisable sur Vercel sans backend
+            FastAPI.
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Anneaux de fraude
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Graphe vendor ↔ IBAN ↔ finding généré depuis le détecteur Python
-        NetworkX. Les IBAN sont masqués avant publication; la page reste
-        utilisable sur Vercel sans backend FastAPI.
-      </p>
 
-      <Card className="mb-4">
-        <CardContent className="grid gap-3 md:grid-cols-5">
-          <Metric label="Généré le" value={formatDate(dataset.generatedAt)} />
-          <Metric label="Nœuds" value={formatNumber(dataset.nodes.length)} />
-          <Metric label="Liens" value={formatNumber(dataset.edges.length)} />
-          <Metric label="Findings" value={formatNumber(dataset.findings.length)} />
-          <Metric label="Exposition" value={formatEuro(dataset.metrics.exposureEur)} />
-        </CardContent>
-      </Card>
-
-      <Card className="mb-4 overflow-hidden">
-        <CardHeader>
-          <CardTitle>Graphe interactif WebGL</CardTitle>
-        </CardHeader>
-        <GraphExplorer dataset={dataset} />
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Légende</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#1f3a6e]" />
-            Fournisseur (vendor_name)
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-body">
+          <div className="grid gap-4 md:grid-cols-5">
+            <Metric label="Généré le" value={formatDate(dataset.generatedAt)} />
+            <Metric label="Nœuds" value={formatNumber(dataset.nodes.length)} />
+            <Metric label="Liens" value={formatNumber(dataset.edges.length)} />
+            <Metric label="Findings" value={formatNumber(dataset.findings.length)} />
+            <Metric label="Exposition" value={formatEuro(dataset.metrics.exposureEur)} />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#3E7CB1]" />
-            IBAN masqué
-          </div>
-          {(["critical", "high", "medium"] as const).map((level) => (
-            <div key={level} className="flex items-center gap-2">
-              <span
-                className="inline-block h-3 w-3 rounded-full"
-                style={{ backgroundColor: SEVERITY_COLORS[level] }}
+        </div>
+      </div>
+
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Graphe interactif WebGL</h2>
+          <span className="glyph">◫</span>
+        </div>
+        <div style={{ overflow: "hidden" }}>
+          <GraphExplorer dataset={dataset} />
+        </div>
+      </div>
+
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>Légende</h2>
+          <span className="glyph">§</span>
+        </div>
+        <div className="fx-panel-body">
+          <div className="flex flex-wrap gap-5">
+            <LegendItem color="var(--info)" label="Fournisseur (vendor_name)" />
+            <LegendItem color="var(--fg-2)" label="IBAN masqué" />
+            {(["critical", "high", "medium"] as const).map((level) => (
+              <LegendItem
+                key={level}
+                color={SEVERITY_COLORS[level]}
+                label={`Finding ${level}`}
               />
-              Finding {level}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-[#5a6478]">{label}</div>
-      <div className="mt-1 font-mono text-sm font-semibold text-[#0f1b33] dark:text-white">
+      <div className="fx-eyebrow">{label}</div>
+      <div
+        className="fx-mono"
+        style={{ marginTop: 6, fontSize: 14, fontWeight: 600, color: "var(--fg)" }}
+      >
         {value}
       </div>
+    </div>
+  );
+}
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        style={{
+          display: "inline-block",
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+      <span className="fx-mono" style={{ fontSize: 12, color: "var(--fg-2)" }}>
+        {label}
+      </span>
     </div>
   );
 }

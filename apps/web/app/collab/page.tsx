@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listCases } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AtSign, Lock } from "lucide-react";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function CollabPage() {
   const cases = useQuery({
@@ -19,134 +19,159 @@ export default function CollabPage() {
   }
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Pilotage
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Pilotage</div>
+          <h1 style={{ marginTop: 9 }}>
+            Collaboration <span className="italic">multi-user</span>
+          </h1>
+          <p className="sub">
+            Multi-user · @mentions · SLA configurable · OIDC Microsoft Entra ID / Auth0 /
+            Keycloak (Phase 4 P4-3).
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Collaboration multi-user
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Multi-user · @mentions · SLA configurable · OIDC Microsoft Entra ID /
-        Auth0 / Keycloak (Phase 4 P4-3).
-      </p>
 
-      <div className="mb-4 grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Lock size={16} /> Authentification OIDC
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              Discovery + PKCE + JWKS cache 1h. Compatible Microsoft Entra ID,
-              Auth0, Keycloak.
+      <div className="mb-5 grid gap-4 md:grid-cols-3">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Authentification OIDC</h2>
+            <span className="glyph">□</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
+              Discovery + PKCE + JWKS cache 1h. Compatible Microsoft Entra ID, Auth0, Keycloak.
             </p>
-            <p>
-              <strong>Proxy Next.js</strong> :{" "}
-              <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Proxy Next.js</strong> :{" "}
+              <code
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border)",
+                  padding: "1px 5px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                }}
+              >
                 /api/auth/*
               </code>{" "}
               → FastAPI{" "}
-              <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
+              <code
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border)",
+                  padding: "1px 5px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                }}
+              >
                 /oidc/*
               </code>
             </p>
-            <p className="text-xs text-[#5a6478]">
-              Variables d'env requises côté FastAPI :{" "}
-              <code>OIDC_ISSUER</code>, <code>OIDC_CLIENT_ID</code>,{" "}
-              <code>OIDC_REDIRECT_URI</code>.
+            <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+              Variables d&apos;env requises côté FastAPI :{" "}
+              <span style={{ color: "var(--fg-2)" }}>OIDC_ISSUER</span>,{" "}
+              <span style={{ color: "var(--fg-2)" }}>OIDC_CLIENT_ID</span>,{" "}
+              <span style={{ color: "var(--fg-2)" }}>OIDC_REDIRECT_URI</span>.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AtSign size={16} /> @mentions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              Dans les commentaires de cases, les @mentions parsées
-              automatiquement déclenchent une notification (Slack/Teams si
-              configuré).
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>@mentions</h2>
+            <span className="glyph">◷</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
+              Dans les commentaires de cases, les @mentions parsées automatiquement
+              déclenchent une notification (Slack/Teams si configuré).
             </p>
-            <p className="text-xs text-[#5a6478]">
+            <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
               MentionStore : SQLite/PostgreSQL, audit trail chaque mention.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users size={16} /> SLA configurable
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <table className="w-full text-xs">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>SLA configurable</h2>
+            <span className="glyph">◷</span>
+          </div>
+          <div className="fx-table-wrap">
+            <table className="fx-table">
               <tbody>
-                <tr className="border-b border-[#e1e5ee]">
-                  <td className="py-1 font-medium">Critical</td>
-                  <td className="py-1 text-right">24 h</td>
-                </tr>
-                <tr className="border-b border-[#e1e5ee]">
-                  <td className="py-1 font-medium">High</td>
-                  <td className="py-1 text-right">3 j</td>
-                </tr>
-                <tr className="border-b border-[#e1e5ee]">
-                  <td className="py-1 font-medium">Medium</td>
-                  <td className="py-1 text-right">7 j</td>
+                <tr>
+                  <td className="key">Critical</td>
+                  <td className="num">24 h</td>
                 </tr>
                 <tr>
-                  <td className="py-1 font-medium">Low</td>
-                  <td className="py-1 text-right">14 j</td>
+                  <td className="key">High</td>
+                  <td className="num">3 j</td>
+                </tr>
+                <tr>
+                  <td className="key">Medium</td>
+                  <td className="num">7 j</td>
+                </tr>
+                <tr>
+                  <td className="key">Low</td>
+                  <td className="num">14 j</td>
                 </tr>
               </tbody>
             </table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>👥 Cas par assigné (live)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cases.isLoading ? (
-            <div className="text-sm text-[#5a6478]">Chargement…</div>
-          ) : !assignees.size ? (
-            <div className="text-sm text-[#5a6478]">
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>Cas par assigné (live)</h2>
+          <span className="glyph">▣</span>
+        </div>
+        {cases.isLoading ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              Chargement…
+            </span>
+          </div>
+        ) : !assignees.size ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
               Aucun case assigné. Utiliser bulk assign depuis{" "}
-              <a className="text-[#1f3a6e] hover:underline" href="/cases">
+              <Link href="/cases" className="fx-link">
                 /cases
-              </a>
+              </Link>
               .
-            </div>
-          ) : (
-            <table className="w-full text-sm">
+            </span>
+          </div>
+        ) : (
+          <div className="fx-table-wrap">
+            <table className="fx-table">
               <thead>
-                <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                  <th className="py-2">Utilisateur</th>
-                  <th className="py-2 text-right">Cases assignés</th>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th className="num">Cases assignés</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from(assignees.entries())
                   .sort((a, b) => b[1] - a[1])
                   .map(([user, n]) => (
-                    <tr key={user} className="border-b border-[#e1e5ee]">
-                      <td className="py-2 font-mono text-xs">{user}</td>
-                      <td className="py-2 text-right font-semibold">{n}</td>
+                    <tr key={user}>
+                      <td className="key fx-mono" style={{ fontSize: 12 }}>
+                        {user}
+                      </td>
+                      <td className="num" style={{ fontFamily: "var(--font-display)", fontSize: 20 }}>
+                        {n}
+                      </td>
                     </tr>
                   ))}
               </tbody>
             </table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        )}
+      </div>
+    </ForensicPage>
   );
 }

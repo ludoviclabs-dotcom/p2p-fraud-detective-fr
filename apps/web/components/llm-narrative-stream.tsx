@@ -1,8 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Sparkles, StopCircle } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 const SECRET = process.env.FRAUD_API_SECRET ?? "";
@@ -113,42 +111,99 @@ export function LlmNarrativeStream(props: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Controls row */}
+      <div className="flex flex-wrap items-center gap-3">
         {streaming ? (
-          <Button onClick={stop} variant="danger" type="button">
-            <StopCircle size={14} /> Arrêter
-          </Button>
+          <button onClick={stop} type="button" className="fx-btn sm">
+            ◼ Arrêter
+          </button>
         ) : (
-          <Button onClick={start} type="button">
-            <Sparkles size={14} /> Générer narration (Claude streaming)
-          </Button>
+          <button onClick={start} type="button" className="fx-btn sm">
+            ★ Générer narration (Claude streaming)
+          </button>
         )}
-        <span className="text-xs text-[#5a6478]">
+        <span className="fx-mono" style={{ fontSize: 10, color: "var(--muted)" }}>
           Streaming SSE via{" "}
-          <code className="rounded bg-[#f4f6fa] px-1 py-0.5">
+          <code
+            style={{
+              fontFamily: "var(--font-mono)",
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
+              padding: "1px 5px",
+              fontSize: 10,
+            }}
+          >
             POST /api/v1/llm/narrative
           </code>{" "}
-          · Requiert <code>ANTHROPIC_API_KEY</code> côté FastAPI.
+          · Requiert <code
+            style={{
+              fontFamily: "var(--font-mono)",
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
+              padding: "1px 5px",
+              fontSize: 10,
+            }}
+          >
+            ANTHROPIC_API_KEY
+          </code>{" "}
+          côté FastAPI.
         </span>
       </div>
 
+      {/* Error state */}
       {error ? (
-        <div className="rounded border border-[#a23e48] bg-[#fdecee] p-3 text-sm text-[#a23e48]">
-          ❌ {error}
+        <div className="fx-notice" style={{ borderLeftColor: "var(--risk)" }}>
+          <span className="glyph" style={{ color: "var(--risk)" }}>⚠</span>
+          <div>
+            <div className="nt" style={{ color: "var(--risk)" }}>Erreur de streaming</div>
+            <p className="nb">{error}</p>
+          </div>
         </div>
       ) : null}
 
+      {/* Narrative output */}
       {text || streaming ? (
-        <div className="rounded-md border border-[#e1e5ee] bg-white p-4">
-          <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-[#5a6478]">
-            <Sparkles size={12} className={streaming ? "animate-pulse" : ""} />
-            Narration ISA 240 {streaming ? "(streaming…)" : ""}
-          </div>
-          <div className="whitespace-pre-wrap text-sm text-[#1a1f2c]">
-            {text}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <div className="fx-eyebrow">
+                ∿ Narration ISA 240{streaming ? " (streaming…)" : ""}
+              </div>
+            </div>
             {streaming ? (
-              <span className="ml-1 inline-block h-3 w-2 animate-pulse bg-[#1f3a6e]" />
+              <span
+                className="fx-mono"
+                style={{ fontSize: 10, color: "var(--risk)", animation: "forensicPulse 1.4s infinite" }}
+              >
+                LIVE
+              </span>
             ) : null}
+          </div>
+          <div className="fx-panel-body">
+            <div
+              className="fx-mono"
+              style={{
+                fontSize: 13,
+                lineHeight: 1.7,
+                color: "var(--fg-2)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {text}
+              {streaming ? (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 8,
+                    height: 14,
+                    background: "var(--risk)",
+                    marginLeft: 4,
+                    verticalAlign: "text-bottom",
+                    animation: "forensicPulse 0.9s infinite",
+                  }}
+                />
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

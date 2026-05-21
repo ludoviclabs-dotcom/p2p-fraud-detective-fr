@@ -2,25 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  DatabaseZap,
-  FileText,
-  FlaskConical,
-  Loader2,
-  Play,
-  ShieldCheck,
-  TerminalSquare,
-  TriangleAlert,
-} from "lucide-react";
 import { RISK_SCENARIOS } from "@/data/risk-scenarios";
 import { scoreTransaction } from "@/lib/risk/scoreEngine";
 import type { RiskScenario, RiskScoreResult } from "@/types/risk";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 type ScenarioFeed = {
   source: "huggingface" | "local";
@@ -98,98 +85,98 @@ export default function P2PScenariosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085]">
-            Paiements P2P · SEPA · Procure-to-Pay
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#08111f] dark:text-white">
-            Scénarios P2P explicables
+          <div className="fx-eyebrow">Paiements P2P · SEPA · Procure-to-Pay</div>
+          <h1 style={{ marginTop: 9 }}>
+            Scénarios P2P <span className="italic">explicables</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
+          <p className="sub">
             Six parcours synthétiques pour démontrer le cycle détecter, scorer,
             expliquer, investiguer, documenter et exporter.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge severity={feed.source === "huggingface" ? "low" : "neutral"}>
-            {sourceLabel}
-          </Badge>
-          <Link
-            href="/risk-test-lab"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white sm:w-auto"
-          >
-            Test Lab
-            <ArrowRight size={15} />
+        <div className="fx-head-actions">
+          <Link href="/risk-test-lab" className="fx-btn">
+            Test Lab ↗
           </Link>
-          <Link
-            href="/risk-docs"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#e6ebf2] bg-white px-4 text-sm font-semibold text-[#667085] hover:border-[#2f6bff] hover:text-[#2f6bff] sm:w-auto"
-          >
-            Docs & glossaire
-            <ArrowRight size={15} />
+          <Link href="/risk-docs" className="fx-btn-ghost">
+            Docs &amp; glossaire
           </Link>
-          <Link
-            href="/detection-studio"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff] sm:w-auto"
-          >
+          <Link href="/detection-studio" className="fx-btn-ghost">
             Detection Studio
-            <ArrowRight size={15} />
           </Link>
         </div>
       </div>
 
-      <Card className="mt-6 border-l-4 border-l-[#2f6bff]">
-        <CardContent className="flex flex-col gap-3 text-sm text-[#667085] md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <DatabaseZap size={16} className="text-[#2f6bff]" />
-            {feed.message}
-          </div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-[#027a48]" />
-            Données synthétiques, décision finale humaine.
-          </div>
-        </CardContent>
-      </Card>
+      <div className="fx-notice" style={{ marginBottom: 20 }}>
+        <span className="glyph">▣</span>
+        <div className="min-w-0 flex-1">
+          <div className="nt">{feed.message}</div>
+          <p className="nb">Données synthétiques, décision finale humaine.</p>
+        </div>
+        <div style={{ flexShrink: 0 }}>
+          <Badge severity={feed.source === "huggingface" ? "low" : "neutral"}>
+            {sourceLabel}
+          </Badge>
+        </div>
+      </div>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-3" style={{ marginBottom: 20 }}>
         <PathCard
           title="1. Scénarios guidés"
           body="Sélectionner une fraude synthétique, lancer l'analyse et voir score, reason codes et action recommandée."
-          icon={FlaskConical}
+          glyph="◇"
           href="/p2p-scenarios"
         />
         <PathCard
           title="2. Test Lab API"
           body="Modifier le JSON, appeler /api/risk/score, créer un case et générer un evidence pack."
-          icon={TerminalSquare}
+          glyph="□"
           href="/risk-test-lab"
         />
         <PathCard
           title="3. Documentation"
           body="Lire le glossaire, les endpoints, les typologies, les limites et le fonctionnement du moteur."
-          icon={BookOpen}
+          glyph="§"
           href="/risk-docs"
         />
       </section>
 
-      <section className="mt-6 grid gap-3 rounded-md border border-[#e6ebf2] bg-white p-4 text-sm shadow-sm dark:border-white/10 dark:bg-white/[0.04] md:grid-cols-4">
-        {[
-          ["Tester", "Lancer l'analyse sur un scénario.", "/p2p-scenarios"],
-          ["Modifier", "Ouvrir le JSON éditable.", "/risk-test-lab"],
-          ["Documenter", "Lire glossaire et limites.", "/risk-docs"],
-          ["Exporter", "Générer l'evidence pack.", "/risk-test-lab"],
-        ].map(([title, body, href]) => (
-          <Link key={`${title}-${href}`} href={href} className="rounded-md bg-[#f7f9fc] p-3 hover:bg-[#eaf1ff]">
-            <div className="font-semibold text-[#111827] dark:text-white">{title}</div>
-            <div className="mt-1 leading-5 text-[#667085]">{body}</div>
-          </Link>
-        ))}
-      </section>
+      <div
+        style={{
+          background: "var(--panel)",
+          border: "1px solid var(--border)",
+          padding: "14px 16px",
+          marginBottom: 20,
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-4">
+          {[
+            ["Tester", "Lancer l'analyse sur un scénario.", "/p2p-scenarios"],
+            ["Modifier", "Ouvrir le JSON éditable.", "/risk-test-lab"],
+            ["Documenter", "Lire glossaire et limites.", "/risk-docs"],
+            ["Exporter", "Générer l'evidence pack.", "/risk-test-lab"],
+          ].map(([title, body, href]) => (
+            <Link
+              key={`${title}-${href}`}
+              href={href}
+              style={{ display: "block", background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px", textDecoration: "none" }}
+            >
+              <div className="fx-mono" style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>
+                {title}
+              </div>
+              <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
+                {body}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
 
-      <section className="mt-6 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="flex flex-col gap-3 self-start">
+      <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="space-y-3">
           {feed.scenarios.map((scenario) => {
             const result = results[scenario.id];
             const active = selected?.id === scenario.id;
@@ -198,27 +185,33 @@ export default function P2PScenariosPage() {
                 key={scenario.id}
                 type="button"
                 onClick={() => setSelectedId(scenario.id)}
-                className={`rounded-md border bg-white p-4 text-left shadow-sm transition-colors dark:bg-white/[0.04] ${
-                  active
-                    ? "border-[#2f6bff]"
-                    : "border-[#e6ebf2] hover:border-[#2f6bff] dark:border-white/10"
-                }`}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  background: active ? "var(--panel-2)" : "var(--panel)",
+                  border: `1px solid ${active ? "var(--risk)" : "var(--border)"}`,
+                  borderLeft: active ? "2px solid var(--risk)" : "2px solid transparent",
+                  padding: "14px 16px",
+                  cursor: "pointer",
+                  transition: "all .15s",
+                }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-semibold text-[#111827] dark:text-white">
+                    <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500 }}>
                       {scenario.title}
-                    </h2>
-                    <p className="mt-1 text-sm leading-6 text-[#667085]">
+                    </div>
+                    <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
                       {scenario.description}
                     </p>
                   </div>
                   {result ? <SeverityBadge value={result.level} /> : <Badge>Demo</Badge>}
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#667085]">
-                  <span className="font-mono">{scenario.caseId}</span>
-                  <span>{formatEur(scenario.transaction.amount)}</span>
-                  <span>{scenario.transaction.rail}</span>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>{scenario.caseId}</span>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>{formatEur(scenario.transaction.amount)}</span>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>{scenario.transaction.rail}</span>
                 </div>
               </button>
             );
@@ -226,75 +219,81 @@ export default function P2PScenariosPage() {
         </div>
 
         {selected ? (
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-[#08111f] text-white">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                    Analyse scénario
-                  </div>
-                  <CardTitle className="mt-2 text-white">{selected.title}</CardTitle>
-                </div>
-                {selectedResult ? <SeverityBadge value={selectedResult.level} /> : null}
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <div>
+                <div className="fx-eyebrow">Analyse scénario</div>
+                <h2 style={{ marginTop: 4 }}>{selected.title}</h2>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <p className="text-sm leading-7 text-[#667085]">{selected.businessContext}</p>
+              {selectedResult ? <SeverityBadge value={selectedResult.level} /> : null}
+            </div>
+            <div className="fx-panel-body space-y-4">
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>{selected.businessContext}</p>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <Fact label="Montant" value={formatEur(selected.transaction.amount)} />
-                <Fact label="Rail" value={selected.transaction.rail} />
-                <Fact label="Case" value={selected.caseId} />
+                <FactBox label="Montant" value={formatEur(selected.transaction.amount)} />
+                <FactBox label="Rail" value={selected.transaction.rail} />
+                <FactBox label="Case" value={selected.caseId} />
               </div>
 
-              <details className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                  <FileText size={14} />
-                  Voir les données synthétiques JSON
+              <details style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: 14 }}>
+                <summary
+                  style={{ cursor: "pointer" }}
+                  className="fx-eyebrow"
+                >
+                  § Voir les données synthétiques JSON
                 </summary>
-                <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap text-xs leading-6 text-[#111827] dark:text-white/80">
+                <pre
+                  className="fx-mono"
+                  style={{
+                    marginTop: 12,
+                    maxHeight: 224,
+                    overflow: "auto",
+                    fontSize: 11,
+                    lineHeight: 1.6,
+                    color: "var(--fg-2)",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   {JSON.stringify(selected.transaction, null, 2)}
                 </pre>
               </details>
 
-              <Button
+              <button
                 type="button"
+                className="fx-btn sm"
                 onClick={() => analyze(selected)}
                 disabled={pendingId === selected.id}
               >
-                {pendingId === selected.id ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                Lancer l'analyse
-              </Button>
+                {pendingId === selected.id ? "⏳ Analyse en cours…" : "▶ Lancer l'analyse"}
+              </button>
 
               {selectedResult ? (
                 <div className="space-y-4" aria-live="polite" data-testid="p2p-scenario-result">
                   <div className="grid gap-3 sm:grid-cols-4">
-                    <Fact label="Score" value={`${selectedResult.score}/100`} />
-                    <Fact label="Niveau" value={selectedResult.level} />
-                    <Fact label="Décision" value={selectedResult.decision} />
-                    <Fact label="Typologie" value={selectedResult.typology} />
+                    <FactBox label="Score" value={`${selectedResult.score}/100`} />
+                    <FactBox label="Niveau" value={selectedResult.level} />
+                    <FactBox label="Décision" value={selectedResult.decision} />
+                    <FactBox label="Typologie" value={selectedResult.typology} />
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                      <TriangleAlert size={14} />
-                      Reason codes
-                    </div>
+                    <div className="fx-eyebrow" style={{ marginBottom: 8 }}>⚠ Reason codes</div>
                     <div className="grid gap-2">
                       {selectedResult.reasonCodes.map((reasonCode) => (
                         <div
                           key={`${reasonCode.detector}-${reasonCode.code}`}
-                          className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]"
+                          style={{ background: "var(--panel-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <code className="text-xs font-semibold text-[#2f6bff]">
+                            <code className="fx-mono" style={{ fontSize: 11, color: "var(--info)" }}>
                               {reasonCode.code}
                             </code>
-                            <span className="text-xs font-semibold text-[#667085]">
+                            <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
                               +{reasonCode.weight}
                             </span>
                           </div>
-                          <p className="mt-1 text-sm text-[#111827] dark:text-white">
+                          <p style={{ marginTop: 4, fontSize: 13, color: "var(--fg-2)" }}>
                             {reasonCode.label}
                           </p>
                         </div>
@@ -303,24 +302,22 @@ export default function P2PScenariosPage() {
                   </div>
 
                   <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-                      Scores par détecteur
-                    </div>
+                    <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Scores par détecteur</div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {selectedResult.detectorScores.map((detector) => (
                         <div
                           key={detector.detector}
-                          className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]"
+                          style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold text-[#111827] dark:text-white">
+                            <span className="fx-mono" style={{ fontSize: 12, color: "var(--fg)" }}>
                               {detector.label}
                             </span>
-                            <span className="font-mono text-xs text-[#667085]">
+                            <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
                               {detector.score}/{detector.maxScore}
                             </span>
                           </div>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#667085]">
+                          <p className="fx-mono" style={{ marginTop: 4, fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>
                             {detector.explanation}
                           </p>
                         </div>
@@ -328,65 +325,59 @@ export default function P2PScenariosPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-md bg-[#eaf1ff] p-4 text-sm text-[#111827]">
-                    <div className="font-semibold">Action recommandée</div>
-                    <p className="mt-1 leading-6">{selectedResult.recommendedActions[0]}</p>
+                  <div className="fx-card-accent">
+                    <div className="fx-eyebrow" style={{ marginBottom: 6 }}>Action recommandée</div>
+                    <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)", marginTop: 4 }}>
+                      {selectedResult.recommendedActions[0]}
+                    </p>
                   </div>
 
-                  <Link
-                    href={`/fraud-case-360/${encodeURIComponent(selected.caseId)}`}
-                    className="mr-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#08111f] px-4 text-sm font-semibold text-white sm:w-auto"
-                  >
-                    Ouvrir Fraud Case 360
-                    <ArrowRight size={15} />
-                  </Link>
-                  <Link
-                    href="/risk-test-lab"
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff] sm:w-auto"
-                  >
-                    Modifier / exporter dans le Test Lab
-                    <ArrowRight size={15} />
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/fraud-case-360/${encodeURIComponent(selected.caseId)}`}
+                      className="fx-btn sm"
+                    >
+                      Ouvrir Fraud Case 360 ↗
+                    </Link>
+                    <Link href="/risk-test-lab" className="fx-btn-ghost sm">
+                      Modifier / exporter dans le Test Lab
+                    </Link>
+                  </div>
                 </div>
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : null}
       </section>
-    </div>
+    </ForensicPage>
   );
 }
 
 function PathCard({
   title,
   body,
+  glyph,
   href,
-  icon: Icon,
 }: {
   title: string;
   body: string;
+  glyph: string;
   href: string;
-  icon: typeof BookOpen;
 }) {
   return (
-    <Link
-      href={href}
-      className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm transition-colors hover:border-[#2f6bff] dark:border-white/10 dark:bg-white/[0.04]"
-    >
-      <Icon size={20} className="text-[#2f6bff]" />
-      <div className="mt-3 font-semibold text-[#111827] dark:text-white">{title}</div>
-      <p className="mt-2 text-sm leading-6 text-[#667085]">{body}</p>
+    <Link href={href} className="fx-card" style={{ display: "block", textDecoration: "none" }}>
+      <span className="fx-mono" style={{ fontSize: 16, color: "var(--risk)" }}>{glyph}</span>
+      <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 10, fontWeight: 500 }}>{title}</div>
+      <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--muted)", marginTop: 6 }}>{body}</p>
     </Link>
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function FactBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
-        {label}
-      </div>
-      <div className="mt-1 break-all font-mono text-sm font-semibold text-[#111827] dark:text-white">
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}>
+      <div className="fx-eyebrow">{label}</div>
+      <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 4, fontWeight: 500, wordBreak: "break-all" }}>
         {value}
       </div>
     </div>

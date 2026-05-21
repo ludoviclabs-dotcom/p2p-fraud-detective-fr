@@ -1,21 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  BadgeEuro,
-  BookOpen,
-  FileSearch,
-  Network,
-  ShieldAlert,
-} from "lucide-react";
 
 import { getP2PDataset, getVendor, getVendorFindings } from "@/data/get-dataset";
 import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { getSignalLabel, SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default async function VendorDetailPage({
   params,
@@ -50,110 +41,93 @@ export default async function VendorDetailPage({
   ).length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/rings"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F3A6E]"
-        >
-          <ArrowLeft aria-hidden className="h-4 w-4" />
-          Retour au graphe
-        </Link>
-        <Link
-          href="/vendors"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#5A6478]"
-        >
-          Liste fournisseurs
-        </Link>
-      </div>
-
-      <section className="mt-6 rounded-md border border-[#D8DEE9] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
-              Fiche fournisseur 360
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-[#141927]">{vendor.name}</h1>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[#5A6478]">
-              <span className="mono">{vendor.vendorId}</span>
-              {vendor.siren ? <span>SIREN {vendor.siren}</span> : null}
-              {vendor.apeCode ? <span>APE {vendor.apeCode}</span> : null}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <SeverityBadge value={vendor.severity} />
-            <span className="mono rounded-md bg-[#F6F7FB] px-3 py-2 text-sm text-[#141927]">
-              Score {vendor.riskScore}/100
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Fiche fournisseur 360</div>
+          <h1 style={{ marginTop: 9 }}>{vendor.name}</h1>
+          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 16 }}>
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              {vendor.vendorId}
             </span>
+            {vendor.siren ? (
+              <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+                SIREN {vendor.siren}
+              </span>
+            ) : null}
+            {vendor.apeCode ? (
+              <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+                APE {vendor.apeCode}
+              </span>
+            ) : null}
           </div>
         </div>
-      </section>
+        <div className="fx-head-actions">
+          <Link href="/rings" className="fx-btn-ghost sm">
+            ← Retour au graphe
+          </Link>
+          <Link href="/vendors" className="fx-btn-ghost sm">
+            Liste fournisseurs
+          </Link>
+          <SeverityBadge value={vendor.severity} />
+          <span
+            className="fx-mono"
+            style={{
+              fontSize: 12,
+              color: "var(--fg)",
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
+              padding: "6px 12px",
+            }}
+          >
+            Score {vendor.riskScore}/100
+          </span>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          icon={<BadgeEuro aria-hidden className="h-5 w-5" />}
-          label="Exposition"
-          value={formatEuro(vendor.exposureEur)}
-        />
-        <KpiCard
-          icon={<FileSearch aria-hidden className="h-5 w-5" />}
-          label="Findings"
-          value={formatNumber(findingTotal)}
-        />
-        <KpiCard
-          icon={<ShieldAlert aria-hidden className="h-5 w-5" />}
-          label="Critical / high"
-          value={formatNumber(criticalOrHigh)}
-        />
-        <KpiCard
-          icon={<Network aria-hidden className="h-5 w-5" />}
-          label="IBAN connectes"
-          value={formatNumber(ibanConnections.length)}
-        />
-      </section>
+      <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard glyph="Σ" label="Exposition" value={formatEuro(vendor.exposureEur)} />
+        <KpiCard glyph="§" label="Findings" value={formatNumber(findingTotal)} />
+        <KpiCard glyph="▲" label="Critical / high" value={formatNumber(criticalOrHigh)} />
+        <KpiCard glyph="∿" label="IBAN connectés" value={formatNumber(ibanConnections.length)} />
+      </div>
 
-      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Findings relies au fournisseur</CardTitle>
-          </CardHeader>
-          <div className="overflow-x-auto">
-            <table data-testid="vendor-findings-table" className="w-full text-sm">
-              <thead className="bg-[#F6F7FB] text-[#5A6478]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Findings reliés au fournisseur</h2>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-table-wrap">
+            <table data-testid="vendor-findings-table" className="fx-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left">Invoice</th>
-                  <th className="px-4 py-3 text-left">Signal</th>
-                  <th className="px-4 py-3 text-left">Severite</th>
-                  <th className="px-4 py-3 text-right">Score</th>
-                  <th className="px-4 py-3 text-right">Exposition</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th>Invoice</th>
+                  <th>Signal</th>
+                  <th>Sévérité</th>
+                  <th className="num">Score</th>
+                  <th className="num">Exposition</th>
+                  <th className="num">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {topFindings.map((finding) => (
-                  <tr key={finding.id} className="border-t border-[#E6EBF2]">
-                    <td className="mono px-4 py-3 text-xs text-[#141927]">
+                  <tr key={finding.id}>
+                    <td className="key fx-mono" style={{ fontSize: 11 }}>
                       {finding.invoiceId}
                     </td>
-                    <td className="px-4 py-3 text-[#141927]">
-                      {getSignalLabel(finding.signal)}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td>{getSignalLabel(finding.signal)}</td>
+                    <td>
                       <SeverityBadge value={finding.severity} />
                     </td>
-                    <td className="mono px-4 py-3 text-right text-[#141927]">
-                      {finding.riskScore}/100
-                    </td>
-                    <td className="mono px-4 py-3 text-right text-[#141927]">
-                      {formatEuro(finding.exposureEur)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="num">{finding.riskScore}/100</td>
+                    <td className="num">{formatEuro(finding.exposureEur)}</td>
+                    <td className="num">
                       <Link
                         href={`/score/${finding.invoiceId}`}
-                        className="inline-flex items-center gap-1 font-semibold text-[#1F3A6E]"
+                        className="fx-link"
                       >
-                        Ouvrir
-                        <ArrowUpRight aria-hidden className="h-3.5 w-3.5" />
+                        Ouvrir ↗
                       </Link>
                     </td>
                   </tr>
@@ -161,7 +135,7 @@ export default async function VendorDetailPage({
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
 
         <aside className="space-y-5">
           {leadFinding ? (
@@ -182,76 +156,106 @@ export default async function VendorDetailPage({
             />
           ) : null}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Breakdown signaux</CardTitle>
-            </CardHeader>
-            <CardContent data-testid="vendor-signal-breakdown" className="space-y-3">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Breakdown signaux</h2>
+              <span className="glyph">∿</span>
+            </div>
+            <div
+              className="fx-panel-body space-y-3"
+              data-testid="vendor-signal-breakdown"
+            >
               {Object.entries(signalCounts)
                 .sort((a, b) => b[1] - a[1])
                 .map(([signal, count]) => (
                   <div key={signal}>
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="font-medium text-[#141927]">{getSignalLabel(signal)}</span>
-                      <span className="mono text-[#5A6478]">{count}</span>
+                    <div className="flex items-center justify-between gap-3">
+                      <span style={{ fontSize: 13, color: "var(--fg)" }}>
+                        {getSignalLabel(signal)}
+                      </span>
+                      <span
+                        className="fx-mono"
+                        style={{ fontSize: 11, color: "var(--muted)" }}
+                      >
+                        {count}
+                      </span>
                     </div>
-                    <div className="mt-2 h-2 rounded-full bg-[#EEF3FB]">
-                      <div
-                        className="h-2 rounded-full bg-[#1F3A6E]"
-                        style={{ width: `${Math.max((count / Math.max(findingTotal, 1)) * 100, 8)}%` }}
+                    <div className="fx-bar" style={{ marginTop: 6 }}>
+                      <i
+                        style={{
+                          width: `${Math.max((count / Math.max(findingTotal, 1)) * 100, 8)}%`,
+                        }}
                       />
                     </div>
                   </div>
                 ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Connexions IBAN</CardTitle>
-            </CardHeader>
-            <CardContent data-testid="vendor-iban-connections" className="space-y-3">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Connexions IBAN</h2>
+              <span className="glyph">◇</span>
+            </div>
+            <div
+              className="fx-panel-body space-y-3"
+              data-testid="vendor-iban-connections"
+            >
               {ibanConnections.length ? (
                 ibanConnections.slice(0, 8).map(({ edge, node }) => (
                   <div
                     key={`${edge.source}-${edge.target}`}
-                    className="rounded-md border border-[#E6EBF2] bg-[#F6F7FB] p-3"
+                    className="fx-card"
+                    style={{ padding: "10px 14px" }}
                   >
-                    <div className="mono text-xs text-[#141927]">
+                    <div
+                      className="fx-mono"
+                      style={{ fontSize: 12, color: "var(--fg)" }}
+                    >
                       {node.maskedValue ?? node.label}
                     </div>
-                    <div className="mt-1 text-xs text-[#5A6478]">
-                      {edge.findingIds.length} finding(s) associe(s)
+                    <div
+                      className="fx-mono"
+                      style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}
+                    >
+                      {edge.findingIds.length} finding(s) associé(s)
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[#5A6478]">Aucune connexion IBAN directe.</p>
+                <p
+                  className="fx-mono"
+                  style={{ fontSize: 12, color: "var(--muted)" }}
+                >
+                  Aucune connexion IBAN directe.
+                </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Decision audit</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-[#5A6478]">
-              <p>
-                Priorite a la revue des invoices critical/high, puis validation du RIB et
-                recherche de fournisseurs partageant les memes coordonnees bancaires.
-              </p>
-              <Link
-                href="/rings"
-                className="inline-flex items-center gap-2 rounded-md bg-[#1F3A6E] px-3 py-2 font-semibold text-white"
-              >
-                Revenir au graphe
-                <ArrowUpRight aria-hidden className="h-4 w-4" />
+          <div className="fx-card-accent">
+            <div className="fx-eyebrow">Décision audit</div>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "var(--fg-2)",
+                marginTop: 10,
+              }}
+            >
+              Priorité à la revue des invoices critical/high, puis validation du RIB et
+              recherche de fournisseurs partageant les mêmes coordonnées bancaires.
+            </p>
+            <div style={{ marginTop: 14 }}>
+              <Link href="/rings" className="fx-btn sm">
+                Revenir au graphe ↗
               </Link>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </aside>
-      </section>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
@@ -262,89 +266,100 @@ function UnknownVendorDetail({ requestedId }: { requestedId: string }) {
     .slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/sandbox"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F3A6E]"
-      >
-        <ArrowLeft aria-hidden className="h-4 w-4" />
-        Retour à la démo
-      </Link>
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Fiche fournisseur 360</div>
+          <h1 style={{ marginTop: 9 }}>
+            Fournisseur synthétique <span className="italic">non chargé</span>
+          </h1>
+        </div>
+        <div className="fx-head-actions">
+          <Link href="/sandbox" className="fx-btn-ghost sm">
+            ← Retour à la démo
+          </Link>
+        </div>
+      </div>
 
-      <section className="mt-6 rounded-md border border-[#D8DEE9] bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
-          Fiche fournisseur 360
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold text-[#141927]">
-          Fournisseur synthétique non chargé
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#5A6478]">
-          L'identifiant <span className="mono font-semibold">{requestedId}</span> vient
-          probablement d'un scénario backend ou d'une ancienne démo. La route reste
-          volontairement accessible pour préserver le parcours, mais seules les fiches
-          synthétiques ci-dessous contiennent des données complètes.
-        </p>
-      </section>
+      <div className="fx-notice" style={{ marginBottom: 24 }}>
+        <span className="glyph">⚠</span>
+        <div>
+          <div className="nt">Identifiant non reconnu</div>
+          <p className="nb">
+            L&apos;identifiant{" "}
+            <span className="fx-mono" style={{ color: "var(--fg)" }}>
+              {requestedId}
+            </span>{" "}
+            vient probablement d&apos;un scénario backend ou d&apos;une ancienne démo. La route reste
+            volontairement accessible pour préserver le parcours, mais seules les fiches
+            synthétiques ci-dessous contiennent des données complètes.
+          </p>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3" style={{ marginBottom: 24 }}>
         {fallbackVendors.map((vendor) => (
           <Link
             key={vendor.vendorId}
             href={`/vendors/${encodeURIComponent(vendor.vendorId)}`}
-            className="rounded-md border border-[#D8DEE9] bg-white p-5 shadow-sm transition-colors hover:border-[#1F3A6E]"
+            className="fx-panel"
+            style={{ display: "block", textDecoration: "none", padding: "20px" }}
           >
             <SeverityBadge value={vendor.severity} />
-            <div className="mt-3 font-semibold text-[#141927]">{vendor.name}</div>
-            <div className="mt-1 mono text-xs text-[#5A6478]">{vendor.vendorId}</div>
-            <div className="mt-3 text-sm text-[#5A6478]">
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 18,
+                color: "var(--fg)",
+                marginTop: 12,
+              }}
+            >
+              {vendor.name}
+            </div>
+            <div
+              className="fx-mono"
+              style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}
+            >
+              {vendor.vendorId}
+            </div>
+            <div
+              className="fx-mono"
+              style={{ fontSize: 11, color: "var(--fg-2)", marginTop: 10 }}
+            >
               Score {vendor.riskScore}/100 · {formatEuro(vendor.exposureEur)}
             </div>
           </Link>
         ))}
-      </section>
+      </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Link
-          href="/p2p-scenarios"
-          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#1F3A6E] px-4 text-sm font-semibold text-white"
-        >
-          <FileSearch aria-hidden className="h-4 w-4" />
-          Tester les scénarios P2P
+      <div className="flex flex-wrap gap-3">
+        <Link href="/p2p-scenarios" className="fx-btn">
+          Tester les scénarios P2P ↗
         </Link>
-        <Link
-          href="/risk-docs"
-          className="inline-flex h-10 items-center gap-2 rounded-md border border-[#D8DEE9] bg-white px-4 text-sm font-semibold text-[#5A6478]"
-        >
-          <BookOpen aria-hidden className="h-4 w-4" />
+        <Link href="/risk-docs" className="fx-btn-ghost">
           Lire les limites de démo
         </Link>
       </div>
-    </div>
+    </ForensicPage>
   );
 }
 
 function KpiCard({
-  icon,
+  glyph,
   label,
   value,
 }: {
-  icon: ReactNode;
+  glyph: ReactNode;
   label: string;
   value: string;
 }) {
   return (
-    <Card>
-      <CardContent>
-        <div className="flex items-center justify-between gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-md bg-[#EAF1FF] text-[#1F3A6E]">
-            {icon}
-          </div>
-        </div>
-        <div className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
-          {label}
-        </div>
-        <div className="mt-2 text-2xl font-semibold text-[#141927]">{value}</div>
-      </CardContent>
-    </Card>
+    <div className="fx-stat">
+      <div className="fx-stat-top">
+        <span className="glyph">{glyph}</span>
+      </div>
+      <div className="lbl">{label}</div>
+      <div className="val">{value}</div>
+    </div>
   );
 }

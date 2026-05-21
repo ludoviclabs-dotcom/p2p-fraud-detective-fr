@@ -3,18 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listAudit, type AuditEntryOut } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
-const KIND_COLORS: Record<string, string> = {
-  "case.created": "#1f3a6e",
-  "case.assigned": "#3e7cb1",
-  "case.commented": "#5a6478",
-  "case.escalated": "#c97b1f",
-  "case.closed": "#3e7c5a",
-  "case.status_changed": "#e5a93a",
-  "file.imported": "#a23e48",
+const KIND_TONE: Record<string, string> = {
+  "case.created": "info",
+  "case.assigned": "info",
+  "case.commented": "",
+  "case.escalated": "warn",
+  "case.closed": "ok",
+  "case.status_changed": "warn",
+  "file.imported": "risk",
 };
 
 export default function MasterHistoryPage() {
@@ -40,94 +40,188 @@ export default function MasterHistoryPage() {
   }, [query.data, search]);
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Données
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Données</div>
+          <h1 style={{ marginTop: 9 }}>
+            Référentiel — <span className="italic">historique</span>
+          </h1>
+          <p className="sub">
+            Timeline événementielle des mutations sur le référentiel fournisseurs
+            et les cases. Source : audit log SHA-256 chaîné (P3 + P5-5
+            Ed25519).
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Référentiel — historique
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Timeline événementielle des mutations sur le référentiel fournisseurs
-        et les cases. Source : audit log SHA-256 chaîné (P3 + P5-5 Ed25519).
-      </p>
 
-      <Card className="mb-4">
-        <CardContent>
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Recherche</h2>
+        </div>
+        <div className="fx-panel-body">
           <Input
             aria-label="Rechercher dans actor, kind ou payload"
             placeholder="Rechercher dans actor/kind/payload…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            🕓 Timeline {entries.length} événements
-          </CardTitle>
-        </CardHeader>
-        <div className="p-4">
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <div>
+            <h2>Timeline</h2>
+            <div className="sub">{entries.length} événements</div>
+          </div>
+          <span className="glyph">◷</span>
+        </div>
+        <div className="fx-panel-body">
           {query.isLoading ? (
-            <div className="text-sm text-[#5a6478]">Chargement…</div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((k) => (
+                <div key={k} className="fx-skel" style={{ height: 64 }} />
+              ))}
+            </div>
           ) : !entries.length ? (
-            <div className="text-sm text-[#5a6478]">
-              Aucun événement à afficher.
+            <div className="fx-notice">
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">Aucun événement</div>
+                <p className="nb">Aucun événement à afficher.</p>
+              </div>
             </div>
           ) : (
             <Timeline entries={entries} />
           )}
         </div>
-      </Card>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function Timeline({ entries }: { entries: AuditEntryOut[] }) {
   return (
-    <ol className="relative ml-4 border-l-2 border-[#e1e5ee] pl-6">
-      {entries.map((e) => (
-        <li key={e.seq} className="mb-5 last:mb-0">
-          <span
-            className="absolute -left-[7px] mt-1 inline-block h-3 w-3 rounded-full border-2 border-white"
-            style={{ background: KIND_COLORS[e.kind] ?? "#9aa3b2" }}
-          />
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="font-mono text-xs text-[#5a6478]">
-              {formatDate(e.at)} · #{e.seq}
-            </span>
-            {e.signature ? (
-              <span className="text-[10px] text-[#3e7c5a]">🔑 Ed25519</span>
-            ) : null}
-          </div>
-          <div className="mt-0.5 font-mono text-xs text-[#1f3a6e]">{e.kind}</div>
-          <div className="mt-0.5 text-sm">
-            <span className="text-[#5a6478]">par</span>{" "}
-            <span className="font-medium text-[#0f1b33]">{e.actor}</span>
-            {e.payload?.case_id ? (
-              <>
-                {" "}
-                <span className="text-[#5a6478]">— case</span>{" "}
-                <span className="font-mono text-xs text-[#1f3a6e]">
-                  {String(e.payload.case_id).slice(0, 16)}
+    <div
+      style={{
+        borderLeft: "1px solid var(--border)",
+        paddingLeft: 20,
+        marginLeft: 8,
+      }}
+    >
+      {entries.map((e) => {
+        const tone = KIND_TONE[e.kind] ?? "";
+        const dotColor =
+          tone === "risk"
+            ? "var(--risk)"
+            : tone === "warn"
+              ? "var(--warn)"
+              : tone === "ok"
+                ? "var(--verified)"
+                : tone === "info"
+                  ? "var(--info)"
+                  : "var(--dim)";
+        return (
+          <div
+            key={e.seq}
+            style={{
+              position: "relative",
+              marginBottom: 20,
+              paddingTop: 2,
+            }}
+          >
+            {/* timeline dot */}
+            <span
+              style={{
+                position: "absolute",
+                left: -26,
+                top: 4,
+                width: 10,
+                height: 10,
+                background: dotColor,
+                border: "1px solid var(--bg)",
+                display: "inline-block",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <span
+                className="fx-mono"
+                style={{ fontSize: 10, color: "var(--muted)" }}
+              >
+                {formatDate(e.at)} · #{e.seq}
+              </span>
+              {e.signature ? (
+                <span
+                  className="fx-mono"
+                  style={{ fontSize: 10, color: "var(--verified)" }}
+                >
+                  ✓ Ed25519
                 </span>
-              </>
+              ) : null}
+            </div>
+            <div
+              className="fx-mono"
+              style={{ fontSize: 11, color: dotColor, marginTop: 2 }}
+            >
+              {e.kind}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--fg-2)", marginTop: 2 }}>
+              <span style={{ color: "var(--muted)" }}>par</span>{" "}
+              <span style={{ color: "var(--fg)" }}>{e.actor}</span>
+              {e.payload?.case_id ? (
+                <>
+                  {" "}
+                  <span style={{ color: "var(--muted)" }}>— case</span>{" "}
+                  <span
+                    className="fx-mono"
+                    style={{ fontSize: 11, color: "var(--info)" }}
+                  >
+                    {String(e.payload.case_id).slice(0, 16)}
+                  </span>
+                </>
+              ) : null}
+            </div>
+            {Object.keys(e.payload).length > 0 ? (
+              <details style={{ marginTop: 4 }}>
+                <summary
+                  className="fx-mono"
+                  style={{
+                    cursor: "pointer",
+                    fontSize: 10,
+                    color: "var(--muted)",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  payload
+                </summary>
+                <pre
+                  style={{
+                    marginTop: 6,
+                    overflowX: "auto",
+                    background: "var(--panel-2)",
+                    border: "1px solid var(--border)",
+                    padding: "8px 12px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    color: "var(--fg-2)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {JSON.stringify(e.payload, null, 2)}
+                </pre>
+              </details>
             ) : null}
           </div>
-          {Object.keys(e.payload).length > 0 ? (
-            <details className="mt-1">
-              <summary className="cursor-pointer text-xs text-[#5a6478]">
-                payload
-              </summary>
-              <pre className="mt-1 overflow-x-auto rounded bg-[#f4f6fa] p-2 text-[10px]">
-                {JSON.stringify(e.payload, null, 2)}
-              </pre>
-            </details>
-          ) : null}
-        </li>
-      ))}
-    </ol>
+        );
+      })}
+    </div>
   );
 }

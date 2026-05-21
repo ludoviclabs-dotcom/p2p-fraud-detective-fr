@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Download, FileSpreadsheet, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -13,8 +12,6 @@ import {
   type CaseWorkflowContext,
   type CaseWorkflowRecord,
 } from "@/lib/case-workflow";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro } from "@/lib/p2p-demo-format";
 import { getSignalLabel } from "@/lib/p2p-demo-taxonomy";
@@ -114,68 +111,87 @@ export function CaseWorkflowExport({
     window.dispatchEvent(new Event("p2p-case-workflow-updated"));
   };
 
+  const selectStyle: React.CSSProperties = {
+    height: 36,
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    padding: "0 10px",
+    fontFamily: "var(--font-mono)",
+    fontSize: 11,
+    color: "var(--fg)",
+    outline: "none",
+  };
+
   return (
     <div className="space-y-5">
+      {/* KPI strip */}
       <section className="grid gap-4 md:grid-cols-4">
-        <Metric label="Cas affiches" value={String(filteredRecords.length)} />
-        <Metric label="Escalades" value={String(metrics.escalated)} />
-        <Metric label="Clotures" value={String(metrics.cleared)} />
-        <Metric label="Exposition" value={formatEuro(metrics.exposure)} />
+        <MetricCard label="Cas affiches" value={String(filteredRecords.length)} />
+        <MetricCard label="Escalades" value={String(metrics.escalated)} />
+        <MetricCard label="Clotures" value={String(metrics.cleared)} />
+        <MetricCard label="Exposition" value={formatEuro(metrics.exposure)} />
       </section>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle>Registre workflow</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" type="button" onClick={refresh}>
-                <RotateCcw aria-hidden className="h-4 w-4" />
-                Actualiser
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                disabled={!filteredRecords.length}
-                onClick={exportJson}
-              >
-                JSON
-              </Button>
-              <Button
-                type="button"
-                disabled={!filteredRecords.length}
-                onClick={exportCsv}
-              >
-                <Download aria-hidden className="h-4 w-4" />
-                CSV audit
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                disabled={!records.length}
-                onClick={resetDemo}
-              >
-                <Trash2 aria-hidden className="h-4 w-4" />
-                Reset demo
-              </Button>
-            </div>
+      {/* Workflow registry */}
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <div>
+            <h2>Registre workflow</h2>
           </div>
-        </CardHeader>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={refresh} className="fx-btn-ghost sm">
+              ↻ Actualiser
+            </button>
+            <button
+              type="button"
+              disabled={!filteredRecords.length}
+              onClick={exportJson}
+              className="fx-btn-ghost sm"
+            >
+              JSON
+            </button>
+            <button
+              type="button"
+              disabled={!filteredRecords.length}
+              onClick={exportCsv}
+              className="fx-btn sm"
+            >
+              ↓ CSV audit
+            </button>
+            <button
+              type="button"
+              disabled={!records.length}
+              onClick={resetDemo}
+              className="fx-btn-ghost sm"
+              style={{ color: "var(--risk)", borderColor: "var(--risk-dim)" }}
+            >
+              ✕ Reset demo
+            </button>
+          </div>
+        </div>
 
         {records.length ? (
           <div>
-            <div className="grid gap-3 border-b border-[#e6ebf2] px-5 py-4 md:grid-cols-[minmax(0,1fr)_180px_220px]">
+            {/* Filters */}
+            <div
+              className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_220px]"
+              style={{
+                padding: "14px 20px",
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
               <input
                 aria-label="Filtrer les cases exportables"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Filtrer invoice, fournisseur, responsable, note..."
-                className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927] placeholder:text-[#9aa3b2]"
+                className="fx-input"
               />
               <select
                 aria-label="Filtrer par statut de case"
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927]"
+                style={selectStyle}
               >
                 <option value="all">Tous statuts</option>
                 <option value="new">Nouveau</option>
@@ -188,7 +204,7 @@ export function CaseWorkflowExport({
                 aria-label="Filtrer par decision"
                 value={decisionFilter}
                 onChange={(event) => setDecisionFilter(event.target.value)}
-                className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm text-[#141927]"
+                style={selectStyle}
               >
                 <option value="all">Toutes decisions</option>
                 <option value="pending">Decision en attente</option>
@@ -200,128 +216,125 @@ export function CaseWorkflowExport({
             </div>
 
             {filteredRecords.length ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-[#f6f7fb] text-[#5a6478]">
+              <div className="fx-table-wrap">
+                <table className="fx-table">
+                  <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left">Invoice</th>
-                      <th className="px-4 py-3 text-left">Fournisseur</th>
-                      <th className="px-4 py-3 text-left">Statut</th>
-                      <th className="px-4 py-3 text-left">Decision</th>
-                      <th className="px-4 py-3 text-left">Responsable</th>
-                      <th className="px-4 py-3 text-left">Source</th>
-                      <th className="px-4 py-3 text-right">Exposition</th>
+                      <th>Invoice</th>
+                      <th>Fournisseur</th>
+                      <th>Statut</th>
+                      <th>Decision</th>
+                      <th>Responsable</th>
+                      <th>Source</th>
+                      <th className="num">Exposition</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredRecords.map((record) => (
-                      <tr key={record.id} className="border-t border-[#e6ebf2]">
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/score/${record.invoiceId}`}
-                            className="mono text-xs font-semibold text-[#1f3a6e]"
-                          >
+                      <tr key={record.id}>
+                        <td className="key">
+                          <Link href={`/score/${record.invoiceId}`} className="fx-link">
                             {record.invoiceId}
                           </Link>
-                          <div className="mt-1">
+                          <div style={{ marginTop: 4 }}>
                             <SeverityBadge value={record.severity} />
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td>
                           <Link
                             href={`/vendors/${record.vendorId}`}
-                            className="font-medium text-[#141927] hover:text-[#1f3a6e]"
+                            className="fx-link"
                           >
                             {record.vendorName}
                           </Link>
-                          <div className="mt-1 text-xs text-[#5a6478]">
+                          <div
+                            className="fx-mono"
+                            style={{ marginTop: 3, fontSize: 10, color: "var(--muted)" }}
+                          >
                             {getSignalLabel(record.signal)}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[#141927]">
-                          {getCaseStatusLabel(record.status)}
+                        <td>{getCaseStatusLabel(record.status)}</td>
+                        <td>{getCaseDecisionLabel(record.decision)}</td>
+                        <td style={{ color: "var(--muted)" }}>
+                          {record.assignee || "—"}
                         </td>
-                        <td className="px-4 py-3 text-[#141927]">
-                          {getCaseDecisionLabel(record.decision)}
-                        </td>
-                        <td className="px-4 py-3 text-[#5a6478]">
-                          {record.assignee || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-[#5a6478]">
+                        <td
+                          className="fx-mono"
+                          style={{ fontSize: 10, color: "var(--muted)" }}
+                        >
                           {record.backendCaseId ? `FastAPI ${record.backendCaseId}` : "Local"}
                         </td>
-                        <td className="mono px-4 py-3 text-right text-[#141927]">
-                          {formatEuro(record.exposureEur)}
-                        </td>
+                        <td className="num">{formatEuro(record.exposureEur)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <CardContent className="text-sm text-[#5a6478]">
-                Aucun cas ne correspond aux filtres.
-              </CardContent>
+              <div className="fx-panel-body">
+                <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+                  Aucun cas ne correspond aux filtres.
+                </span>
+              </div>
             )}
           </div>
         ) : (
-          <CardContent className="space-y-3 text-sm leading-6 text-[#5a6478]">
-            <div className="flex items-center gap-2 font-medium text-[#141927]">
-              <FileSpreadsheet aria-hidden className="h-4 w-4 text-[#1f3a6e]" />
+          <div className="fx-panel-body space-y-3">
+            <div
+              className="fx-mono"
+              style={{ fontSize: 13, color: "var(--fg)", display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <span style={{ color: "var(--muted)" }}>◫</span>
               Aucun cas qualifie dans ce navigateur.
             </div>
-            <p>
+            <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.65 }}>
               Ouvrir une fiche score ou fournisseur, renseigner la qualification audit,
               puis revenir ici pour exporter le registre.
             </p>
-          </CardContent>
+          </div>
         )}
-      </Card>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cas prioritaires a qualifier</CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-[#f6f7fb] text-[#5a6478]">
+      {/* Priority cases to qualify */}
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>Cas prioritaires a qualifier</h2>
+          <span className="glyph">▲</span>
+        </div>
+        <div className="fx-table-wrap">
+          <table className="fx-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 text-left">Invoice</th>
-                <th className="px-4 py-3 text-left">Signal</th>
-                <th className="px-4 py-3 text-left">Severite</th>
-                <th className="px-4 py-3 text-right">Score</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th>Invoice</th>
+                <th>Signal</th>
+                <th>Severite</th>
+                <th className="num">Score</th>
+                <th className="num">Action</th>
               </tr>
             </thead>
             <tbody>
               {suggestedCases.slice(0, 20).map((item) => (
-                <tr key={item.id} className="border-t border-[#e6ebf2]">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/score/${item.invoiceId}`}
-                      className="mono text-xs font-semibold text-[#1f3a6e]"
-                    >
+                <tr key={item.id}>
+                  <td className="key">
+                    <Link href={`/score/${item.invoiceId}`} className="fx-link">
                       {item.invoiceId}
                     </Link>
-                    <div className="mt-1 text-xs text-[#5a6478]">
+                    <div
+                      className="fx-mono"
+                      style={{ marginTop: 3, fontSize: 10, color: "var(--muted)" }}
+                    >
                       {item.vendorName}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-[#141927]">
-                    {getSignalLabel(item.signal)}
-                  </td>
-                  <td className="px-4 py-3">
+                  <td>{getSignalLabel(item.signal)}</td>
+                  <td>
                     <SeverityBadge value={item.severity} />
                   </td>
-                  <td className="mono px-4 py-3 text-right text-[#141927]">
-                    {item.riskScore}/100
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/score/${item.invoiceId}`}
-                      className="font-semibold text-[#1f3a6e]"
-                    >
-                      {qualifiedIds.has(item.id) ? "Revoir" : "Qualifier"}
+                  <td className="num">{item.riskScore}/100</td>
+                  <td className="num">
+                    <Link href={`/score/${item.invoiceId}`} className="fx-link">
+                      {qualifiedIds.has(item.id) ? "Revoir →" : "Qualifier →"}
                     </Link>
                   </td>
                 </tr>
@@ -329,20 +342,16 @@ export function CaseWorkflowExport({
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card>
-      <CardContent>
-        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5a6478]">
-          {label}
-        </div>
-        <div className="mt-2 text-2xl font-semibold text-[#141927]">{value}</div>
-      </CardContent>
-    </Card>
+    <div className="fx-stat info">
+      <div className="lbl">{label}</div>
+      <div className="val">{value}</div>
+    </div>
   );
 }

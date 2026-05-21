@@ -40,14 +40,38 @@ export function CaseWorkflowStatusBadge({
 
   if (!match) {
     return (
-      <span className="inline-flex rounded bg-[#eef3fb] px-2 py-1 text-xs font-semibold text-[#5a6478]">
+      <span
+        className="fx-mono"
+        style={{
+          display: "inline-block",
+          padding: "2px 8px",
+          fontSize: 10,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "var(--muted)",
+          border: "1px solid var(--border-strong)",
+          background: "var(--panel)",
+        }}
+      >
         A qualifier
       </span>
     );
   }
 
   return (
-    <span className="inline-flex rounded bg-[#e8f8f1] px-2 py-1 text-xs font-semibold text-[#22754c]">
+    <span
+      className="fx-mono"
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        fontSize: 10,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: "var(--verified)",
+        border: "1px solid var(--verified)",
+        background: "rgba(127,163,127,0.08)",
+      }}
+    >
       {getCaseStatusLabel(match.status)}
     </span>
   );

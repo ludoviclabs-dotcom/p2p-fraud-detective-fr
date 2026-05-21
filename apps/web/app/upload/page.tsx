@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useRef, type DragEvent, type ChangeEvent } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { SeverityBadge } from "@/components/ui/badge";
-import { Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 type DetectFinding = {
   invoice_id: string;
@@ -68,24 +66,30 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Données
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Données</div>
+          <h1 style={{ marginTop: 9 }}>
+            Import des <span className="italic">données</span>
+          </h1>
+          <p className="sub">
+            Upload d&apos;un CSV/Excel de factures fournisseurs (auto-détection
+            schéma ERP : SAP, Sage X3, Cegid, Oracle). Le fichier est streamé
+            vers le backend FastAPI sans buffering RAM (Route Handler Node.js).
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Import des données
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Upload d'un CSV/Excel de factures fournisseurs (auto-détection schéma
-        ERP : SAP, Sage X3, Cegid, Oracle). Le fichier est streamé vers le
-        backend FastAPI sans buffering RAM (Route Handler Node.js).
-      </p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>📤 Glisser-déposer un fichier</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <div>
+            <h2>Glisser-déposer un fichier</h2>
+            <div className="sub">CSV, XLSX — max 50 Mo</div>
+          </div>
+          <span className="glyph">▲</span>
+        </div>
+        <div className="fx-panel-body">
           <div
             data-testid="upload-dropzone"
             role="button"
@@ -105,28 +109,52 @@ export default function UploadPage() {
                 inputRef.current?.click();
               }
             }}
-            className={`flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed transition-colors ${
-              dragOver
-                ? "border-[#1f3a6e] bg-[#f4f6fa]"
-                : "border-[#e1e5ee] hover:border-[#1f3a6e] hover:bg-[#f9fafc]"
-            }`}
+            style={{
+              height: 140,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              cursor: "pointer",
+              border: dragOver
+                ? "2px dashed var(--risk)"
+                : "2px dashed var(--border-strong)",
+              background: dragOver ? "var(--risk-soft)" : "var(--bg-2)",
+              transition: "border-color .15s, background .15s",
+            }}
           >
-            <Upload size={32} className="text-[#5a6478]" />
-            <div className="text-sm text-[#5a6478]">
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 28,
+                color: dragOver ? "var(--risk)" : "var(--muted)",
+              }}
+            >
+              ▲
+            </span>
+            <div
+              className="fx-mono"
+              style={{ fontSize: 13, color: "var(--fg-2)" }}
+            >
               {file ? (
-                <span className="flex items-center gap-2">
-                  <FileText size={16} />
-                  <strong className="text-[#0f1b33]">{file.name}</strong> (
-                  {(file.size / 1024).toFixed(1)} Ko)
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "var(--muted)" }}>◫</span>
+                  <strong style={{ color: "var(--fg)" }}>{file.name}</strong>
+                  <span style={{ color: "var(--muted)" }}>
+                    ({(file.size / 1024).toFixed(1)} Ko)
+                  </span>
                 </span>
               ) : (
                 <>
                   Glissez votre fichier ici ou{" "}
-                  <strong className="text-[#1f3a6e]">cliquez pour parcourir</strong>
+                  <strong style={{ color: "var(--fg)" }}>
+                    cliquez pour parcourir
+                  </strong>
                 </>
               )}
             </div>
-            <div className="text-xs text-[#9aa3b2]">CSV, XLSX — max 50 Mo</div>
+            <div className="fx-eyebrow">CSV, XLSX — max 50 Mo</div>
           </div>
           <input
             id="upload-input"
@@ -136,134 +164,160 @@ export default function UploadPage() {
             aria-label="Fichier de factures synthétiques"
             accept=".csv,.xlsx,.xls,.tsv,.parquet"
             onChange={onSelect}
-            className="hidden"
+            style={{ display: "none" }}
           />
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button
+            <button
+              className="fx-btn"
               onClick={upload}
               disabled={!file || uploading}
               type="button"
             >
-              {uploading ? "⏳ Streaming en cours…" : "🚀 Lancer la détection"}
-            </Button>
+              {uploading ? "◷ Streaming en cours…" : "▲ Lancer la détection"}
+            </button>
             {file ? (
-              <Button
+              <button
+                className="fx-btn-ghost"
                 onClick={() => {
                   setFile(null);
                   setResult(null);
                   setError(null);
                 }}
-                variant="ghost"
                 type="button"
               >
                 Annuler
-              </Button>
+              </button>
             ) : null}
           </div>
 
           {error ? (
-            <div className="mt-3 flex items-center gap-2 rounded border border-[#a23e48] bg-[#fdecee] p-3 text-sm text-[#a23e48]">
-              <AlertCircle size={16} />
-              {error}
+            <div
+              className="fx-notice"
+              style={{ marginTop: 12, borderLeftColor: "var(--risk)" }}
+            >
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">Erreur d&apos;upload</div>
+                <p className="nb">{error}</p>
+              </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {result ? (
-        <Card data-testid="upload-result">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#3e7c5a]">
-              <CheckCircle2 size={18} /> Détection terminée
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 grid gap-3 md:grid-cols-3 text-sm">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Factures analysées
-                </div>
-                <div className="text-xl font-semibold text-[#0f1b33]">
+        <div className="fx-panel" data-testid="upload-result">
+          <div className="fx-panel-head">
+            <div>
+              <h2>
+                Détection <span className="italic">terminée</span>
+              </h2>
+              <div className="sub">Résultats de l&apos;analyse</div>
+            </div>
+            <span className="glyph">✓</span>
+          </div>
+          <div className="fx-panel-body">
+            <div className="grid gap-3 md:grid-cols-3" style={{ marginBottom: 20 }}>
+              <div className="fx-stat info">
+                <div className="lbl">Factures analysées</div>
+                <div className="val">
                   {result.n_invoices.toLocaleString("fr-FR")}
                 </div>
               </div>
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Détecteurs exécutés
-                </div>
-                <div className="text-xl font-semibold text-[#0f1b33]">
-                  {result.detectors_run.length}
-                </div>
-                <div className="text-xs text-[#5a6478]">
+              <div className="fx-stat ok">
+                <div className="lbl">Détecteurs exécutés</div>
+                <div className="val">{result.detectors_run.length}</div>
+                <div
+                  className="fx-mono"
+                  style={{
+                    fontSize: 10,
+                    color: "var(--muted)",
+                    marginTop: 6,
+                    lineHeight: 1.5,
+                  }}
+                >
                   {result.detectors_run.join(", ")}
                 </div>
               </div>
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-                  Findings remontés
-                </div>
-                <div className="text-xl font-semibold text-[#a23e48]">
-                  {result.findings.length}
-                </div>
+              <div className="fx-stat risk">
+                <div className="lbl">Findings remontés</div>
+                <div className="val">{result.findings.length}</div>
               </div>
             </div>
 
             {result.findings.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table data-testid="upload-findings-table" className="w-full text-sm">
-                  <thead className="bg-[#f4f6fa] text-[#5a6478]">
-                    <tr>
-                      <th className="px-3 py-2 text-left">Invoice ID</th>
-                      <th className="px-3 py-2 text-left">Rule</th>
-                      <th className="px-3 py-2 text-left">Sévérité</th>
-                      <th className="px-3 py-2 text-left">Signal</th>
-                      <th className="px-3 py-2 text-right">Exposition</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.findings.slice(0, 100).map((f, i) => {
-                      const exp = f.evidence?.exposure_eur as
-                        | number
-                        | undefined;
-                      return (
-                        <tr
-                          key={`${f.invoice_id}-${f.rule_id}-${i}`}
-                          className="border-t border-[#e1e5ee]"
-                        >
-                          <td className="px-3 py-2 font-mono text-xs">
-                            {f.invoice_id}
-                          </td>
-                          <td className="px-3 py-2 font-mono text-xs">
-                            {f.rule_id}
-                          </td>
-                          <td className="px-3 py-2">
-                            <SeverityBadge value={f.severity} />
-                          </td>
-                          <td className="px-3 py-2">{f.signal}</td>
-                          <td className="px-3 py-2 text-right">
-                            {formatEur(exp)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <>
+                <div className="fx-table-wrap">
+                  <table
+                    data-testid="upload-findings-table"
+                    className="fx-table"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Invoice ID</th>
+                        <th>Rule</th>
+                        <th>Sévérité</th>
+                        <th>Signal</th>
+                        <th className="num">Exposition</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.findings.slice(0, 100).map((f, i) => {
+                        const exp = f.evidence?.exposure_eur as
+                          | number
+                          | undefined;
+                        return (
+                          <tr key={`${f.invoice_id}-${f.rule_id}-${i}`}>
+                            <td className="key">{f.invoice_id}</td>
+                            <td>{f.rule_id}</td>
+                            <td>
+                              <SeverityBadge value={f.severity} />
+                            </td>
+                            <td>{f.signal}</td>
+                            <td className="num">{formatEur(exp)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
                 {result.findings.length > 100 ? (
-                  <div className="px-3 py-2 text-xs text-[#5a6478]">
+                  <div
+                    className="fx-mono"
+                    style={{
+                      fontSize: 10,
+                      color: "var(--muted)",
+                      padding: "8px 0",
+                    }}
+                  >
                     Affichage limité aux 100 premiers ·{" "}
                     {result.findings.length - 100} masqués.
                   </div>
                 ) : null}
-              </div>
+              </>
             ) : (
-              <div className="text-sm text-[#3e7c5a]">
-                ✅ Aucun finding remonté — dataset clean.
+              <div
+                className="fx-notice"
+                style={{ borderLeftColor: "var(--verified)" }}
+              >
+                <span
+                  className="glyph"
+                  style={{ color: "var(--verified)" }}
+                >
+                  ✓
+                </span>
+                <div>
+                  <div className="nt" style={{ color: "var(--verified)" }}>
+                    Dataset clean
+                  </div>
+                  <p className="nb">Aucun finding remonté.</p>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
-    </div>
+    </ForensicPage>
   );
 }

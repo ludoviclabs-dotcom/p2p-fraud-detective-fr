@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { CaseWorkflowExport } from "@/components/case-workflow-export";
 import { getP2PDataset } from "@/data/get-dataset";
 import { SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function ExportsPage() {
   const dataset = getP2PDataset();
@@ -29,56 +29,85 @@ export default function ExportsPage() {
     }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5a6478]">
-            Audit trail
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-[#141927]">
-            Registre et exports
+          <div className="fx-eyebrow">Audit trail</div>
+          <h1 style={{ marginTop: 9 }}>
+            Registre et <span className="italic">exports</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5a6478]">
-            Qualification locale des cas P2P : statut, decision, responsable, note
-            d'investigation et export CSV/JSON. La V1 reste statique et compatible
-            Vercel ; une API FastAPI pourra reprendre ce contrat plus tard.
+          <p className="sub">
+            Qualification locale des cas P2P : statut, décision, responsable,
+            note d&apos;investigation et export CSV/JSON. La V1 reste statique
+            et compatible Vercel ; une API FastAPI pourra reprendre ce contrat
+            plus tard.
           </p>
         </div>
-        <Link
-          href="/score"
-          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#1f3a6e] px-4 text-sm font-semibold text-white"
-        >
-          Ouvrir les scores
-          <ArrowUpRight aria-hidden className="h-4 w-4" />
-        </Link>
+        <div className="fx-head-actions">
+          <Link href="/score" className="fx-btn">
+            Ouvrir les scores <span>↗</span>
+          </Link>
+        </div>
       </div>
 
-      <section className="mt-6 grid gap-3 md:grid-cols-4">
+      <section className="mt-4 grid gap-3 md:grid-cols-4" style={{ marginBottom: 24 }}>
         {[
           ["1", "Dashboard", "/dashboard"],
           ["2", "Graphe rings", "/rings"],
-          ["3", "Score detaille", "/score"],
+          ["3", "Score détaillé", "/score"],
           ["4", "Export audit", "/exports"],
         ].map(([step, label, href]) => (
           <Link
             key={step}
             href={href}
-            className="flex min-h-20 items-center justify-between gap-3 rounded-md border border-[#e6ebf2] bg-white px-4 py-3 text-sm font-semibold text-[#141927] shadow-sm"
+            className="fx-card"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              textDecoration: "none",
+              minHeight: 64,
+            }}
           >
-            <span className="flex items-center gap-3">
-              <span className="mono grid h-7 w-7 place-items-center rounded bg-[#eaf1ff] text-xs text-[#1f3a6e]">
+            <span
+              style={{ display: "flex", alignItems: "center", gap: 12 }}
+            >
+              <span
+                className="fx-mono"
+                style={{
+                  width: 24,
+                  height: 24,
+                  display: "grid",
+                  placeItems: "center",
+                  border: "1px solid var(--border-strong)",
+                  fontSize: 11,
+                  color: "var(--risk)",
+                  flexShrink: 0,
+                }}
+              >
                 {step}
               </span>
-              {label}
+              <span
+                className="fx-mono"
+                style={{ fontSize: 12, color: "var(--fg)", letterSpacing: "0.02em" }}
+              >
+                {label}
+              </span>
             </span>
-            <ArrowRight aria-hidden className="h-4 w-4 text-[#1f3a6e]" />
+            <span
+              className="fx-mono"
+              style={{ fontSize: 11, color: "var(--muted)" }}
+            >
+              →
+            </span>
           </Link>
         ))}
       </section>
 
-      <div className="mt-6">
+      <div>
         <CaseWorkflowExport suggestedCases={suggestedCases} />
       </div>
-    </div>
+    </ForensicPage>
   );
 }

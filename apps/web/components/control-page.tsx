@@ -1,22 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { listCases, type CaseOutV1 } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 export type ControlPageConfig = {
-  surtitle: string; // "Contrôles statistiques" | "Données" | ...
+  surtitle: string;
   title: string;
   kicker: string;
-  description: string; // markdown-like (paragraphes)
-  ruleIdMatchers: string[]; // ex. ["BENFORD", "F1D", "F2D"]
-  titleMatchers?: string[]; // fallback : keywords dans c.title si rule_id manque
+  description: string;
+  ruleIdMatchers: string[];
+  titleMatchers?: string[];
   regulations: { label: string; ref: string }[];
   sources?: { name: string; url: string; license: string }[];
 };
+
+function sevClass(value: string): string {
+  const n = value.toLowerCase();
+  return n === "critical" || n === "high" || n === "medium" || n === "low" ? n : "";
+}
 
 export function ControlPage({ config }: { config: ControlPageConfig }) {
   const query = useQuery({
@@ -40,124 +45,109 @@ export function ControlPage({ config }: { config: ControlPageConfig }) {
   }, [filteredCases]);
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        {config.surtitle}
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">{config.surtitle}</div>
+          <h1 style={{ marginTop: 9 }}>{config.title}</h1>
+          <p className="sub">{config.kicker}</p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        {config.title}
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">{config.kicker}</p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Description du contrôle</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm leading-relaxed text-[#1a1f2c]">
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Description du contrôle</h2>
+        </div>
+        <div className="fx-panel-body">
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--fg-2)" }}>
             {config.description}
           </p>
           {config.regulations.length > 0 ? (
-            <div className="mt-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#5a6478]">
-                Références réglementaires
-              </div>
-              <ul className="mt-1 space-y-1 text-sm">
+            <div style={{ marginTop: 16 }}>
+              <div className="fx-eyebrow">Références réglementaires</div>
+              <ul className="space-y-1" style={{ marginTop: 8, listStyle: "none", padding: 0 }}>
                 {config.regulations.map((r) => (
-                  <li key={r.ref}>
-                    <span className="font-medium text-[#0f1b33]">{r.label}</span>
-                    <span className="text-[#5a6478]"> · {r.ref}</span>
+                  <li key={r.ref} className="fx-mono" style={{ fontSize: 12 }}>
+                    <span style={{ color: "var(--fg)" }}>{r.label}</span>
+                    <span style={{ color: "var(--muted)" }}> · {r.ref}</span>
                   </li>
                 ))}
               </ul>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
-
-      <div className="mb-4 grid gap-3 md:grid-cols-4">
-        <KpiBox label="Cas flagués" value={String(stats.total)} />
-        <KpiBox
-          label="CRITICAL"
-          value={String(stats.critical)}
-          color="#a23e48"
-        />
-        <KpiBox label="HIGH" value={String(stats.high)} color="#c97b1f" />
-        <KpiBox label="Exposition" value={formatEur(stats.exposure)} />
+        </div>
       </div>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>🚨 Cases flagués par ce contrôle</CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          {query.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-          ) : !filteredCases.length ? (
-            <div className="p-4 text-sm text-[#5a6478]">
-              Aucun case flagué par ce contrôle. Lancer le détecteur côté
-              Streamlit (legacy) pour générer des findings.
-            </div>
-          ) : (
-            <CasesTable rows={filteredCases} />
-          )}
+      <div className="grid gap-3 md:grid-cols-4" style={{ marginBottom: 16 }}>
+        <KpiBox label="Cas flagués" value={String(stats.total)} tone="info" />
+        <KpiBox label="Critical" value={String(stats.critical)} tone="risk" />
+        <KpiBox label="High" value={String(stats.high)} tone="warn" />
+        <KpiBox label="Exposition" value={formatEur(stats.exposure)} tone="ok" />
+      </div>
+
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Cases flagués par ce contrôle</h2>
+          <span className="glyph">▣</span>
         </div>
-      </Card>
+        {query.isLoading ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              Chargement…
+            </span>
+          </div>
+        ) : !filteredCases.length ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+              Aucun case flagué par ce contrôle. Lancer le détecteur côté Streamlit (legacy)
+              pour générer des findings.
+            </span>
+          </div>
+        ) : (
+          <CasesTable rows={filteredCases} />
+        )}
+      </div>
 
       {config.sources?.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>📡 Sources de données</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <table className="w-full text-sm">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Sources de données</h2>
+            <span className="glyph">✓</span>
+          </div>
+          <div className="fx-table-wrap">
+            <table className="fx-table">
               <thead>
-                <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                  <th className="py-2">Source</th>
-                  <th className="py-2">URL</th>
-                  <th className="py-2">Licence</th>
+                <tr>
+                  <th>Source</th>
+                  <th>URL</th>
+                  <th>Licence</th>
                 </tr>
               </thead>
               <tbody>
                 {config.sources.map((s) => (
-                  <tr key={s.name} className="border-b border-[#e1e5ee]">
-                    <td className="py-2 font-medium">{s.name}</td>
-                    <td className="py-2 font-mono text-xs">{s.url}</td>
-                    <td className="py-2 text-xs">{s.license}</td>
+                  <tr key={s.name}>
+                    <td className="key">{s.name}</td>
+                    <td>{s.url}</td>
+                    <td>{s.license}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
-    </div>
+    </ForensicPage>
   );
 }
 
-function KpiBox({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color?: string;
-}) {
+function KpiBox({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <Card>
-      <CardContent>
-        <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-          {label}
-        </div>
-        <div
-          className="mt-1 text-2xl font-semibold"
-          style={{ color: color ?? "#0f1b33" }}
-        >
-          {value}
-        </div>
-      </CardContent>
-    </Card>
+    <div className={`fx-stat ${tone}`}>
+      <div className="lbl" style={{ marginTop: 0 }}>
+        {label}
+      </div>
+      <div className="val">{value}</div>
+    </div>
   );
 }
 
@@ -166,43 +156,45 @@ function CasesTable({ rows }: { rows: CaseOutV1[] }) {
     (a, b) => (b.exposure_eur ?? 0) - (a.exposure_eur ?? 0),
   );
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
-        <tr>
-          <th className="px-3 py-2 text-left">Case ID</th>
-          <th className="px-3 py-2 text-left">Titre</th>
-          <th className="px-3 py-2 text-left">Vendor</th>
-          <th className="px-3 py-2 text-left">Sévérité</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sorted.map((c) => (
-          <tr key={c.case_id} className="border-t border-[#e1e5ee]">
-            <td className="px-3 py-2 font-mono text-xs">
-              {c.case_id.slice(0, 16)}
-            </td>
-            <td className="px-3 py-2">{c.title}</td>
-            <td className="px-3 py-2">
-              {c.vendor_id ? (
-                <a
-                  href={`/vendors/${encodeURIComponent(c.vendor_id)}`}
-                  className="font-mono text-xs text-[#1f3a6e] hover:underline"
-                >
-                  {c.vendor_id}
-                </a>
-              ) : (
-                <span className="text-xs text-[#9aa3b2]">—</span>
-              )}
-            </td>
-            <td className="px-3 py-2">
-              <SeverityBadge value={c.severity} />
-            </td>
-            <td className="px-3 py-2 text-right">{formatEur(c.exposure_eur)}</td>
+    <div className="fx-table-wrap">
+      <table className="fx-table">
+        <thead>
+          <tr>
+            <th>Case ID</th>
+            <th>Titre</th>
+            <th>Vendor</th>
+            <th>Sévérité</th>
+            <th className="num">Exposition</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {sorted.map((c) => (
+            <tr key={c.case_id}>
+              <td className="key">{c.case_id.slice(0, 16)}</td>
+              <td>{c.title}</td>
+              <td>
+                {c.vendor_id ? (
+                  <Link
+                    href={`/vendors/${encodeURIComponent(c.vendor_id)}`}
+                    className="fx-link"
+                  >
+                    {c.vendor_id}
+                  </Link>
+                ) : (
+                  <span style={{ color: "var(--dim)" }}>—</span>
+                )}
+              </td>
+              <td>
+                <span className={`fx-tag ${sevClass(c.severity)}`}>
+                  {c.severity.toUpperCase()}
+                </span>
+              </td>
+              <td className="num">{formatEur(c.exposure_eur)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

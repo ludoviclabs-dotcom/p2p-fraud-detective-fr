@@ -3,18 +3,6 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
-  ArrowRight,
-  BarChart3,
-  BriefcaseBusiness,
-  Clock3,
-  FileSearch,
-  RefreshCw,
-  ShieldAlert,
-  TrendingUp,
-  type LucideIcon,
-} from "lucide-react";
-import {
   getCockpitKpis,
   getDemoGraphMetrics,
   getTopVendors,
@@ -24,81 +12,48 @@ import {
 } from "@/lib/api-client";
 import { formatNumber } from "@/lib/p2p-demo-format";
 import { formatEur } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { ForensicPage } from "@/components/forensic-page";
 
-type KpiTone = "blue" | "risk" | "amber" | "green";
-
-const toneClasses: Record<KpiTone, { icon: string; ring: string; text: string }> = {
-  blue: {
-    icon: "bg-[#eaf1ff] text-[#2f6bff]",
-    ring: "border-l-[#2f6bff]",
-    text: "text-[#2f6bff]",
-  },
-  risk: {
-    icon: "bg-[#fff0f1] text-[#b42318]",
-    ring: "border-l-[#b42318]",
-    text: "text-[#b42318]",
-  },
-  amber: {
-    icon: "bg-[#fff7e8] text-[#b56b00]",
-    ring: "border-l-[#f5a524]",
-    text: "text-[#b56b00]",
-  },
-  green: {
-    icon: "bg-[#e8f8f1] text-[#027a48]",
-    ring: "border-l-[#027a48]",
-    text: "text-[#027a48]",
-  },
-};
+type KpiTone = "info" | "risk" | "warn" | "ok";
 
 function KPICard({
   label,
   value,
   delta,
   tone,
-  Icon,
+  glyph,
 }: {
   label: string;
   value: string;
   delta?: string;
   tone: KpiTone;
-  Icon: LucideIcon;
+  glyph: string;
 }) {
-  const classes = toneClasses[tone];
   return (
-    <div
-      className={`rounded-md border border-l-4 border-[#e6ebf2] ${classes.ring} bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className={`grid h-10 w-10 place-items-center rounded-md ${classes.icon}`}>
-          <Icon size={20} />
-        </div>
-        {delta ? (
-          <span className={`rounded px-2 py-1 text-xs font-semibold ${classes.icon}`}>
-            {delta}
-          </span>
-        ) : null}
+    <div className={`fx-stat ${tone}`}>
+      <div className="fx-stat-top">
+        <span className="glyph">{glyph}</span>
+        {delta ? <span className="pill">{delta}</span> : null}
       </div>
-      <div className="mt-5 text-xs font-semibold uppercase tracking-wider text-[#667085]">
-        {label}
-      </div>
-      <div className="metric-number mt-2 font-bold text-[#111827] dark:text-white">
-        {value}
-      </div>
+      <div className="lbl">{label}</div>
+      <div className="val">{value}</div>
     </div>
   );
 }
 
 function Sparkline({
   points,
-  color = "#2f6bff",
+  color = "var(--risk)",
 }: {
   points: { date: string; value: number }[];
   color?: string;
 }) {
   if (!points.length) {
     return (
-      <div className="mt-3 h-12 rounded bg-[#f7f9fc] dark:bg-white/[0.04]" />
+      <div
+        className="mt-3 h-14"
+        style={{ background: "var(--bg-2)", border: "1px solid var(--border)" }}
+      />
     );
   }
   const max = Math.max(...points.map((p) => p.value), 1);
@@ -144,35 +99,29 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <h1 className="text-3xl font-bold text-[#08111f] dark:text-white">
-            Cockpit risque P2P
+          <div className="fx-eyebrow">Cockpit P2P · vue consolidée</div>
+          <h1 style={{ marginTop: 9 }}>
+            Cockpit risque <span className="italic">P2P</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
-            Vue consolidée des risques fournisseurs, triée par exposition
-            financière et prête pour la décision audit.
+          <p className="sub">
+            Vue consolidée des risques fournisseurs, triée par exposition financière et prête
+            pour la décision audit.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/sandbox"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white shadow-sm shadow-[#2f6bff]/20 transition-colors hover:bg-[#2457d6]"
-          >
-            Analyser un scénario
-            <ArrowRight size={15} />
+        <div className="fx-head-actions">
+          <Link href="/sandbox" className="fx-btn">
+            Analyser un scénario <span>↗</span>
           </Link>
-          <Link
-            href="/exports"
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-[#e6ebf2] bg-white px-4 text-sm font-semibold text-[#667085] transition-colors hover:border-[#2f6bff] hover:text-[#2f6bff] dark:border-white/10 dark:bg-white/[0.04]"
-          >
-            Préparer l'export
+          <Link href="/exports" className="fx-btn-ghost">
+            Préparer l&apos;export
           </Link>
         </div>
       </div>
 
-      <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.42fr]">
+      <section className="grid gap-4 lg:grid-cols-[1fr_0.42fr]">
         <div>
           {kpisQuery.isLoading ? (
             <KpiSkeleton />
@@ -188,55 +137,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-md border border-[#e6ebf2] bg-[#08111f] p-5 text-white shadow-xl shadow-[#08111f]/10">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-white/42">
-                Priorité du jour
-              </div>
-              <div className="mt-2 text-xl font-semibold">
-                Réduire l'exposition critique
-              </div>
-            </div>
-            <div className="grid h-11 w-11 place-items-center rounded-md bg-[#fff0f1] text-[#b42318]">
-              <ShieldAlert size={22} />
-            </div>
-          </div>
-          <p className="mt-4 text-sm leading-6 text-white/62">
-            Traitez d'abord les fournisseurs à criticité maximale avec retard
-            SLA ou absence d'assignation. Chaque case doit produire une preuve
-            d'audit exploitable.
-          </p>
-          <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-md bg-white/[0.07] p-3">
-              <div className="text-white/45">Next action</div>
-              <div className="mt-1 font-semibold">Assigner reviewer</div>
-            </div>
-            <div className="rounded-md bg-white/[0.07] p-3">
-              <div className="text-white/45">Preuve</div>
-              <div className="mt-1 font-semibold">Audit trail</div>
-            </div>
-          </div>
-        </div>
+        <PriorityPanel />
       </section>
 
       <section className="mt-8 grid gap-4 xl:grid-cols-[1fr_0.42fr]">
-        <div className="rounded-md border border-[#e6ebf2] bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="flex items-center justify-between gap-4 border-b border-[#e6ebf2] px-5 py-4 dark:border-white/10">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
             <div>
-              <h2 className="font-semibold text-[#111827] dark:text-white">
-                Top fournisseurs par exposition financière
-              </h2>
-              <p className="mt-1 text-sm text-[#667085]">
-                Le tri favorise l'impact financier, pas seulement le score brut.
-              </p>
+              <h2>Top fournisseurs par exposition</h2>
+              <div className="sub">
+                Le tri favorise l&apos;impact financier, pas seulement le score brut.
+              </div>
             </div>
-            <BriefcaseBusiness size={20} className="text-[#2f6bff]" />
+            <span className="glyph">◫</span>
           </div>
           {vendorsQuery.isLoading ? (
             <TableSkeleton />
           ) : vendorsQuery.error ? (
-            <div className="p-5">
+            <div className="fx-panel-body">
               <ActionState
                 title="Fournisseurs non chargés"
                 body="Vérifiez la variable NEXT_PUBLIC_API_URL ou explorez un scénario préchargé."
@@ -258,6 +176,61 @@ export default function DashboardPage() {
           <RecommendedPath />
         </div>
       </section>
+    </ForensicPage>
+  );
+}
+
+function PriorityPanel() {
+  return (
+    <div className="fx-card-accent">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="fx-eyebrow">Priorité du jour</div>
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 23,
+              lineHeight: 1.1,
+              color: "var(--fg)",
+              marginTop: 8,
+            }}
+          >
+            Réduire l&apos;exposition critique
+          </div>
+        </div>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, color: "var(--risk)" }}>▲</span>
+      </div>
+      <p
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          lineHeight: 1.65,
+          color: "var(--muted)",
+          marginTop: 14,
+        }}
+      >
+        Traitez d&apos;abord les fournisseurs à criticité maximale avec retard SLA ou absence
+        d&apos;assignation. Chaque case doit produire une preuve d&apos;audit exploitable.
+      </p>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        {[
+          ["Next action", "Assigner reviewer"],
+          ["Preuve", "Audit trail"],
+        ].map(([k, v]) => (
+          <div
+            key={k}
+            style={{ background: "var(--panel)", border: "1px solid var(--border)", padding: "11px 13px" }}
+          >
+            <div className="fx-eyebrow">{k}</div>
+            <div
+              className="fx-mono"
+              style={{ fontSize: 12, color: "var(--fg)", marginTop: 5 }}
+            >
+              {v}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -265,15 +238,8 @@ export default function DashboardPage() {
 function KpiSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {["Exposition totale", "Critique", "Cases ouverts", "SLA"].map((label) => (
-        <div
-          key={label}
-          className="h-36 animate-pulse rounded-md border border-[#e6ebf2] bg-white p-5 dark:border-white/10 dark:bg-white/[0.04]"
-        >
-          <div className="h-10 w-10 rounded-md bg-[#eef3fb]" />
-          <div className="mt-5 h-3 w-32 rounded bg-[#eef3fb]" />
-          <div className="mt-4 h-8 w-24 rounded bg-[#eef3fb]" />
-        </div>
+      {["a", "b", "c", "d"].map((k) => (
+        <div key={k} className="fx-skel" style={{ height: 134 }} />
       ))}
     </div>
   );
@@ -286,20 +252,20 @@ function KpiGrid({ data }: { data: CockpitKPIs }) {
         <KPICard
           label="Exposition totale"
           value={formatEur(data.exposure_total_eur)}
-          tone="blue"
-          Icon={TrendingUp}
+          tone="info"
+          glyph="Σ"
         />
         <KPICard
-          label="Exposition critical"
+          label="Exposition critique"
           value={formatEur(data.exposure_critical_eur)}
           tone="risk"
-          Icon={ShieldAlert}
+          glyph="▲"
         />
         <KPICard
           label="Cases ouverts"
           value={String(data.n_cases_open)}
-          tone="amber"
-          Icon={FileSearch}
+          tone="warn"
+          glyph="▣"
         />
         <KPICard
           label="Retards SLA"
@@ -309,31 +275,27 @@ function KpiGrid({ data }: { data: CockpitKPIs }) {
               ? `${data.n_cases_unassigned_critical} non assignés`
               : undefined
           }
-          tone="green"
-          Icon={Clock3}
+          tone="ok"
+          glyph="◷"
         />
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <TrendCard
-          title="Cases créés"
-          points={data.trend_cases_created ?? []}
-          color="#2f6bff"
-        />
+        <TrendCard title="Cases créés" points={data.trend_cases_created ?? []} color="var(--info)" />
         <TrendCard
           title="Cases clôturés"
           points={data.trend_cases_closed ?? []}
-          color="#027a48"
+          color="var(--verified)"
         />
         <TrendCard
           title="Alertes critiques"
           points={data.trend_critical_alerts ?? []}
-          color="#b42318"
+          color="var(--risk)"
         />
         <TrendCard
           title="Activité audit"
           points={data.trend_audit_activity ?? []}
-          color="#f5a524"
+          color="var(--warn)"
         />
       </div>
     </>
@@ -350,15 +312,17 @@ function TrendCard({
   color: string;
 }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+    <div className="fx-card">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-semibold text-[#111827] dark:text-white">
+        <span className="fx-mono" style={{ fontSize: 11, color: "var(--fg)", letterSpacing: "0.02em" }}>
           {title}
-        </div>
-        <BarChart3 size={16} style={{ color }} />
+        </span>
+        <span style={{ color }}>∿</span>
       </div>
       <Sparkline points={points} color={color} />
-      <div className="mt-2 text-xs text-[#667085]">Tendance 30 jours</div>
+      <div className="fx-eyebrow" style={{ marginTop: 8 }}>
+        Tendance 30 jours
+      </div>
     </div>
   );
 }
@@ -373,14 +337,7 @@ function SignalBreakdownCard({
   isError: boolean;
 }) {
   if (isLoading) {
-    return (
-      <div className="h-72 animate-pulse rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-        <div className="h-5 w-40 rounded bg-[#eef3fb]" />
-        <div className="mt-5 h-4 w-full rounded bg-[#eef3fb]" />
-        <div className="mt-3 h-4 w-10/12 rounded bg-[#eef3fb]" />
-        <div className="mt-3 h-4 w-8/12 rounded bg-[#eef3fb]" />
-      </div>
-    );
+    return <div className="fx-skel" style={{ height: 286 }} />;
   }
 
   if (isError || !data) {
@@ -394,76 +351,78 @@ function SignalBreakdownCard({
     );
   }
 
-  const severityRows = [
-    ["Critical", data.metrics.criticalFindings, "#b42318"],
-    ["High", data.metrics.highFindings, "#d35f2a"],
-    ["Medium", data.metrics.mediumFindings, "#c97b1f"],
+  const severityRows: [string, number, string][] = [
+    ["Critical", data.metrics.criticalFindings, "var(--risk)"],
+    ["High", data.metrics.highFindings, "var(--warn)"],
+    ["Medium", data.metrics.mediumFindings, "var(--info)"],
   ];
 
   return (
-    <div
-      className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
-      data-testid="dashboard-signal-breakdown"
-    >
-      <div className="flex items-center justify-between gap-3">
+    <div className="fx-panel" data-testid="dashboard-signal-breakdown">
+      <div className="fx-panel-head">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
-            Démo Vercel
-          </div>
-          <h2 className="mt-1 font-semibold text-[#111827] dark:text-white">
-            Répartition des signaux
-          </h2>
+          <div className="fx-eyebrow">Démo Vercel</div>
+          <h2 style={{ marginTop: 3 }}>Répartition des signaux</h2>
         </div>
-        <BarChart3 size={20} className="text-[#2f6bff]" />
+        <span className="glyph">▦</span>
       </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-        {severityRows.map(([label, count, color]) => (
-          <div key={label} className="rounded-md bg-[#f7f9fc] p-3 dark:bg-white/[0.04]">
-            <div className="text-xs text-[#667085]">{label}</div>
-            <div className="mt-1 font-mono text-lg font-bold" style={{ color: String(color) }}>
-              {formatNumber(Number(count))}
+      <div className="fx-panel-body">
+        <div className="grid grid-cols-3 gap-2">
+          {severityRows.map(([label, count, color]) => (
+            <div
+              key={label}
+              style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
+            >
+              <div className="fx-eyebrow">{label}</div>
+              <div className="fx-mono" style={{ fontSize: 18, fontWeight: 700, color, marginTop: 5 }}>
+                {formatNumber(Number(count))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {data.signalBreakdown.map((item) => (
+            <div key={item.signal}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="fx-mono" style={{ fontSize: 12, color: "var(--fg)" }}>
+                  {item.label}
+                </span>
+                <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                  {formatNumber(item.count)}
+                </span>
+              </div>
+              <div className="fx-bar" style={{ marginTop: 6 }}>
+                <i style={{ width: `${Math.max(item.share * 100, 2)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Link href="/rings" className="fx-link" style={{ marginTop: 18 }}>
+          Explorer le graphe →
+        </Link>
       </div>
-
-      <div className="mt-5 space-y-3">
-        {data.signalBreakdown.map((item) => (
-          <div key={item.signal}>
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="font-medium text-[#111827] dark:text-white">{item.label}</span>
-              <span className="font-mono text-xs text-[#667085]">
-                {formatNumber(item.count)}
-              </span>
-            </div>
-            <div className="mt-1 h-2 rounded-full bg-[#eef3fb] dark:bg-white/[0.07]">
-              <div
-                className="h-2 rounded-full bg-[#2f6bff]"
-                style={{ width: `${Math.max(item.share * 100, 2)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Link
-        href="/rings"
-        className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[#2f6bff] hover:underline"
-      >
-        Explorer le graphe
-        <ArrowRight size={14} />
-      </Link>
     </div>
   );
 }
 
 function RecommendedPath() {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex items-center gap-2 font-semibold text-[#111827] dark:text-white">
-        <FileSearch size={19} className="text-[#2f6bff]" />
-        Parcours recommandé
+    <div className="fx-card">
+      <div className="flex items-center gap-2">
+        <span style={{ fontFamily: "var(--font-mono)", color: "var(--risk)" }}>▣</span>
+        <span
+          className="fx-mono"
+          style={{
+            fontSize: 12,
+            color: "var(--fg)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Parcours recommandé
+        </span>
       </div>
       <div className="mt-5 space-y-4">
         {[
@@ -471,15 +430,11 @@ function RecommendedPath() {
           ["2", "Ouvrir fournisseur 360", "Valider liens SIREN, IBAN et historique."],
           ["3", "Exporter la preuve", "Signer et archiver la piste d'audit."],
         ].map(([step, title, body]) => (
-          <div key={step} className="flex gap-3">
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#eaf1ff] text-xs font-bold text-[#2f6bff]">
-              {step}
-            </div>
+          <div key={step} className="fx-step">
+            <div className="n">{step}</div>
             <div>
-              <div className="text-sm font-semibold text-[#111827] dark:text-white">
-                {title}
-              </div>
-              <div className="text-sm leading-6 text-[#667085]">{body}</div>
+              <div className="t">{title}</div>
+              <div className="d">{body}</div>
             </div>
           </div>
         ))}
@@ -492,7 +447,7 @@ function TableSkeleton() {
   return (
     <div className="space-y-3 p-5">
       {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="h-12 animate-pulse rounded bg-[#eef3fb]" />
+        <div key={index} className="fx-skel" style={{ height: 44 }} />
       ))}
     </div>
   );
@@ -501,7 +456,7 @@ function TableSkeleton() {
 function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
   if (!rows.length) {
     return (
-      <div className="p-5">
+      <div className="fx-panel-body">
         <ActionState
           title="Aucun finding chargé"
           body="Le Top 10 se calcule sur les findings de la session. Lancez un scénario synthétique pour voir le cockpit rempli."
@@ -511,50 +466,41 @@ function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
       </div>
     );
   }
-  const severityColor: Record<string, string> = {
-    critical: "bg-[#fff0f1] text-[#b42318]",
-    high: "bg-[#fff7e8] text-[#b56b00]",
-    medium: "bg-[#fff7e8] text-[#9a5b00]",
-    low: "bg-[#e8f8f1] text-[#027a48]",
+  const severityClass: Record<string, string> = {
+    critical: "critical",
+    high: "high",
+    medium: "medium",
+    low: "low",
   };
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm" data-testid="dashboard-top-vendors">
-        <thead className="bg-[#f7f9fc] text-xs uppercase tracking-wider text-[#667085] dark:bg-white/[0.03]">
+    <div className="fx-table-wrap">
+      <table className="fx-table" data-testid="dashboard-top-vendors">
+        <thead>
           <tr>
-            <th className="px-5 py-3 text-left">Fournisseur</th>
-            <th className="px-5 py-3 text-right">Exposition</th>
-            <th className="px-5 py-3 text-right">Findings</th>
-            <th className="px-5 py-3 text-left">Sévérité</th>
-            <th className="px-5 py-3 text-right">Action</th>
+            <th>Fournisseur</th>
+            <th className="num">Exposition</th>
+            <th className="num">Findings</th>
+            <th>Sévérité</th>
+            <th className="num">Action</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr
-              key={row.vendor_id}
-              className="border-t border-[#e6ebf2] transition-colors hover:bg-[#f7f9fc] dark:border-white/10 dark:hover:bg-white/[0.03]"
-            >
-              <td className="px-5 py-4 font-mono text-xs font-semibold text-[#111827] dark:text-white">
-                {row.vendor_id}
-              </td>
-              <td className="px-5 py-4 text-right font-semibold">
-                {formatEur(row.exposure_eur)}
-              </td>
-              <td className="px-5 py-4 text-right">{row.n_findings}</td>
-              <td className="px-5 py-4">
-                <span
-                  className={`inline-block rounded px-2 py-1 text-xs font-semibold ${severityColor[row.max_severity] ?? "bg-[#eef3fb] text-[#111827]"}`}
-                >
+            <tr key={row.vendor_id}>
+              <td className="key">{row.vendor_id}</td>
+              <td className="num">{formatEur(row.exposure_eur)}</td>
+              <td className="num">{row.n_findings}</td>
+              <td>
+                <span className={`fx-tag ${severityClass[row.max_severity] ?? ""}`}>
                   {row.max_severity.toUpperCase()}
                 </span>
               </td>
-              <td className="px-5 py-4 text-right">
+              <td className="num">
                 <Link
                   href={`/vendors/${encodeURIComponent(row.vendor_id)}`}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#2f6bff] hover:underline"
+                  className="fx-link"
                 >
-                  Ouvrir 360 <ArrowRight size={13} />
+                  Ouvrir 360 →
                 </Link>
               </td>
             </tr>
@@ -577,34 +523,22 @@ function ActionState({
   actionLabel: string;
 }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex items-start gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-md bg-[#fff7e8] text-[#b56b00]">
-          <AlertTriangle size={19} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="font-semibold text-[#111827] dark:text-white">
-            {title}
-          </div>
-          <p className="mt-1 text-sm leading-6 text-[#667085]">{body}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href={actionHref}
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-[#2f6bff] px-3 text-sm font-semibold text-white"
-            >
-              {actionLabel}
-              <ArrowRight size={14} />
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => window.location.reload()}
-            >
-              <RefreshCw size={14} />
-              Réessayer
-            </Button>
-          </div>
+    <div className="fx-notice">
+      <span className="glyph">⚠</span>
+      <div className="min-w-0 flex-1">
+        <div className="nt">{title}</div>
+        <p className="nb">{body}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href={actionHref} className="fx-btn">
+            {actionLabel} <span>↗</span>
+          </Link>
+          <button
+            type="button"
+            className="fx-btn-ghost"
+            onClick={() => window.location.reload()}
+          >
+            ↻ Réessayer
+          </button>
         </div>
       </div>
     </div>

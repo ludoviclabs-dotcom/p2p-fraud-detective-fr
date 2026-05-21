@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, CircleAlert, EyeOff, Landmark, Network } from "lucide-react";
 import Link from "next/link";
 
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
@@ -75,6 +74,17 @@ function selectedNodeSummary(dataset: P2PDemoDataset, node: GraphNode | undefine
   }
   return { node, finding: undefined, vendor: undefined };
 }
+
+const selectStyle: React.CSSProperties = {
+  height: 36,
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
+  padding: "0 10px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  color: "var(--fg)",
+  outline: "none",
+};
 
 export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -236,14 +246,17 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="panel overflow-hidden rounded-md">
-        <div className="flex flex-col gap-3 border-b border-[#D8DEE9] bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* Graph panel */}
+      <section className="fx-panel overflow-hidden">
+        {/* Chrome header */}
+        <div className="fx-panel-head flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-[#141927]">Graphe interactif WebGL</h2>
-            <p className="mt-1 text-sm text-[#5A6478]">
-              {formatNumber(filtered.nodes.length)} nœuds · {formatNumber(filtered.edges.length)} liens ·{" "}
+            <h2>Graphe interactif WebGL</h2>
+            <div className="sub">
+              {formatNumber(filtered.nodes.length)} nœuds &middot;{" "}
+              {formatNumber(filtered.edges.length)} liens &middot;{" "}
               {formatNumber(findingCount)} findings visibles
-            </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -254,7 +267,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
               id="signal-filter"
               value={signal}
               onChange={(event) => setSignal(event.target.value)}
-              className="rounded-md border border-[#D8DEE9] bg-white px-3 py-2 text-sm font-medium text-[#141927]"
+              style={selectStyle}
             >
               {signalOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -269,7 +282,7 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
               id="severity-filter"
               value={severity}
               onChange={(event) => setSeverity(event.target.value)}
-              className="rounded-md border border-[#D8DEE9] bg-white px-3 py-2 text-sm font-medium text-[#141927]"
+              style={selectStyle}
             >
               {SEVERITY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -280,25 +293,64 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
           </div>
         </div>
 
+        {/* Graph canvas area */}
         {filtered.nodes.length > 0 ? (
-          <div className="graph-frame relative bg-white" data-testid="graph-frame">
+          <div
+            className="graph-frame relative"
+            data-testid="graph-frame"
+            style={{ background: "var(--bg-2)" }}
+          >
             <div ref={containerRef} className="h-full w-full" />
             {graphError ? (
-              <div className="absolute inset-0 grid place-items-center bg-white px-6 text-center">
-                <div>
-                  <EyeOff aria-hidden className="mx-auto h-8 w-8 text-[#5A6478]" />
-                  <p className="mt-3 font-semibold text-[#141927]">Rendu du graphe indisponible.</p>
-                  <p className="mt-1 max-w-md text-sm text-[#5A6478]">{graphError}</p>
+              <div
+                className="absolute inset-0 grid place-items-center px-6"
+                style={{ background: "var(--bg-2)" }}
+              >
+                <div style={{ textAlign: "center" }}>
+                  <span
+                    className="fx-mono"
+                    style={{ fontSize: 24, color: "var(--muted)", display: "block" }}
+                  >
+                    ◫
+                  </span>
+                  <p
+                    className="fx-mono"
+                    style={{ marginTop: 10, fontSize: 13, color: "var(--fg)" }}
+                  >
+                    Rendu du graphe indisponible.
+                  </p>
+                  <p
+                    className="fx-mono"
+                    style={{ marginTop: 4, fontSize: 11, color: "var(--muted)", maxWidth: 400 }}
+                  >
+                    {graphError}
+                  </p>
                 </div>
               </div>
             ) : null}
           </div>
         ) : (
-          <div className="grid h-[420px] place-items-center bg-white px-6 text-center">
+          <div
+            className="grid place-items-center px-6"
+            style={{ height: 420, background: "var(--bg-2)", textAlign: "center" }}
+          >
             <div>
-              <EyeOff aria-hidden className="mx-auto h-8 w-8 text-[#5A6478]" />
-              <p className="mt-3 font-semibold text-[#141927]">Aucun nœud pour ce filtre.</p>
-              <p className="mt-1 text-sm text-[#5A6478]">
+              <span
+                className="fx-mono"
+                style={{ fontSize: 24, color: "var(--muted)", display: "block" }}
+              >
+                ◫
+              </span>
+              <p
+                className="fx-mono"
+                style={{ marginTop: 10, fontSize: 13, color: "var(--fg)" }}
+              >
+                Aucun nœud pour ce filtre.
+              </p>
+              <p
+                className="fx-mono"
+                style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}
+              >
                 Relâchez la sévérité ou revenez à tous les signaux.
               </p>
             </div>
@@ -306,47 +358,83 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
         )}
       </section>
 
+      {/* Right sidebar panels */}
       <aside className="flex flex-col gap-5">
-        <section className="panel rounded-md p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
-            Légende
-          </h3>
-          <div className="mt-4 space-y-4 text-sm">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5A6478]">
-                Types de nœuds
-              </p>
+        {/* Legend */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Légende</h2>
+          </div>
+          <div className="fx-panel-body space-y-4">
+            <div className="space-y-2">
+              <div className="fx-eyebrow">Types de nœuds</div>
               <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-[#1F3A6E]" />
-                <span>Fournisseur</span>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: NODE_COLORS.vendor,
+                    flexShrink: 0,
+                    display: "inline-block",
+                  }}
+                />
+                <span className="fx-mono" style={{ fontSize: 12, color: "var(--fg-2)" }}>
+                  Fournisseur
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-[#3E7CB1]" />
-                <span>IBAN masqué</span>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: NODE_COLORS.iban,
+                    flexShrink: 0,
+                    display: "inline-block",
+                  }}
+                />
+                <span className="fx-mono" style={{ fontSize: 12, color: "var(--fg-2)" }}>
+                  IBAN masqué
+                </span>
               </div>
             </div>
-            <div className="space-y-3 border-t border-[#D8DEE9] pt-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5A6478]">
-                Sévérité des findings
-              </p>
+
+            <div
+              className="space-y-2"
+              style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}
+            >
+              <div className="fx-eyebrow">Sévérité des findings</div>
               {(["critical", "high", "medium"] as const).map((level) => (
                 <div key={level} className="flex items-center gap-3">
                   <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: SEVERITY_COLORS[level] }}
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: SEVERITY_COLORS[level],
+                      flexShrink: 0,
+                      display: "inline-block",
+                    }}
                   />
-                  <span className="capitalize">{level}</span>
+                  <span
+                    className="fx-mono"
+                    style={{ fontSize: 12, color: "var(--fg-2)", textTransform: "capitalize" }}
+                  >
+                    {level}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="panel rounded-md p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
-            Nœuds prioritaires
-          </h3>
-          <div className="mt-4 space-y-2" data-testid="graph-priority-list">
+        {/* Priority nodes */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Nœuds prioritaires</h2>
+          </div>
+          <div className="fx-panel-body space-y-2" data-testid="graph-priority-list">
             {priorityNodes.map((node) => (
               <button
                 key={node.id}
@@ -355,82 +443,157 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
                 aria-pressed={selectedNodeId === node.id}
                 data-node-kind={node.kind}
                 data-testid="priority-node"
-                className="w-full rounded-md border border-[#D8DEE9] bg-white p-3 text-left text-sm transition hover:border-[#1F3A6E] hover:bg-[#F6F7FB] aria-pressed:border-[#1F3A6E] aria-pressed:bg-[#EAF1FF]"
+                style={{
+                  width: "100%",
+                  background:
+                    selectedNodeId === node.id ? "var(--panel-2)" : "var(--bg)",
+                  border: `1px solid ${selectedNodeId === node.id ? "var(--risk)" : "var(--border)"}`,
+                  padding: "10px 12px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "all .15s",
+                }}
               >
                 <span className="flex items-center justify-between gap-3">
-                  <span className="truncate font-semibold text-[#141927]">{node.label}</span>
-                  <span className="mono shrink-0 text-xs text-[#5A6478]">
+                  <span
+                    className="fx-mono"
+                    style={{
+                      fontSize: 12,
+                      color: "var(--fg)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {node.label}
+                  </span>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", flexShrink: 0 }}>
                     {node.riskScore}/100
                   </span>
                 </span>
-                <span className="mt-1 flex items-center justify-between gap-3 text-xs text-[#5A6478]">
-                  <span className="capitalize">{node.kind}</span>
-                  <span>{formatEuro(node.exposureEur)}</span>
+                <span className="flex items-center justify-between gap-3 mt-1">
+                  <span
+                    className="fx-mono"
+                    style={{ fontSize: 10, color: "var(--muted)", textTransform: "capitalize" }}
+                  >
+                    {node.kind}
+                  </span>
+                  <span className="fx-mono" style={{ fontSize: 10, color: "var(--muted)" }}>
+                    {formatEuro(node.exposureEur)}
+                  </span>
                 </span>
               </button>
             ))}
           </div>
-        </section>
+        </div>
 
-        <section className="panel rounded-md p-5" data-testid="graph-selection-panel">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
-            Sélection
-          </h3>
+        {/* Selection detail */}
+        <div className="fx-panel" data-testid="graph-selection-panel">
+          <div className="fx-panel-head">
+            <h2>Sélection</h2>
+          </div>
 
           {!details ? (
-            <p className="mt-4 text-sm leading-6 text-[#5A6478]">
-              Cliquez sur un fournisseur, un IBAN ou un finding pour afficher le contexte
-              d&apos;investigation.
-            </p>
+            <div className="fx-panel-body">
+              <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.65 }}>
+                Cliquez sur un fournisseur, un IBAN ou un finding pour afficher le contexte
+                d&apos;investigation.
+              </p>
+            </div>
           ) : (
-            <div className="mt-4 space-y-4">
+            <div className="fx-panel-body space-y-4">
               <div className="flex items-start gap-3">
-                {details.node.kind === "vendor" ? (
-                  <Landmark aria-hidden className="mt-0.5 h-5 w-5 text-[#1F3A6E]" />
-                ) : details.node.kind === "iban" ? (
-                  <Network aria-hidden className="mt-0.5 h-5 w-5 text-[#3E7CB1]" />
-                ) : (
-                  <CircleAlert aria-hidden className="mt-0.5 h-5 w-5 text-[#A23E48]" />
-                )}
+                <span
+                  className="fx-mono"
+                  style={{
+                    fontSize: 16,
+                    color:
+                      details.node.kind === "vendor"
+                        ? "var(--info)"
+                        : details.node.kind === "iban"
+                          ? "var(--warn)"
+                          : "var(--risk)",
+                    marginTop: 2,
+                    flexShrink: 0,
+                  }}
+                >
+                  {details.node.kind === "vendor"
+                    ? "Σ"
+                    : details.node.kind === "iban"
+                      ? "∿"
+                      : "▲"}
+                </span>
                 <div>
-                  <p className="text-lg font-semibold text-[#141927]">{details.node.label}</p>
-                  <p className="mt-1 text-sm capitalize text-[#5A6478]">{details.node.kind}</p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 18,
+                      color: "var(--fg)",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {details.node.label}
+                  </p>
+                  <p
+                    className="fx-mono"
+                    style={{ marginTop: 4, fontSize: 11, color: "var(--muted)", textTransform: "capitalize" }}
+                  >
+                    {details.node.kind}
+                  </p>
                 </div>
               </div>
 
-              <dl className="space-y-3 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-[#5A6478]">Sévérité</dt>
-                  <dd className="font-medium capitalize text-[#141927]">{details.node.severity}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-[#5A6478]">Score</dt>
-                  <dd className="mono text-[#141927]">{details.node.riskScore}/100</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-[#5A6478]">Exposition</dt>
-                  <dd className="mono text-[#141927]">{formatEuro(details.node.exposureEur)}</dd>
-                </div>
-                {details.node.maskedValue ? (
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-[#5A6478]">Valeur</dt>
-                    <dd className="mono text-right text-[#141927]">{details.node.maskedValue}</dd>
+              <dl className="space-y-3">
+                {(
+                  [
+                    ["Sévérité", details.node.severity],
+                    ["Score", `${details.node.riskScore}/100`],
+                    ["Exposition", formatEuro(details.node.exposureEur)],
+                    ...(details.node.maskedValue
+                      ? [["Valeur", details.node.maskedValue] as [string, string]]
+                      : []),
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4">
+                    <dt className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {k}
+                    </dt>
+                    <dd
+                      className="fx-mono"
+                      style={{ fontSize: 12, color: "var(--fg)", textTransform: "capitalize" }}
+                    >
+                      {v}
+                    </dd>
                   </div>
-                ) : null}
+                ))}
               </dl>
 
               {details.finding ? (
-                <div className="rounded-md border border-[#D8DEE9] bg-[#F6F7FB] p-4 text-sm">
-                  <p className="font-semibold text-[#141927]">
+                <div
+                  style={{
+                    background: "var(--bg-2)",
+                    border: "1px solid var(--border)",
+                    padding: "14px 16px",
+                  }}
+                >
+                  <p
+                    className="fx-mono"
+                    style={{ fontSize: 12, color: "var(--fg)" }}
+                  >
                     {getSignalLabel(details.finding.signal)}
                   </p>
-                  <p className="mono mt-1 text-[#5A6478]">{details.finding.invoiceId}</p>
+                  <p
+                    className="fx-mono"
+                    style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}
+                  >
+                    {details.finding.invoiceId}
+                  </p>
                   <Link
                     href={`/score/${details.finding.invoiceId}`}
-                    className="mt-3 inline-flex items-center gap-1 font-semibold text-[#1F3A6E]"
+                    className="fx-link"
+                    style={{ marginTop: 10 }}
                   >
-                    Ouvrir le score
-                    <ArrowUpRight aria-hidden className="h-3.5 w-3.5" />
+                    Ouvrir le score ↗
                   </Link>
                 </div>
               ) : null}
@@ -438,15 +601,15 @@ export function GraphExplorer({ dataset }: { dataset: P2PDemoDataset }) {
               {details.vendor ? (
                 <Link
                   href={`/vendors/${details.vendor.vendorId}`}
-                  className="inline-flex items-center gap-2 rounded-md bg-[#1F3A6E] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0F1B33]"
+                  className="fx-btn sm"
+                  style={{ display: "inline-flex" }}
                 >
-                  Fiche fournisseur
-                  <ArrowUpRight aria-hidden className="h-4 w-4" />
+                  Fiche fournisseur ↗
                 </Link>
               ) : null}
             </div>
           )}
-        </section>
+        </div>
       </aside>
     </div>
   );
