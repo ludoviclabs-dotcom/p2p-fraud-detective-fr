@@ -12,16 +12,17 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import Link from "next/link";
 import { listCases, type CaseOutV1 } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#a23e48",
-  high: "#c97b1f",
+  critical: "#c8392c",
+  high: "#c89b2c",
   medium: "#e5a93a",
-  low: "#3e7c5a",
+  low: "#7fa37f",
 };
 
 const SEVERITY_Y: Record<string, number> = {
@@ -48,7 +49,7 @@ export default function AnomaliesPage() {
         x: c.exposure_eur ?? 0,
         y: SEVERITY_Y[c.severity] ?? 0,
         z: 100,
-        fill: SEVERITY_COLORS[c.severity] ?? "#1f3a6e",
+        fill: SEVERITY_COLORS[c.severity] ?? "var(--info)",
       }));
   }, [query.data]);
 
@@ -66,46 +67,52 @@ export default function AnomaliesPage() {
   }, [scatterData]);
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Détection ML
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Détection ML</div>
+          <h1 style={{ marginTop: 9 }}>
+            Anomalies <span className="italic">ML</span>
+          </h1>
+          <p className="sub">
+            Dispersion des cases sur l&apos;axe exposition (€) × sévérité. Chaque point est un
+            case à investiguer. Approche Isolation Forest côté Streamlit (legacy) — le frontend
+            Next.js v2 lit les findings agrégés et les affiche en scatter Recharts.
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Anomalies (ML)
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Dispersion des cases sur l'axe exposition (€) × sévérité. Chaque point
-        est un case à investiguer. Approche Isolation Forest côté Streamlit
-        (legacy) — le frontend Next.js v2 lit les findings agrégés et les
-        affiche en scatter Recharts.
-      </p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>📊 Dispersion exposition × sévérité</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[500px]">
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Dispersion exposition × sévérité</h2>
+          <span className="glyph">∿</span>
+        </div>
+        <div className="fx-panel-body" style={{ height: 520 }}>
           {query.isLoading ? (
-            <div className="text-sm text-[#5a6478]">Chargement…</div>
+            <div className="fx-skel" style={{ height: 460 }} />
           ) : !scatterData.length ? (
-            <div className="text-sm text-[#5a6478]">
-              Aucun case avec exposition à afficher.
+            <div className="fx-notice">
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">Aucun case avec exposition</div>
+                <p className="nb">Aucun case avec exposition à afficher.</p>
+              </div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e1e5ee" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   type="number"
                   dataKey="x"
                   name="Exposition"
-                  tick={{ fontSize: 10, fill: "#5a6478" }}
+                  tick={{ fontSize: 10, fill: "var(--muted)", fontFamily: "var(--font-mono)" }}
                   tickFormatter={(v) => `${(v / 1000).toFixed(0)}k €`}
                   label={{
                     value: "Exposition (€)",
                     position: "insideBottom",
                     offset: -10,
-                    fill: "#5a6478",
+                    fill: "var(--muted)",
                     fontSize: 11,
                   }}
                 />
@@ -116,9 +123,11 @@ export default function AnomaliesPage() {
                   domain={[0, 5]}
                   ticks={[1, 2, 3, 4]}
                   tickFormatter={(v) =>
-                    ({ 1: "Low", 2: "Medium", 3: "High", 4: "Critical" })[v as 1 | 2 | 3 | 4] ?? ""
+                    ({ 1: "Low", 2: "Medium", 3: "High", 4: "Critical" })[
+                      v as 1 | 2 | 3 | 4
+                    ] ?? ""
                   }
-                  tick={{ fontSize: 10, fill: "#5a6478" }}
+                  tick={{ fontSize: 10, fill: "var(--muted)", fontFamily: "var(--font-mono)" }}
                 />
                 <ZAxis dataKey="z" range={[60, 200]} />
                 <Tooltip
@@ -127,12 +136,21 @@ export default function AnomaliesPage() {
                     if (!active || !payload?.length) return null;
                     const p = payload[0].payload;
                     return (
-                      <div className="rounded-md border border-[#e1e5ee] bg-white p-2 text-xs shadow">
-                        <div className="font-mono">{p.case_id?.slice(0, 16)}</div>
-                        <div className="font-medium">{p.title}</div>
-                        <div className="text-[#5a6478]">
-                          Vendor : {p.vendor_id ?? "—"}
+                      <div
+                        style={{
+                          background: "var(--panel)",
+                          border: "1px solid var(--border-strong)",
+                          padding: "10px 14px",
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          color: "var(--fg-2)",
+                        }}
+                      >
+                        <div style={{ color: "var(--fg)", marginBottom: 4 }}>
+                          {p.case_id?.slice(0, 16)}
                         </div>
+                        <div style={{ color: "var(--fg)", marginBottom: 4 }}>{p.title}</div>
+                        <div>Vendor : {p.vendor_id ?? "—"}</div>
                         <div>Exposition : {formatEur(p.x)}</div>
                         <div>Sévérité : {p.severity}</div>
                       </div>
@@ -152,20 +170,22 @@ export default function AnomaliesPage() {
               </ScatterChart>
             </ResponsiveContainer>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            🚨 Outliers ({scatterData.length} cases avec exposition &gt; 0)
-          </CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <div>
+            <h2>Outliers</h2>
+            <div className="sub">{scatterData.length} cases avec exposition &gt; 0</div>
+          </div>
+          <span className="glyph">▲</span>
+        </div>
+        <div className="fx-table-wrap">
           <CasesTable rows={query.data ?? []} />
         </div>
-      </Card>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
@@ -175,40 +195,44 @@ function CasesTable({ rows }: { rows: CaseOutV1[] }) {
     .sort((a, b) => (b.exposure_eur ?? 0) - (a.exposure_eur ?? 0))
     .slice(0, 20);
   if (!top.length) {
-    return <div className="p-4 text-sm text-[#5a6478]">Aucun outlier.</div>;
+    return (
+      <div className="fx-panel-body">
+        <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+          Aucun outlier.
+        </span>
+      </div>
+    );
   }
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
+    <table className="fx-table">
+      <thead>
         <tr>
-          <th className="px-3 py-2 text-left">Case ID</th>
-          <th className="px-3 py-2 text-left">Vendor</th>
-          <th className="px-3 py-2 text-left">Sévérité</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
+          <th>Case ID</th>
+          <th>Vendor</th>
+          <th>Sévérité</th>
+          <th className="num">Exposition</th>
         </tr>
       </thead>
       <tbody>
         {top.map((c) => (
-          <tr key={c.case_id} className="border-t border-[#e1e5ee]">
-            <td className="px-3 py-2 font-mono text-xs">
-              {c.case_id.slice(0, 16)}
-            </td>
-            <td className="px-3 py-2">
+          <tr key={c.case_id}>
+            <td className="key">{c.case_id.slice(0, 16)}</td>
+            <td>
               {c.vendor_id ? (
-                <a
+                <Link
                   href={`/vendors/${encodeURIComponent(c.vendor_id)}`}
-                  className="font-mono text-xs text-[#1f3a6e] hover:underline"
+                  className="fx-link"
                 >
                   {c.vendor_id}
-                </a>
+                </Link>
               ) : (
-                <span className="text-xs text-[#9aa3b2]">—</span>
+                <span style={{ color: "var(--dim)" }}>—</span>
               )}
             </td>
-            <td className="px-3 py-2">
+            <td>
               <SeverityBadge value={c.severity} />
             </td>
-            <td className="px-3 py-2 text-right">{formatEur(c.exposure_eur)}</td>
+            <td className="num">{formatEur(c.exposure_eur)}</td>
           </tr>
         ))}
       </tbody>

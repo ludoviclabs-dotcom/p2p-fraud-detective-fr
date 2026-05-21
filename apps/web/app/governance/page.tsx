@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Shield, Lock, Users, FileCheck2, Brain } from "lucide-react";
+import { ForensicPage } from "@/components/forensic-page";
 
 export const metadata: Metadata = {
   title: "Gouvernance — P2P Fraud Detective FR",
@@ -9,117 +8,177 @@ export const metadata: Metadata = {
 
 export default function GovernancePage() {
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Gouvernance
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Gouvernance</div>
+          <h1 style={{ marginTop: 9 }}>
+            Gouver<span className="italic">nance</span>
+          </h1>
+          <p className="sub">
+            AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD · Sapin 2 · ANSSI
+            RGS B1/B2
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Gouvernance
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        AI Act · RGPD · RGAA 4.1 · RBAC · AMLD6 · CSRD · Sapin 2 · ANSSI RGS B1/B2
-      </p>
 
-      <div className="mb-4 grid gap-4 md:grid-cols-2">
-        <Card className="border-l-4 border-l-[#2f6bff] md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle size={18} /> P2P Fraud Detection Workbench
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm md:grid-cols-2">
-            <p>
-              <strong>Statut</strong> : démonstrateur professionnel fondé sur des
-              scénarios et datasets synthétiques, avec fallback local si Hugging
-              Face est indisponible.
-            </p>
-            <p>
-              <strong>Limites</strong> : pas de décision bancaire réelle, pas de
-              certification conformité, pas de fingerprinting réel, pas de dark
-              web scraping. La décision finale reste humaine.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Workbench — full width */}
+      <div className="fx-card-accent" style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <span
+            className="fx-mono"
+            style={{ fontSize: 16, color: "var(--risk)", flexShrink: 0 }}
+          >
+            ⚠
+          </span>
+          <div>
+            <div className="fx-eyebrow">Démonstrateur</div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 20,
+                color: "var(--fg)",
+                marginTop: 6,
+                lineHeight: 1.1,
+              }}
+            >
+              P2P Fraud Detection Workbench
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <strong style={{ color: "var(--fg)" }}>Statut</strong> :
+            démonstrateur professionnel fondé sur des scénarios et datasets
+            synthétiques, avec fallback local si Hugging Face est indisponible.
+          </p>
+          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <strong style={{ color: "var(--fg)" }}>Limites</strong> : pas de
+            décision bancaire réelle, pas de certification conformité, pas de
+            fingerprinting réel, pas de dark web scraping. La décision finale
+            reste humaine.
+          </p>
+        </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain size={18} /> AI Act (UE 2024/1689)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Classification</strong> : système d'IA à risque limité
-              (art. 50) — transparence obligatoire, pas de risque élevé
-              (annexe III).
+      {/* Grid of governance cards */}
+      <div className="grid gap-4 md:grid-cols-2" style={{ marginBottom: 16 }}>
+        {/* AI Act */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>AI Act (UE 2024/1689)</h2>
+            </div>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Classification</strong> :
+              système d&apos;IA à risque limité (art. 50) — transparence
+              obligatoire, pas de risque élevé (annexe III).
             </p>
-            <p>
-              <strong>Conformité</strong> : page Méthodologie publique avec
-              sources, seuils, métriques F1, limites. Pas de scoring opaque.
-              Audit log immutable de toutes les décisions.
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Conformité</strong> : page
+              Méthodologie publique avec sources, seuils, métriques F1, limites.
+              Pas de scoring opaque. Audit log immutable de toutes les décisions.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock size={18} /> RGPD (UE 2016/679)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Données traitées</strong> : 100 % synthétiques en démo
-              publique. En pilote ETI, données fournisseurs uniquement
-              (vendor_name, SIREN, IBAN, montants) — pas de PII salariés.
+        {/* RGPD */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>RGPD (UE 2016/679)</h2>
+            </div>
+            <span className="glyph">□</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Données traitées</strong> :
+              100 % synthétiques en démo publique. En pilote ETI, données
+              fournisseurs uniquement (vendor_name, SIREN, IBAN, montants) — pas
+              de PII salariés.
             </p>
-            <p>
-              <strong>Droit à l'effacement (art. 17)</strong> : bouton "Purger
-              session" + endpoint{" "}
-              <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Droit à l&apos;effacement (art. 17)
+              </strong>{" "}
+              : bouton &quot;Purger session&quot; + endpoint{" "}
+              <code
+                className="fx-mono"
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border)",
+                  padding: "1px 5px",
+                  fontSize: 11,
+                }}
+              >
                 purge_user_data()
               </code>
               .
             </p>
-            <p>
-              <strong>IBAN au repos</strong> : chiffré Fernet (AES-128-CBC +
-              HMAC-SHA256), clé{" "}
-              <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>IBAN au repos</strong> :
+              chiffré Fernet (AES-128-CBC + HMAC-SHA256), clé{" "}
+              <code
+                className="fx-mono"
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border)",
+                  padding: "1px 5px",
+                  fontSize: 11,
+                }}
+              >
                 P2P_FRAUD_DATA_KEY
               </code>
               .
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users size={18} /> RBAC — 4 rôles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <table className="w-full text-sm">
+        {/* RBAC */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>RBAC — 4 rôles</h2>
+            </div>
+            <span className="glyph">◇</span>
+          </div>
+          <div className="fx-table-wrap">
+            <table className="fx-table">
               <thead>
-                <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                  <th className="py-1">Rôle</th>
-                  <th className="py-1">Lecture</th>
-                  <th className="py-1">Triage</th>
-                  <th className="py-1">Clôture</th>
-                  <th className="py-1">Purge</th>
+                <tr>
+                  <th>Rôle</th>
+                  <th>Lecture</th>
+                  <th>Triage</th>
+                  <th>Clôture</th>
+                  <th>Purge</th>
                 </tr>
               </thead>
-              <tbody className="text-xs">
+              <tbody>
                 {[
-                  ["viewer", "✅", "❌", "❌", "❌"],
-                  ["analyst", "✅", "✅", "❌", "❌"],
-                  ["manager", "✅", "✅", "✅", "❌"],
-                  ["admin", "✅", "✅", "✅", "✅"],
+                  ["viewer", "✓", "—", "—", "—"],
+                  ["analyst", "✓", "✓", "—", "—"],
+                  ["manager", "✓", "✓", "✓", "—"],
+                  ["admin", "✓", "✓", "✓", "✓"],
                 ].map(([r, ...rest]) => (
-                  <tr key={r} className="border-b border-[#e1e5ee]">
-                    <td className="py-1 font-medium">{r}</td>
+                  <tr key={r}>
+                    <td className="key">{r}</td>
                     {rest.map((c, i) => (
-                      <td key={i} className="py-1">
+                      <td
+                        key={i}
+                        style={{
+                          color: c === "✓" ? "var(--verified)" : "var(--dim)",
+                        }}
+                      >
                         {c}
                       </td>
                     ))}
@@ -127,111 +186,143 @@ export default function GovernancePage() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-xs text-[#5a6478]">
+          </div>
+          <div className="fx-panel-body" style={{ borderTop: "1px solid var(--border)" }}>
+            <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
               PBKDF2-SHA256 200 000 itérations · sels uniques par user.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield size={18} /> AMLD6 (UE 2018/1673)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Bénéficiaires effectifs ≥ 25 %</strong> : page
-              <Link className="text-[#1f3a6e] hover:underline" href="/decp-rbe">
-                {" "}
-                DECP & RBE INPI
+        {/* AMLD6 */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>AMLD6 (UE 2018/1673)</h2>
+            </div>
+            <span className="glyph">▣</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Bénéficiaires effectifs ≥ 25 %
+              </strong>{" "}
+              : page{" "}
+              <Link className="fx-link" href="/decp-rbe">
+                DECP &amp; RBE INPI
               </Link>{" "}
               via Pappers.
             </p>
-            <p>
-              <strong>PEP screening</strong> : OpenSanctions Yente CC-BY 4.0,
-              page{" "}
-              <Link className="text-[#1f3a6e] hover:underline" href="/sanctions">
-                Sanctions & PEP
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>PEP screening</strong> :
+              OpenSanctions Yente CC-BY 4.0, page{" "}
+              <Link className="fx-link" href="/sanctions">
+                Sanctions &amp; PEP
               </Link>
               .
             </p>
-            <p>
-              <strong>Tracfin déclaration de soupçon</strong> : bouton
-              "Générer brouillon DS" dans la fiche fournisseur (annoté
-              "démonstration pédagogique").
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Tracfin déclaration de soupçon
+              </strong>{" "}
+              : bouton &quot;Générer brouillon DS&quot; dans la fiche fournisseur
+              (annoté &quot;démonstration pédagogique&quot;).
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileCheck2 size={18} /> Sapin 2 — art. 17
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Due diligence tiers</strong> : croisement automatique
-              SIREN/SIRET avec DECP + RBE. Détection structures opaques,
-              nationalités à haut risque.
+        {/* Sapin 2 */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>Sapin 2 — art. 17</h2>
+            </div>
+            <span className="glyph">✓</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Due diligence tiers</strong>{" "}
+              : croisement automatique SIREN/SIRET avec DECP + RBE. Détection
+              structures opaques, nationalités à haut risque.
             </p>
-            <p>
-              <strong>Cartographie risques</strong> : scoring 0-100 par
-              fournisseur, waterfall des contributions sur{" "}
-              <Link className="text-[#1f3a6e] hover:underline" href="/score">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Cartographie risques</strong>{" "}
+              : scoring 0-100 par fournisseur, waterfall des contributions sur{" "}
+              <Link className="fx-link" href="/score">
                 /score
               </Link>
               .
             </p>
-            <p>
-              <strong>Plan de prévention</strong> : audit trail Ed25519
-              recevable comme preuve de diligence (Cour des comptes 2024).
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>Plan de prévention</strong>{" "}
+              : audit trail Ed25519 recevable comme preuve de diligence (Cour des
+              comptes 2024).
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock size={18} /> ANSSI RGS B1/B2 — Ed25519
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Signatures cryptographiques</strong> : audit log signé
-              Ed25519 (RFC 8032) — non-répudiation, intégrité, vérifiabilité
-              externe.
+        {/* ANSSI */}
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <div>
+              <h2>ANSSI RGS B1/B2 — Ed25519</h2>
+            </div>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Signatures cryptographiques
+              </strong>{" "}
+              : audit log signé Ed25519 (RFC 8032) — non-répudiation, intégrité,
+              vérifiabilité externe.
             </p>
-            <p>
-              <strong>Clé publique exposée</strong> :{" "}
-              <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Clé publique exposée
+              </strong>{" "}
+              :{" "}
+              <code
+                className="fx-mono"
+                style={{
+                  background: "var(--panel-2)",
+                  border: "1px solid var(--border)",
+                  padding: "1px 5px",
+                  fontSize: 11,
+                }}
+              >
                 GET /security/public-key
               </code>{" "}
               — vérification indépendante par CAC, ACPR, magistrat.
             </p>
-            <p>
-              <strong>Conformité eIDAS 2024/1183</strong> : signatures
-              électroniques avancées.
+            <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+              <strong style={{ color: "var(--fg)" }}>
+                Conformité eIDAS 2024/1183
+              </strong>{" "}
+              : signatures électroniques avancées.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>📚 Documents de conformité</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <table className="w-full text-sm">
+      {/* Documents de conformité */}
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <div>
+            <h2>Documents de conformité</h2>
+          </div>
+          <span className="glyph">▦</span>
+        </div>
+        <div className="fx-table-wrap">
+          <table className="fx-table">
             <thead>
-              <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                <th className="py-2">Document</th>
-                <th className="py-2">Référence</th>
-                <th className="py-2">Lien</th>
+              <tr>
+                <th>Document</th>
+                <th>Référence</th>
+                <th>Lien</th>
               </tr>
             </thead>
-            <tbody className="text-xs">
+            <tbody>
               {[
                 [
                   "DPIA (Analyse d'impact RGPD)",
@@ -264,47 +355,79 @@ export default function GovernancePage() {
                   "docs/sources_de_donnees.md",
                 ],
               ].map(([doc, ref, link]) => (
-                <tr key={doc} className="border-b border-[#e1e5ee]">
-                  <td className="py-2 font-medium">{doc}</td>
-                  <td className="py-2">{ref}</td>
-                  <td className="py-2">
+                <tr key={doc}>
+                  <td className="key">{doc}</td>
+                  <td style={{ color: "var(--muted)" }}>{ref}</td>
+                  <td>
                     <a
-                      className="font-mono text-[#1f3a6e] hover:underline"
+                      className="fx-link"
                       href={`https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/${link}`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {link}
+                      {link} ↗
                     </a>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>♿ Accessibilité RGAA 4.1 (partielle)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-[#5a6478]">
-          <p>
-            <strong>Contrastes</strong> : navy <code>#1f3a6e</code> sur blanc
-            = 8.59:1 ✅, gold <code>#e5a93a</code> sur navy = 7.21:1 ✅
-            (cible WCAG AA ≥ 4.5:1).
+      {/* Accessibilité */}
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <div>
+            <h2>Accessibilité RGAA 4.1 (partielle)</h2>
+          </div>
+          <span className="glyph">◫</span>
+        </div>
+        <div className="fx-panel-body space-y-3">
+          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <strong style={{ color: "var(--fg)" }}>Contrastes</strong> : navy{" "}
+            <code
+              className="fx-mono"
+              style={{
+                background: "var(--panel-2)",
+                border: "1px solid var(--border)",
+                padding: "1px 5px",
+                fontSize: 11,
+              }}
+            >
+              #1f3a6e
+            </code>{" "}
+            sur blanc = 8.59:1{" "}
+            <span style={{ color: "var(--verified)" }}>✓</span>, gold{" "}
+            <code
+              className="fx-mono"
+              style={{
+                background: "var(--panel-2)",
+                border: "1px solid var(--border)",
+                padding: "1px 5px",
+                fontSize: 11,
+              }}
+            >
+              #e5a93a
+            </code>{" "}
+            sur navy = 7.21:1{" "}
+            <span style={{ color: "var(--verified)" }}>✓</span> (cible WCAG AA
+            ≥ 4.5:1).
           </p>
-          <p>
-            <strong>Annotations graphiques</strong> : sigma.js / Recharts
-            doublés d'une vue tabulaire HTML pour lecteurs d'écran.
+          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <strong style={{ color: "var(--fg)" }}>
+              Annotations graphiques
+            </strong>{" "}
+            : sigma.js / Recharts doublés d&apos;une vue tabulaire HTML pour
+            lecteurs d&apos;écran.
           </p>
-          <p>
-            <strong>Limites</strong> : composants TanStack Table partiellement
-            ARIA, à compléter pour marchés publics requérant certification
-            RGAA complète.
+          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
+            <strong style={{ color: "var(--fg)" }}>Limites</strong> : composants
+            TanStack Table partiellement ARIA, à compléter pour marchés publics
+            requérant certification RGAA complète.
           </p>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }

@@ -1,17 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Braces,
-  FileCheck2,
-  GitBranch,
-  Info,
-  Library,
-  ShieldCheck,
-  TerminalSquare,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ForensicPage } from "@/components/forensic-page";
 
 const glossary = [
   ["APP fraud", "Authorized Push Payment fraud: la victime autorise elle-même le paiement sous manipulation."],
@@ -36,109 +25,103 @@ const reasonFamilies = [
 
 export default function RiskDocsPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085]">
-            Documentation produit
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#08111f] dark:text-white">
-            Docs & glossaire du Workbench
+          <div className="fx-eyebrow">Documentation produit</div>
+          <h1 style={{ marginTop: 9 }}>
+            Docs &amp; <span className="italic">glossaire</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
-            Guide de test, API, modèle de scoring, glossaire et limites de la
-            démonstration. Cette page aide un recruteur ou un évaluateur à tester
-            l'outil sans contexte préalable.
+          <p className="sub">
+            Guide de test, API, modèle de scoring, glossaire et limites de la démonstration.
+            Cette page aide un recruteur ou un évaluateur à tester l&apos;outil sans contexte préalable.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/risk-test-lab"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white sm:w-auto"
-          >
-            Ouvrir le Test Lab
-            <ArrowRight size={15} />
+        <div className="fx-head-actions">
+          <Link href="/risk-test-lab" className="fx-btn">
+            Ouvrir le Test Lab ↗
           </Link>
-          <Link
-            href="/p2p-scenarios"
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff] sm:w-auto"
-          >
+          <Link href="/p2p-scenarios" className="fx-btn-ghost">
             Scénarios guidés
-            <ArrowRight size={15} />
           </Link>
         </div>
       </div>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-3" style={{ marginBottom: 20 }}>
         <QuickCard
           title="Tester en 3 minutes"
-          icon={TerminalSquare}
+          glyph="□"
           body="Choisir un scénario, cliquer Scorer via API, ouvrir Fraud Case 360, exporter l'evidence pack."
           href="/risk-test-lab"
         />
         <QuickCard
           title="Lire le modèle"
-          icon={BookOpen}
+          glyph="§"
           body="Comprendre score 0-100, niveaux de risque, décisions, typologies et reason codes."
           href="#model"
         />
         <QuickCard
           title="Voir les limites"
-          icon={ShieldCheck}
+          glyph="▣"
           body="Données synthétiques, décision humaine, pas de détection bancaire réelle."
           href="#limits"
         />
       </section>
 
-      <section className="mt-6 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card id="model">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GitBranch size={18} className="text-[#2f6bff]" />
-              Modèle de scoring
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-[#667085]">
-            <p>
-              Le moteur `risk-engine-demo-v1` agrège huit détecteurs déterministes.
+      <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]" style={{ marginBottom: 20 }}>
+        <div className="fx-panel" id="model">
+          <div className="fx-panel-head">
+            <h2>Modèle de scoring</h2>
+            <span className="glyph">◇</span>
+          </div>
+          <div className="fx-panel-body space-y-4">
+            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
+              Le moteur <code className="fx-mono" style={{ fontSize: 12, color: "var(--info)" }}>risk-engine-demo-v1</code> agrège huit détecteurs déterministes.
               Chaque détecteur produit un score partiel, des signaux et des reason
               codes. Le score final est borné entre 0 et 100.
             </p>
             <div className="grid gap-3 sm:grid-cols-4">
-              <Scale label="LOW" value="0-24" />
-              <Scale label="MEDIUM" value="25-49" />
-              <Scale label="HIGH" value="50-74" />
-              <Scale label="CRITICAL" value="75-100" />
+              <ScaleBox label="LOW" value="0-24" />
+              <ScaleBox label="MEDIUM" value="25-49" />
+              <ScaleBox label="HIGH" value="50-74" />
+              <ScaleBox label="CRITICAL" value="75-100" />
             </div>
-            <div className="rounded-md bg-[#08111f] p-4 text-white">
-              <div className="text-xs uppercase tracking-wider text-white/45">
-                Décisions
-              </div>
-              <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-                <span>ALLOW</span>
-                <span>MONITOR</span>
-                <span>MANUAL_REVIEW</span>
-                <span>BLOCK_RECOMMENDED</span>
+            <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "14px 16px" }}>
+              <div className="fx-eyebrow" style={{ marginBottom: 10 }}>Décisions</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {["ALLOW", "MONITOR", "MANUAL_REVIEW", "BLOCK_RECOMMENDED"].map((d) => (
+                  <span key={d} className="fx-mono" style={{ fontSize: 12, color: "var(--fg-2)" }}>{d}</span>
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Braces size={18} className="text-[#2f6bff]" />
-              API de test
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>API de test</h2>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-panel-body">
             <div className="grid gap-3">
-              <Endpoint method="POST" path="/api/risk/score" body="Score une transaction synthétique." />
-              <Endpoint method="GET" path="/api/risk/scenarios" body="Retourne les scénarios locaux ou Hugging Face." />
-              <Endpoint method="POST" path="/api/risk/cases" body="Crée un case simulé et retourne son lien." />
-              <Endpoint method="POST" path="/api/evidence/export" body="Génère JSON + HTML imprimable." />
+              <EndpointRow method="POST" path="/api/risk/score" body="Score une transaction synthétique." />
+              <EndpointRow method="GET" path="/api/risk/scenarios" body="Retourne les scénarios locaux ou Hugging Face." />
+              <EndpointRow method="POST" path="/api/risk/cases" body="Crée un case simulé et retourne son lien." />
+              <EndpointRow method="POST" path="/api/evidence/export" body="Génère JSON + HTML imprimable." />
             </div>
-            <pre className="mt-4 overflow-auto rounded-md bg-[#08111f] p-4 text-xs leading-6 text-white">
+            <pre
+              className="fx-mono"
+              style={{
+                marginTop: 16,
+                overflow: "auto",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                padding: "14px",
+                fontSize: 11,
+                lineHeight: 1.6,
+                color: "var(--fg-2)",
+              }}
+            >
 {`{
   "score": 91,
   "level": "CRITICAL",
@@ -147,61 +130,61 @@ export default function RiskDocsPage() {
   "modelVersion": "risk-engine-demo-v1"
 }`}
             </pre>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
-      <section className="mt-6 grid gap-5 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Library size={18} className="text-[#2f6bff]" />
-              Glossaire
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <section className="grid gap-5 lg:grid-cols-2" style={{ marginBottom: 20 }}>
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Glossaire</h2>
+            <span className="glyph">§</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
             {glossary.map(([term, definition]) => (
-              <div key={term} className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="font-semibold text-[#111827] dark:text-white">{term}</div>
-                <p className="mt-1 text-sm leading-6 text-[#667085]">{definition}</p>
+              <div
+                key={term}
+                style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
+              >
+                <div className="fx-mono" style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{term}</div>
+                <p style={{ marginTop: 4, fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>{definition}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileCheck2 size={18} className="text-[#2f6bff]" />
-              Familles de reason codes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Familles de reason codes</h2>
+            <span className="glyph">◫</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
             {reasonFamilies.map(([family, codes]) => (
-              <div key={family} className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
+              <div
+                key={family}
+                style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
+              >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="font-semibold text-[#111827] dark:text-white">{family}</div>
+                  <div className="fx-mono" style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{family}</div>
                   <Badge severity="neutral">demo</Badge>
                 </div>
-                <p className="mt-2 font-mono text-xs leading-6 text-[#667085]">{codes}</p>
+                <p className="fx-mono" style={{ marginTop: 6, fontSize: 11, lineHeight: 1.6, color: "var(--muted)" }}>{codes}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
-      <section className="mt-6 grid gap-5 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TerminalSquare size={18} className="text-[#2f6bff]" />
-              Tests & validation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-7 text-[#667085]">
-            <p>
-              Parcours conseillé : choisir un scénario, lancer l'analyse, ouvrir
-              Fraud Case 360, ajouter une note analyste puis exporter l'evidence pack.
+      <section className="grid gap-5 lg:grid-cols-2" style={{ marginBottom: 20 }}>
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Tests &amp; validation</h2>
+            <span className="glyph">□</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
+              Parcours conseillé : choisir un scénario, lancer l&apos;analyse, ouvrir
+              Fraud Case 360, ajouter une note analyste puis exporter l&apos;evidence pack.
             </p>
             <div className="grid gap-2">
               {[
@@ -210,103 +193,124 @@ export default function RiskDocsPage() {
                 "POST /api/evidence/export doit retourner evidencePack et printableHtml.",
                 "Les routes visibles ne doivent pas mener à une 404.",
               ].map((item) => (
-                <div key={item} className="rounded-md bg-[#f7f9fc] p-3 dark:bg-white/[0.03]">
+                <div
+                  key={item}
+                  className="fx-mono"
+                  style={{ fontSize: 11, background: "var(--bg-2)", border: "1px solid var(--border)", padding: "8px 10px", color: "var(--fg-2)", lineHeight: 1.5 }}
+                >
                   {item}
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck size={18} className="text-[#027a48]" />
-              Configuration Hugging Face / Vercel
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-7 text-[#667085]">
-            <p>
+        <div className="fx-panel">
+          <div className="fx-panel-head">
+            <h2>Configuration Hugging Face / Vercel</h2>
+            <span className="glyph">✓</span>
+          </div>
+          <div className="fx-panel-body space-y-3">
+            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
               La source Hugging Face reste optionnelle. Sans variable serveur valide,
-              l'application affiche un fallback local explicite et ne bloque pas la démo.
+              l&apos;application affiche un fallback local explicite et ne bloque pas la démo.
             </p>
-            <pre className="overflow-auto rounded-md bg-[#08111f] p-4 text-xs leading-6 text-white">
+            <pre
+              className="fx-mono"
+              style={{
+                overflow: "auto",
+                background: "var(--bg)",
+                border: "1px solid var(--border)",
+                padding: "14px",
+                fontSize: 11,
+                lineHeight: 1.6,
+                color: "var(--fg-2)",
+              }}
+            >
 {`HF_SYNTHETIC_SCENARIOS_URL=https://...
 HF_TOKEN=hf_... # uniquement si dataset privé`}
             </pre>
-            <p>
+            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
               Le token ne doit jamais être exposé au navigateur. Les datasets doivent
               rester synthétiques.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
-      <Card id="limits" className="mt-6 border-l-4 border-l-[#b42318]">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info size={18} className="text-[#b42318]" />
-            Limites et gouvernance
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 text-sm leading-7 text-[#667085] md:grid-cols-2">
-          <p>
+      <div
+        id="limits"
+        className="fx-card-accent"
+        style={{ marginBottom: 20 }}
+      >
+        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>⚠ Limites et gouvernance</div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
             Données synthétiques uniquement. Aucune donnée personnelle réelle ne
             doit être saisie dans la démo publique.
           </p>
-          <p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--fg-2)" }}>
             Pas de décision bancaire réelle, pas de certification conformité, pas
             de fingerprinting réel, pas de dark web scraping. La décision finale
             reste humaine.
           </p>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function QuickCard({
   title,
   body,
+  glyph,
   href,
-  icon: Icon,
 }: {
   title: string;
   body: string;
+  glyph: string;
   href: string;
-  icon: typeof BookOpen;
 }) {
+  const inner = (
+    <>
+      <span className="fx-mono" style={{ fontSize: 16, color: "var(--risk)" }}>{glyph}</span>
+      <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 10, fontWeight: 500 }}>{title}</div>
+      <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--muted)", marginTop: 6 }}>{body}</p>
+    </>
+  );
+  if (href.startsWith("#")) {
+    return (
+      <a href={href} className="fx-card" style={{ display: "block", textDecoration: "none" }}>
+        {inner}
+      </a>
+    );
+  }
   return (
-    <Link
-      href={href}
-      className="rounded-md border border-[#e6ebf2] bg-white p-5 shadow-sm transition-colors hover:border-[#2f6bff] dark:border-white/10 dark:bg-white/[0.04]"
-    >
-      <Icon size={20} className="text-[#2f6bff]" />
-      <div className="mt-3 font-semibold text-[#111827] dark:text-white">{title}</div>
-      <p className="mt-2 text-sm leading-6 text-[#667085]">{body}</p>
+    <Link href={href} className="fx-card" style={{ display: "block", textDecoration: "none" }}>
+      {inner}
     </Link>
   );
 }
 
-function Scale({ label, value }: { label: string; value: string }) {
+function ScaleBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="text-xs font-semibold text-[#667085]">{label}</div>
-      <div className="mt-1 font-mono text-sm font-bold text-[#111827] dark:text-white">
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}>
+      <div className="fx-eyebrow">{label}</div>
+      <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 4, fontWeight: 500 }}>
         {value}
       </div>
     </div>
   );
 }
 
-function Endpoint({ method, path, body }: { method: string; path: string; body: string }) {
+function EndpointRow({ method, path, body }: { method: string; path: string; body: string }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}>
       <div className="flex flex-wrap items-center gap-2">
         <Badge severity={method === "GET" ? "low" : "medium"}>{method}</Badge>
-        <code className="text-xs font-semibold text-[#2f6bff]">{path}</code>
+        <code className="fx-mono" style={{ fontSize: 11, color: "var(--info)" }}>{path}</code>
       </div>
-      <p className="mt-2 text-sm leading-6 text-[#667085]">{body}</p>
+      <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>{body}</p>
     </div>
   );
 }

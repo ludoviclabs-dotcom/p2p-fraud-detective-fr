@@ -16,18 +16,10 @@ import {
   writeStoredAlertCursor,
   type StreamState,
 } from "@/lib/alerts-feed";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
-import { Bell, Activity } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useLocale } from "@/components/locale-provider";
-
-const SEVERITY_BG: Record<string, string> = {
-  critical: "border-l-4 border-l-[#a23e48]",
-  high: "border-l-4 border-l-[#c97b1f]",
-  medium: "border-l-4 border-l-[#e5a93a]",
-  low: "border-l-4 border-l-[#3e7c5a]",
-};
+import { ForensicPage } from "@/components/forensic-page";
 
 type StreamMessage = {
   key: string;
@@ -134,149 +126,203 @@ export default function AlertsPage() {
   const streamMessageText = streamMessage.custom ?? t(streamMessage.key);
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-          {t("alerts.kicker")}
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">{t("alerts.kicker")}</div>
+          <h1 style={{ marginTop: 9 }}>{t("alerts.title")}</h1>
+          <p className="sub">{t("alerts.description")}</p>
         </div>
-        <div className="flex items-center gap-1 text-xs text-[#5a6478]">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              streamState === "open" || query.isFetching
-                ? "animate-pulse bg-[#3e7c5a]"
-                : "bg-[#9aa3b2]"
-            }`}
-          />
-          {streamStatusLabel}
+        <div className="fx-head-actions">
+          <div
+            className="flex items-center gap-2"
+            style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)" }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background:
+                  streamState === "open" || query.isFetching
+                    ? "var(--verified)"
+                    : "var(--dim)",
+                display: "inline-block",
+              }}
+            />
+            {streamStatusLabel}
+          </div>
         </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        {t("alerts.title")}
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">{t("alerts.description")}</p>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              {t("alerts.metric_total")}
-            </div>
-            <div className="flex items-center gap-2 text-2xl font-semibold text-[#0f1b33]">
-              <Activity size={18} /> {stats.total}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              {t("alerts.metric_critical")}
-            </div>
-            <div className="flex items-center gap-2 text-2xl font-semibold text-[#a23e48]">
-              <Bell size={18} /> {stats.critical}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              {t("alerts.metric_signed")}
-            </div>
-            <div className="text-2xl font-semibold text-[#3e7c5a]">
-              {stats.signed} / {stats.total}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              {t("alerts.metric_kinds")}
-            </div>
-            <div className="text-2xl font-semibold text-[#0f1b33]">
-              {stats.kinds.size}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-5 grid gap-4 md:grid-cols-4">
+        <div className="fx-stat info">
+          <div className="fx-stat-top">
+            <span className="glyph">∿</span>
+          </div>
+          <div className="lbl">{t("alerts.metric_total")}</div>
+          <div className="val">{stats.total}</div>
+        </div>
+        <div className="fx-stat risk">
+          <div className="fx-stat-top">
+            <span className="glyph">▲</span>
+          </div>
+          <div className="lbl">{t("alerts.metric_critical")}</div>
+          <div className="val">{stats.critical}</div>
+        </div>
+        <div className="fx-stat ok">
+          <div className="fx-stat-top">
+            <span className="glyph">✓</span>
+          </div>
+          <div className="lbl">{t("alerts.metric_signed")}</div>
+          <div className="val">
+            {stats.signed} / {stats.total}
+          </div>
+        </div>
+        <div className="fx-stat">
+          <div className="fx-stat-top">
+            <span className="glyph">◇</span>
+          </div>
+          <div className="lbl">{t("alerts.metric_kinds")}</div>
+          <div className="val">{stats.kinds.size}</div>
+        </div>
       </div>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>{t("alerts.channels_title")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <table data-testid="alerts-channel-table" className="w-full text-sm">
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>{t("alerts.channels_title")}</h2>
+          <span className="glyph">◷</span>
+        </div>
+        <div className="fx-table-wrap">
+          <table data-testid="alerts-channel-table" className="fx-table">
             <thead>
-              <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                <th className="py-2">{t("alerts.channel")}</th>
-                <th className="py-2">{t("alerts.status")}</th>
-                <th className="py-2">{t("alerts.target")}</th>
+              <tr>
+                <th>{t("alerts.channel")}</th>
+                <th>{t("alerts.status")}</th>
+                <th>{t("alerts.target")}</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">Slack Webhook</td>
-                <td className="py-2 text-xs">
-                  {t("alerts.configurable_via")}{" "}
-                  <code className="rounded bg-[#f4f6fa] px-1 py-0.5">
-                    SLACK_WEBHOOK_URL
-                  </code>
+              <tr>
+                <td className="key">Slack Webhook</td>
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11 }}>
+                    {t("alerts.configurable_via")}{" "}
+                    <code
+                      style={{
+                        background: "var(--panel-2)",
+                        border: "1px solid var(--border)",
+                        padding: "1px 5px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                      }}
+                    >
+                      SLACK_WEBHOOK_URL
+                    </code>
+                  </span>
                 </td>
-                <td className="py-2 text-xs text-[#5a6478]">
-                  {t("alerts.slack_target")}
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                    {t("alerts.slack_target")}
+                  </span>
                 </td>
               </tr>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">Microsoft Teams</td>
-                <td className="py-2 text-xs">
-                  {t("alerts.configurable_via")}{" "}
-                  <code className="rounded bg-[#f4f6fa] px-1 py-0.5">
-                    TEAMS_WEBHOOK_URL
-                  </code>
+              <tr>
+                <td className="key">Microsoft Teams</td>
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11 }}>
+                    {t("alerts.configurable_via")}{" "}
+                    <code
+                      style={{
+                        background: "var(--panel-2)",
+                        border: "1px solid var(--border)",
+                        padding: "1px 5px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                      }}
+                    >
+                      TEAMS_WEBHOOK_URL
+                    </code>
+                  </span>
                 </td>
-                <td className="py-2 text-xs text-[#5a6478]">
-                  {t("alerts.teams_target")}
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                    {t("alerts.teams_target")}
+                  </span>
                 </td>
               </tr>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">Webhook B2B CloudEvents</td>
-                <td className="py-2 text-xs">
-                  {t("alerts.hmac_signed_via")}{" "}
-                  <code className="rounded bg-[#f4f6fa] px-1 py-0.5">
-                    WEBHOOK_URL
-                  </code>
+              <tr>
+                <td className="key">Webhook B2B CloudEvents</td>
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11 }}>
+                    {t("alerts.hmac_signed_via")}{" "}
+                    <code
+                      style={{
+                        background: "var(--panel-2)",
+                        border: "1px solid var(--border)",
+                        padding: "1px 5px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                      }}
+                    >
+                      WEBHOOK_URL
+                    </code>
+                  </span>
                 </td>
-                <td className="py-2 text-xs text-[#5a6478]">
-                  {t("alerts.webhook_target")}
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                    {t("alerts.webhook_target")}
+                  </span>
                 </td>
               </tr>
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("alerts.feed_title")}</CardTitle>
-        </CardHeader>
-        <div className="p-4">
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>{t("alerts.feed_title")}</h2>
+          <span className="glyph">∿</span>
+        </div>
+        <div className="fx-panel-body">
           <div
             data-testid="alerts-stream-message"
-            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-[#f4f6fa] px-3 py-2 text-xs text-[#5a6478]"
+            className="mb-4 flex flex-wrap items-center justify-between gap-3"
+            style={{
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
+              padding: "10px 14px",
+            }}
           >
-            <span>{streamMessageText}</span>
-            <span data-testid="alerts-cursor" className="font-mono">
+            <span
+              className="fx-mono"
+              style={{ fontSize: 11, color: "var(--fg-2)" }}
+            >
+              {streamMessageText}
+            </span>
+            <span
+              data-testid="alerts-cursor"
+              className="fx-mono"
+              style={{ fontSize: 11, color: "var(--muted)" }}
+            >
               {t("alerts.cursor")}: {lastCursor}
             </span>
           </div>
           {streamState !== "open" && query.isLoading ? (
-            <div className="text-sm text-[#5a6478]">{t("alerts.connecting")}</div>
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              {t("alerts.connecting")}
+            </span>
           ) : !events.length ? (
-            <div className="text-sm text-[#5a6478]">{t("alerts.empty")}</div>
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              {t("alerts.empty")}
+            </span>
           ) : (
             <EventFeed events={events} t={t} />
           )}
         </div>
-      </Card>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
@@ -291,37 +337,73 @@ function EventFeed({
     <ul className="space-y-2">
       {events.map((event) => {
         const sev = (event.payload?.severity as string) ?? "";
-        const sevClass = SEVERITY_BG[sev] ?? "border-l-4 border-l-[#9aa3b2]";
+        const borderColor =
+          sev === "critical"
+            ? "var(--risk)"
+            : sev === "high"
+              ? "var(--warn)"
+              : sev === "medium"
+                ? "var(--warn)"
+                : sev === "low"
+                  ? "var(--verified)"
+                  : "var(--border-strong)";
         return (
           <li
             key={event.seq}
-            className={`flex items-start justify-between gap-3 rounded bg-[#f9fafc] px-3 py-2 ${sevClass}`}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              background: "var(--panel-2)",
+              borderLeft: `3px solid ${borderColor}`,
+              padding: "10px 14px",
+            }}
           >
-            <div className="flex-1">
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div className="flex items-baseline gap-2">
-                <span className="font-mono text-xs text-[#1f3a6e]">
+                <span
+                  className="fx-mono"
+                  style={{ fontSize: 12, color: "var(--fg)" }}
+                >
                   {event.kind}
                 </span>
                 {sev ? <SeverityBadge value={sev} /> : null}
               </div>
-              <div className="mt-0.5 text-xs text-[#5a6478]">
+              <div
+                className="fx-mono"
+                style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}
+              >
                 {t("alerts.by_actor")}{" "}
-                <strong className="text-[#0f1b33]">{event.actor}</strong>
+                <strong style={{ color: "var(--fg)" }}>{event.actor}</strong>
                 {event.payload?.case_id ? (
                   <>
                     {" "}
                     - {t("alerts.case")}{" "}
-                    <span className="font-mono text-[#1f3a6e]">
+                    <span style={{ color: "var(--info)" }}>
                       {String(event.payload.case_id).slice(0, 16)}
                     </span>
                   </>
                 ) : null}
               </div>
             </div>
-            <div className="flex flex-col items-end text-xs text-[#5a6478]">
-              <span>{formatDate(event.at)}</span>
+            <div
+              className="flex flex-col items-end"
+              style={{ flexShrink: 0 }}
+            >
+              <span
+                className="fx-mono"
+                style={{ fontSize: 11, color: "var(--muted)" }}
+              >
+                {formatDate(event.at)}
+              </span>
               {event.signature ? (
-                <span className="text-[#3e7c5a]">{t("alerts.ed25519")}</span>
+                <span
+                  className="fx-mono"
+                  style={{ fontSize: 10, color: "var(--verified)" }}
+                >
+                  {t("alerts.ed25519")}
+                </span>
               ) : null}
             </div>
           </li>

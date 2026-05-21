@@ -2,11 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { listFindings, type FindingOut } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatDate, formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function FindingsPage() {
   const [severity, setSeverity] = useState("");
@@ -38,96 +39,146 @@ export default function FindingsPage() {
   }, [query.data, search]);
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Détection
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Détection</div>
+          <h1 style={{ marginTop: 9 }}>
+            Findings
+          </h1>
+          <p className="sub">
+            Vue paginée des findings agrégés depuis les cases. Filtres rule_id / severity +
+            recherche signal/vendor.
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Findings
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Vue paginée des findings agrégés depuis les cases. Filtres rule_id /
-        severity + recherche signal/vendor.
-      </p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <div>
-            <label htmlFor="findings-severity-filter" className="mb-1 block text-xs text-[#5a6478]">Sévérité</label>
-            <select
-              id="findings-severity-filter"
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
-              className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
-            >
-              <option value="">Toutes</option>
-              <option value="critical">CRITICAL</option>
-              <option value="high">HIGH</option>
-              <option value="medium">MEDIUM</option>
-              <option value="low">LOW</option>
-            </select>
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Filtres</h2>
+          <span className="glyph">◇</span>
+        </div>
+        <div className="fx-panel-body">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div>
+              <label
+                htmlFor="findings-severity-filter"
+                className="fx-eyebrow"
+                style={{ display: "block", marginBottom: 6 }}
+              >
+                Sévérité
+              </label>
+              <select
+                id="findings-severity-filter"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+                style={{
+                  height: 38,
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  padding: "0 12px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--fg)",
+                  outline: "none",
+                }}
+              >
+                <option value="">Toutes</option>
+                <option value="critical">CRITICAL</option>
+                <option value="high">HIGH</option>
+                <option value="medium">MEDIUM</option>
+                <option value="low">LOW</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="findings-rule-filter"
+                className="fx-eyebrow"
+                style={{ display: "block", marginBottom: 6 }}
+              >
+                Rule ID
+              </label>
+              <Input
+                id="findings-rule-filter"
+                placeholder="ex. SANCTION_MATCH"
+                value={ruleId}
+                onChange={(e) => setRuleId(e.target.value)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="findings-free-search"
+                className="fx-eyebrow"
+                style={{ display: "block", marginBottom: 6 }}
+              >
+                Recherche libre
+              </label>
+              <Input
+                id="findings-free-search"
+                placeholder="signal, invoice_id, vendor_id"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="findings-rule-filter" className="mb-1 block text-xs text-[#5a6478]">Rule ID</label>
-            <Input
-              id="findings-rule-filter"
-              placeholder="ex. SANCTION_MATCH"
-              value={ruleId}
-              onChange={(e) => setRuleId(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="findings-free-search" className="mb-1 block text-xs text-[#5a6478]">
-              Recherche libre
-            </label>
-            <Input
-              id="findings-free-search"
-              placeholder="signal, invoice_id, vendor_id"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <div className="overflow-x-auto">
+      <div className="fx-panel">
+        <div className="fx-table-wrap">
           {query.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
+            <div className="fx-panel-body">
+              <div className="fx-skel" style={{ height: 200 }} />
+            </div>
           ) : query.error ? (
-            <div className="p-4 text-sm text-[#a23e48]">
-              API indisponible : {(query.error as Error).message}
+            <div className="fx-panel-body">
+              <div className="fx-notice">
+                <span className="glyph">⚠</span>
+                <div>
+                  <div className="nt">API indisponible</div>
+                  <p className="nb">{(query.error as Error).message}</p>
+                </div>
+              </div>
             </div>
           ) : (
             <FindingsTable rows={rows} />
           )}
         </div>
-        <CardContent className="text-xs text-[#5a6478]">
-          {rows.length} finding(s) affichés
-        </CardContent>
-      </Card>
-    </div>
+        <div
+          className="fx-panel-body"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+            {rows.length} finding(s) affichés
+          </span>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function FindingsTable({ rows }: { rows: FindingOut[] }) {
   if (!rows.length) {
-    return <div className="p-4 text-sm text-[#5a6478]">Aucun finding.</div>;
+    return (
+      <div className="fx-panel-body">
+        <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+          Aucun finding.
+        </span>
+      </div>
+    );
   }
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
+    <table className="fx-table">
+      <thead>
         <tr>
-          <th className="px-3 py-2 text-left">Invoice ID</th>
-          <th className="px-3 py-2 text-left">Rule</th>
-          <th className="px-3 py-2 text-left">Sévérité</th>
-          <th className="px-3 py-2 text-left">Signal</th>
-          <th className="px-3 py-2 text-left">Vendor</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
-          <th className="px-3 py-2 text-left">Détecté</th>
+          <th>Invoice ID</th>
+          <th>Rule</th>
+          <th>Sévérité</th>
+          <th>Signal</th>
+          <th>Vendor</th>
+          <th className="num">Exposition</th>
+          <th>Détecté</th>
         </tr>
       </thead>
       <tbody>
@@ -135,31 +186,30 @@ function FindingsTable({ rows }: { rows: FindingOut[] }) {
           const vendorId = f.evidence?.vendor_id as string | undefined;
           const exposure = f.evidence?.exposure_eur as number | undefined;
           return (
-            <tr
-              key={`${f.invoice_id}-${f.rule_id}`}
-              className="border-t border-[#e1e5ee] hover:bg-[#f9fafc]"
-            >
-              <td className="px-3 py-2 font-mono text-xs">{f.invoice_id}</td>
-              <td className="px-3 py-2 font-mono text-xs">{f.rule_id}</td>
-              <td className="px-3 py-2">
+            <tr key={`${f.invoice_id}-${f.rule_id}`}>
+              <td className="key">{f.invoice_id}</td>
+              <td className="key">{f.rule_id}</td>
+              <td>
                 <SeverityBadge value={f.severity} />
               </td>
-              <td className="px-3 py-2">{f.signal}</td>
-              <td className="px-3 py-2">
+              <td>{f.signal}</td>
+              <td>
                 {vendorId ? (
-                  <a
+                  <Link
                     href={`/vendors/${encodeURIComponent(vendorId)}`}
-                    className="font-mono text-xs text-[#1f3a6e] hover:underline"
+                    className="fx-link"
                   >
                     {vendorId}
-                  </a>
+                  </Link>
                 ) : (
-                  <span className="text-xs text-[#9aa3b2]">—</span>
+                  <span style={{ color: "var(--dim)" }}>—</span>
                 )}
               </td>
-              <td className="px-3 py-2 text-right">{formatEur(exposure)}</td>
-              <td className="px-3 py-2 text-xs text-[#5a6478]">
-                {formatDate(f.detected_at)}
+              <td className="num">{formatEur(exposure)}</td>
+              <td>
+                <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                  {formatDate(f.detected_at)}
+                </span>
               </td>
             </tr>
           );

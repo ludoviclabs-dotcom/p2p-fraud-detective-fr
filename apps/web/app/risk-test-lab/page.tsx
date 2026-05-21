@@ -2,26 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ClipboardCheck,
-  Code2,
-  Download,
-  FileJson,
-  Loader2,
-  Play,
-  RotateCcw,
-  ShieldAlert,
-  TerminalSquare,
-} from "lucide-react";
 import { RISK_SCENARIOS } from "@/data/risk-scenarios";
 import { scoreTransaction } from "@/lib/risk/scoreEngine";
 import type { EvidencePack, P2PTransaction, RiskScenario, RiskScoreResult } from "@/types/risk";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 const FIRST_SCENARIO = RISK_SCENARIOS[0];
 
@@ -133,121 +119,108 @@ export default function RiskTestLabPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <ForensicPage>
+      <div className="fx-head">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667085]">
-            Console de test
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#08111f] dark:text-white">
-            Risk Test Lab
+          <div className="fx-eyebrow">Console de test</div>
+          <h1 style={{ marginTop: 9 }}>
+            Risk <span className="italic">Test Lab</span>
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#667085]">
-            Testez le moteur avec un scénario, modifiez le JSON, appelez l'API,
+          <p className="sub">
+            Testez le moteur avec un scénario, modifiez le JSON, appelez l&apos;API,
             créez un case et générez un evidence pack. Tout reste synthétique.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/risk-docs"
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-[#2f6bff] bg-white px-4 text-sm font-semibold text-[#2f6bff]"
-          >
-            Documentation & glossaire
-            <ArrowRight size={15} />
+        <div className="fx-head-actions">
+          <Link href="/risk-docs" className="fx-btn-ghost">
+            Documentation &amp; glossaire
           </Link>
-          <Link
-            href="/p2p-scenarios"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-[#2f6bff] px-4 text-sm font-semibold text-white"
-          >
-            Scénarios guidés
-            <ArrowRight size={15} />
+          <Link href="/p2p-scenarios" className="fx-btn">
+            Scénarios guidés ↗
           </Link>
         </div>
       </div>
 
-      <section className="mt-6 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-5">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck size={18} className="text-[#2f6bff]" />
-                Choisir un scénario de départ
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Choisir un scénario</h2>
+              <span className="glyph">◇</span>
+            </div>
+            <div className="fx-panel-body space-y-2">
               {RISK_SCENARIOS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => loadScenario(item)}
-                  className={`rounded-md border p-3 text-left transition-colors ${
-                    scenario.id === item.id
-                      ? "border-[#2f6bff] bg-[#eaf1ff]"
-                      : "border-[#e6ebf2] bg-white hover:border-[#2f6bff] dark:border-white/10 dark:bg-white/[0.04]"
-                  }`}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    background: scenario.id === item.id ? "var(--panel-2)" : "var(--bg-2)",
+                    border: `1px solid ${scenario.id === item.id ? "var(--risk)" : "var(--border)"}`,
+                    borderLeft: scenario.id === item.id ? "2px solid var(--risk)" : "2px solid transparent",
+                    padding: "10px 12px",
+                    cursor: "pointer",
+                    transition: "all .15s",
+                  }}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="font-semibold text-[#111827] dark:text-white">
+                      <div className="fx-mono" style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>
                         {item.title}
                       </div>
-                      <div className="mt-1 text-xs text-[#667085]">
-                        {item.caseId} · {formatEur(item.transaction.amount)} ·{" "}
-                        {item.transaction.rail}
+                      <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>
+                        {item.caseId} · {formatEur(item.transaction.amount)} · {item.transaction.rail}
                       </div>
                     </div>
                     <Badge>Demo</Badge>
                   </div>
                 </button>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TerminalSquare size={18} className="text-[#2f6bff]" />
-                Actions de test
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              <Button type="button" onClick={runScore} disabled={pending !== null}>
-                {pending === "score" ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
-                Scorer via API
-              </Button>
-              <Button type="button" variant="secondary" onClick={createCase} disabled={pending !== null}>
-                <ShieldAlert size={15} />
-                Créer Fraud Case 360
-              </Button>
-              <Button type="button" variant="outline" onClick={exportEvidence} disabled={pending !== null}>
-                {pending === "evidence" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-                Générer evidence pack
-              </Button>
-              <Button
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Actions de test</h2>
+              <span className="glyph">□</span>
+            </div>
+            <div className="fx-panel-body grid gap-3 sm:grid-cols-2">
+              <button type="button" className="fx-btn sm" onClick={runScore} disabled={pending !== null}>
+                {pending === "score" ? "⏳ Scoring…" : "▶ Scorer via API"}
+              </button>
+              <button type="button" className="fx-btn-ghost sm" onClick={createCase} disabled={pending !== null}>
+                ▲ Créer Fraud Case 360
+              </button>
+              <button type="button" className="fx-btn-ghost sm" onClick={exportEvidence} disabled={pending !== null}>
+                {pending === "evidence" ? "⏳ Export…" : "↓ Générer evidence pack"}
+              </button>
+              <button
                 type="button"
-                variant="outline"
+                className="fx-btn-ghost sm"
                 onClick={() => loadScenario(scenario)}
                 disabled={pending !== null}
               >
-                <RotateCcw size={15} />
-                Réinitialiser JSON
-              </Button>
-            </CardContent>
-          </Card>
+                ↻ Réinitialiser JSON
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-5">
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Code2 size={18} className="text-[#2f6bff]" />
-                <label htmlFor="risk-lab-transaction-json">
-                  Transaction JSON éditable
-                </label>
-              </CardTitle>
-              <Badge severity="neutral">POST /api/risk/score</Badge>
-            </CardHeader>
-            <CardContent>
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <div>
+                <h2>
+                  <label htmlFor="risk-lab-transaction-json">Transaction JSON éditable</label>
+                </h2>
+                <div className="sub">POST /api/risk/score</div>
+              </div>
+              <Badge severity="neutral">POST</Badge>
+            </div>
+            <div className="fx-panel-body">
               <textarea
                 id="risk-lab-transaction-json"
                 value={jsonInput}
@@ -255,94 +228,123 @@ export default function RiskTestLabPage() {
                 rows={18}
                 spellCheck={false}
                 aria-describedby={error ? "risk-lab-json-error" : "risk-lab-json-help"}
-                className="w-full rounded-md border border-[#e6ebf2] bg-[#08111f] p-4 font-mono text-xs leading-6 text-white outline-none focus:border-[#2f6bff] dark:border-white/10"
+                style={{
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  padding: "14px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  color: "var(--fg)",
+                  outline: "none",
+                  resize: "vertical",
+                }}
               />
-              <p id="risk-lab-json-help" className="mt-2 text-xs leading-5 text-[#667085]">
+              <p id="risk-lab-json-help" className="fx-mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
                 Utilisez uniquement des données synthétiques. Le JSON est envoyé à /api/risk/score.
               </p>
               {error ? (
-                <div id="risk-lab-json-error" role="alert" className="mt-3 rounded-md border border-[#fff0f1] bg-[#fff0f1] p-3 text-sm text-[#b42318]">
-                  {error}
+                <div
+                  id="risk-lab-json-error"
+                  role="alert"
+                  style={{
+                    marginTop: 10,
+                    background: "var(--risk-soft)",
+                    border: "1px solid var(--risk)",
+                    borderLeft: "2px solid var(--risk)",
+                    padding: "10px 12px",
+                  }}
+                >
+                  <span className="fx-mono" style={{ fontSize: 12, color: "var(--risk)" }}>{error}</span>
                 </div>
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {result ? <ScoreResultPanel result={result} /> : null}
           {evidencePack ? <EvidenceResultPanel evidencePack={evidencePack} /> : null}
         </div>
       </section>
-    </div>
+    </ForensicPage>
   );
 }
 
 function ScoreResultPanel({ result }: { result: RiskScoreResult }) {
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <CheckCircle2 size={18} className="text-[#027a48]" />
-          Résultat moteur
-        </CardTitle>
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div>
+          <div className="fx-eyebrow">✓ Résultat moteur</div>
+          <h2 style={{ marginTop: 3 }}>Score &amp; décision</h2>
+        </div>
         <SeverityBadge value={result.level} />
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      <div className="fx-panel-body space-y-4">
         <div className="grid gap-3 sm:grid-cols-4">
-          <Fact label="Score" value={`${result.score}/100`} />
-          <Fact label="Décision" value={result.decision} />
-          <Fact label="Typologie" value={result.typology} />
-          <Fact label="Version" value={result.modelVersion} />
+          <FactBox label="Score" value={`${result.score}/100`} />
+          <FactBox label="Décision" value={result.decision} />
+          <FactBox label="Typologie" value={result.typology} />
+          <FactBox label="Version" value={result.modelVersion} />
         </div>
         <div className="grid gap-2">
           {result.reasonCodes.slice(0, 10).map((reasonCode) => (
             <div
               key={`${reasonCode.detector}-${reasonCode.code}`}
-              className="rounded-md border border-[#e6ebf2] bg-[#f7f9fc] p-3 dark:border-white/10 dark:bg-white/[0.03]"
+              style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}
             >
               <div className="flex items-center justify-between gap-3">
-                <code className="text-xs font-semibold text-[#2f6bff]">
+                <code className="fx-mono" style={{ fontSize: 11, color: "var(--info)" }}>
                   {reasonCode.code}
                 </code>
-                <span className="font-mono text-xs text-[#667085]">
+                <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
                   +{reasonCode.weight}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-[#111827] dark:text-white">
+              <p style={{ marginTop: 4, fontSize: 13, color: "var(--fg-2)" }}>
                 {reasonCode.label}
               </p>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function EvidenceResultPanel({ evidencePack }: { evidencePack: EvidencePack }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileJson size={18} className="text-[#2f6bff]" />
-          Evidence pack généré
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <pre className="max-h-80 overflow-auto rounded-md bg-[#08111f] p-4 text-xs leading-6 text-white">
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <h2>Evidence pack généré</h2>
+        <span className="glyph">§</span>
+      </div>
+      <div className="fx-panel-body">
+        <pre
+          className="fx-mono"
+          style={{
+            maxHeight: 320,
+            overflow: "auto",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            padding: "14px",
+            fontSize: 11,
+            lineHeight: 1.6,
+            color: "var(--fg-2)",
+          }}
+        >
           {JSON.stringify(evidencePack, null, 2)}
         </pre>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function FactBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[#e6ebf2] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
-        {label}
-      </div>
-      <div className="mt-1 truncate font-mono text-sm font-semibold text-[#111827] dark:text-white">
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "10px 12px" }}>
+      <div className="fx-eyebrow">{label}</div>
+      <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 4, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {value}
       </div>
     </div>

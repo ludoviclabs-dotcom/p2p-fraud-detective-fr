@@ -1,13 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listCases, type CaseOutV1 } from "@/lib/api-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
-import { Scale, AlertTriangle } from "lucide-react";
 import { formatEur } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function SanctionsPage() {
   const [search, setSearch] = useState("");
@@ -53,178 +53,202 @@ export default function SanctionsPage() {
   );
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Contrôles statistiques
-      </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Sanctions & PEP
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Croisement des fournisseurs avec OpenSanctions (UE consolidée, OFAC SDN,
-        Trésor FR) + listes PEP. Source live activable via `ENRICHMENT_MODE=live`
-        + `YENTE_BASE_URL` (cf. P5-1).
-      </p>
-
-      <div className="mb-4 grid gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              Cas sanctions/PEP
-            </div>
-            <div className="flex items-center gap-2 text-2xl font-semibold text-[#0f1b33]">
-              <Scale size={18} /> {sanctionsCases.length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              CRITICAL
-            </div>
-            <div className="flex items-center gap-2 text-2xl font-semibold text-[#a23e48]">
-              <AlertTriangle size={18} /> {n_critical}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              Liens PEP
-            </div>
-            <div className="text-2xl font-semibold text-[#c97b1f]">{n_pep}</div>
-            <div className="text-xs text-[#5a6478]">{n_listed} listés sanctions</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="text-xs uppercase tracking-wider text-[#5a6478]">
-              Exposition flagée
-            </div>
-            <div className="text-2xl font-semibold text-[#0f1b33]">
-              {formatEur(totalExposure)}
-            </div>
-          </CardContent>
-        </Card>
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Contrôles statistiques</div>
+          <h1 style={{ marginTop: 9 }}>
+            Sanctions <span className="italic">&amp; PEP</span>
+          </h1>
+          <p className="sub">
+            Croisement des fournisseurs avec OpenSanctions (UE consolidée, OFAC SDN, Trésor FR) +
+            listes PEP. Source live activable via{" "}
+            <span className="fx-mono" style={{ color: "var(--fg-2)" }}>
+              ENRICHMENT_MODE=live
+            </span>{" "}
+            +{" "}
+            <span className="fx-mono" style={{ color: "var(--fg-2)" }}>
+              YENTE_BASE_URL
+            </span>{" "}
+            (cf. P5-1).
+          </p>
+        </div>
       </div>
 
-      <Card className="mb-4">
-        <CardContent>
+      <div className="mb-5 grid gap-4 md:grid-cols-4">
+        <div className="fx-stat info">
+          <div className="fx-stat-top">
+            <span className="glyph">§</span>
+          </div>
+          <div className="lbl">Cas sanctions/PEP</div>
+          <div className="val">{sanctionsCases.length}</div>
+        </div>
+        <div className="fx-stat risk">
+          <div className="fx-stat-top">
+            <span className="glyph">▲</span>
+          </div>
+          <div className="lbl">CRITICAL</div>
+          <div className="val">{n_critical}</div>
+        </div>
+        <div className="fx-stat warn">
+          <div className="fx-stat-top">
+            <span className="glyph">◇</span>
+          </div>
+          <div className="lbl">Liens PEP</div>
+          <div className="val">{n_pep}</div>
+          <div
+            className="fx-mono"
+            style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}
+          >
+            {n_listed} listés sanctions
+          </div>
+        </div>
+        <div className="fx-stat">
+          <div className="fx-stat-top">
+            <span className="glyph">Σ</span>
+          </div>
+          <div className="lbl">Exposition flagée</div>
+          <div className="val">{formatEur(totalExposure)}</div>
+        </div>
+      </div>
+
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-body">
           <Input
             aria-label="Rechercher un fournisseur, une case ou un titre sanctions PEP"
             placeholder="Rechercher vendor / case / titre…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </CardContent>
-      </Card>
-
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>🚨 Cas flagués sanctions / PEP</CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          {query.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-          ) : !filteredCases.length ? (
-            <div className="p-4 text-sm text-[#5a6478]">
-              Aucun cas sanctions/PEP. Lancer le détecteur côté Streamlit
-              (page Sanctions &amp; PEP legacy) pour alimenter cette vue.
-            </div>
-          ) : (
-            <CasesTable rows={filteredCases} />
-          )}
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>📡 Sources actives</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm">
-          <table className="w-full">
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Cas flagués sanctions / PEP</h2>
+          <span className="glyph">▲</span>
+        </div>
+        {query.isLoading ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              Chargement…
+            </span>
+          </div>
+        ) : !filteredCases.length ? (
+          <div className="fx-panel-body">
+            <div className="fx-notice">
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">Aucun cas sanctions/PEP</div>
+                <p className="nb">
+                  Lancer le détecteur côté Streamlit (page Sanctions &amp; PEP legacy) pour
+                  alimenter cette vue.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <CasesTable rows={filteredCases} />
+        )}
+      </div>
+
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>Sources actives</h2>
+          <span className="glyph">◷</span>
+        </div>
+        <div className="fx-table-wrap">
+          <table className="fx-table">
             <thead>
-              <tr className="border-b border-[#e1e5ee] text-left text-xs text-[#5a6478]">
-                <th className="py-2">Source</th>
-                <th className="py-2">URL</th>
-                <th className="py-2">Licence</th>
+              <tr>
+                <th>Source</th>
+                <th>URL</th>
+                <th>Licence</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">OpenSanctions Yente</td>
-                <td className="py-2 font-mono text-xs">
+              <tr>
+                <td className="key">OpenSanctions Yente</td>
+                <td className="fx-mono" style={{ fontSize: 11 }}>
                   api.opensanctions.org/match/sanctions
                 </td>
-                <td className="py-2 text-xs">CC-BY 4.0</td>
-              </tr>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">UE consolidée</td>
-                <td className="py-2 font-mono text-xs">via Yente</td>
-                <td className="py-2 text-xs">EU Open Data</td>
-              </tr>
-              <tr className="border-b border-[#e1e5ee]">
-                <td className="py-2 font-medium">OFAC SDN</td>
-                <td className="py-2 font-mono text-xs">via Yente</td>
-                <td className="py-2 text-xs">US Public Domain</td>
+                <td>CC-BY 4.0</td>
               </tr>
               <tr>
-                <td className="py-2 font-medium">Snapshot local CSV</td>
-                <td className="py-2 font-mono text-xs">
+                <td className="key">UE consolidée</td>
+                <td className="fx-mono" style={{ fontSize: 11 }}>
+                  via Yente
+                </td>
+                <td>EU Open Data</td>
+              </tr>
+              <tr>
+                <td className="key">OFAC SDN</td>
+                <td className="fx-mono" style={{ fontSize: 11 }}>
+                  via Yente
+                </td>
+                <td>US Public Domain</td>
+              </tr>
+              <tr>
+                <td className="key">Snapshot local CSV</td>
+                <td className="fx-mono" style={{ fontSize: 11 }}>
                   data/sanctions/snapshot_*.csv
                 </td>
-                <td className="py-2 text-xs">fallback démo</td>
+                <td>fallback démo</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div className="fx-panel-body">
           <a
             href="https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/docs/sources_de_donnees.md"
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-flex h-8 items-center gap-1 rounded-md border border-[#e1e5ee] bg-white px-3 text-xs font-medium text-[#5a6478] transition-colors hover:border-[#1f3a6e] hover:text-[#1f3a6e]"
+            className="fx-btn-ghost sm"
           >
-            📚 Voir docs/sources_de_donnees.md
+            § Voir docs/sources_de_donnees.md ↗
           </a>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }
 
 function CasesTable({ rows }: { rows: CaseOutV1[] }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
-        <tr>
-          <th className="px-3 py-2 text-left">Vendor</th>
-          <th className="px-3 py-2 text-left">Titre</th>
-          <th className="px-3 py-2 text-left">Sévérité</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((c) => (
-          <tr key={c.case_id} className="border-t border-[#e1e5ee]">
-            <td className="px-3 py-2">
-              {c.vendor_id ? (
-                <a
-                  href={`/vendors/${encodeURIComponent(c.vendor_id)}`}
-                  className="font-mono text-xs text-[#1f3a6e] hover:underline"
-                >
-                  {c.vendor_id}
-                </a>
-              ) : (
-                <span className="text-xs text-[#9aa3b2]">—</span>
-              )}
-            </td>
-            <td className="px-3 py-2">{c.title}</td>
-            <td className="px-3 py-2">
-              <SeverityBadge value={c.severity} />
-            </td>
-            <td className="px-3 py-2 text-right">{formatEur(c.exposure_eur)}</td>
+    <div className="fx-table-wrap">
+      <table className="fx-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Titre</th>
+            <th>Sévérité</th>
+            <th className="num">Exposition</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.case_id}>
+              <td>
+                {c.vendor_id ? (
+                  <Link
+                    href={`/vendors/${encodeURIComponent(c.vendor_id)}`}
+                    className="fx-link"
+                  >
+                    {c.vendor_id}
+                  </Link>
+                ) : (
+                  <span style={{ color: "var(--dim)" }}>—</span>
+                )}
+              </td>
+              <td>{c.title}</td>
+              <td>
+                <SeverityBadge value={c.severity} />
+              </td>
+              <td className="num">{formatEur(c.exposure_eur)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

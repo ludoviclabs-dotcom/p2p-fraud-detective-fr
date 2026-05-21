@@ -9,10 +9,10 @@ import {
   type CaseOutV1,
 } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEur, formatDate } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Nouveau",
@@ -97,79 +97,99 @@ export default function CasesPage() {
   };
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Pilotage
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Pilotage</div>
+          <h1 style={{ marginTop: 9 }}>
+            File d&apos;<span className="italic">investigation</span>
+          </h1>
+          <p className="sub">
+            Case management + audit log immutable. Sélection multiple + actions groupées.
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        File d'investigation
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Case management + audit log immutable. Sélection multiple + actions
-        groupées.
-      </p>
 
       {/* Filtres */}
-      <Card className="mb-4">
-        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div>
-            <label htmlFor="cases-severity-filter" className="mb-1 block text-xs font-medium text-[#5a6478]">
-              Sévérité
-            </label>
-            <select
-              id="cases-severity-filter"
-              data-testid="cases-severity-filter"
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
-            >
-              <option value="">Toutes</option>
-              <option value="critical">CRITICAL</option>
-              <option value="high">HIGH</option>
-              <option value="medium">MEDIUM</option>
-              <option value="low">LOW</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="cases-status-filter" className="mb-1 block text-xs font-medium text-[#5a6478]">
-              Statut
-            </label>
-            <select
-              id="cases-status-filter"
-              data-testid="cases-status-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 w-full rounded-md border border-[#e1e5ee] bg-white px-3 text-sm"
-            >
-              <option value="">Tous</option>
-              <option value="new">Nouveau</option>
-              <option value="triaged">Trié</option>
-              <option value="in_progress">En cours</option>
-              <option value="escalated">Escaladé</option>
-              <option value="closed_confirmed">Clos — confirmé</option>
-              <option value="closed_rejected">Clos — rejeté</option>
-              <option value="closed_false_positive">
-                Clos — faux positif
-              </option>
-            </select>
-          </div>
-          <div className="flex items-end">
-            <div className="text-xs text-[#5a6478]">
-              {rows.length} case(s) — {selected.size} sélectionné(s)
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <h2>Filtres</h2>
+          <span className="glyph">◇</span>
+        </div>
+        <div className="fx-panel-body">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Sévérité</div>
+              <select
+                id="cases-severity-filter"
+                data-testid="cases-severity-filter"
+                value={severityFilter}
+                onChange={(e) => setSeverityFilter(e.target.value)}
+                style={{
+                  height: 38,
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  color: "var(--fg)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  padding: "0 12px",
+                  outline: "none",
+                }}
+              >
+                <option value="">Toutes</option>
+                <option value="critical">CRITICAL</option>
+                <option value="high">HIGH</option>
+                <option value="medium">MEDIUM</option>
+                <option value="low">LOW</option>
+              </select>
+            </div>
+            <div>
+              <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Statut</div>
+              <select
+                id="cases-status-filter"
+                data-testid="cases-status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  height: 38,
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  color: "var(--fg)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  padding: "0 12px",
+                  outline: "none",
+                }}
+              >
+                <option value="">Tous</option>
+                <option value="new">Nouveau</option>
+                <option value="triaged">Trié</option>
+                <option value="in_progress">En cours</option>
+                <option value="escalated">Escaladé</option>
+                <option value="closed_confirmed">Clos — confirmé</option>
+                <option value="closed_rejected">Clos — rejeté</option>
+                <option value="closed_false_positive">Clos — faux positif</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <span
+                className="fx-mono"
+                style={{ fontSize: 12, color: "var(--muted)" }}
+              >
+                {rows.length} case(s) — {selected.size} sélectionné(s)
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Bulk ops */}
       {selected.size >= 2 ? (
-        <Card data-testid="cases-bulk-panel" className="mb-4 border-l-4 border-l-[#e5a93a]">
-          <CardHeader>
-            <CardTitle>
-              🧰 Actions groupées sur {selected.size} cases
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div data-testid="cases-bulk-panel" className="fx-card-accent" style={{ marginBottom: 16 }}>
+          <div className="fx-eyebrow">▣ Actions groupées sur {selected.size} cases</div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="flex gap-2">
               <Input
                 aria-label="Assigner les cases sélectionnées à une adresse email"
@@ -181,7 +201,7 @@ export default function CasesPage() {
                 onClick={() => bulkAssignee && assignMutation.mutate(bulkAssignee)}
                 disabled={!bulkAssignee || assignMutation.isPending}
               >
-                👥 Assigner
+                Assigner
               </Button>
             </div>
             <div className="flex gap-2">
@@ -201,45 +221,61 @@ export default function CasesPage() {
                   bulkReason.trim().length < 3 || closeMutation.isPending
                 }
               >
-                ✅ Clôturer
+                Clôturer
               </Button>
             </div>
             {assignMutation.isSuccess ? (
-              <div className="text-xs text-[#3e7c5a]">
-                Assignation OK : {assignMutation.data.n_ok} ·{" "}
-                {assignMutation.data.n_errors} erreurs
+              <div
+                className="fx-mono"
+                style={{ fontSize: 12, color: "var(--verified)" }}
+              >
+                ✓ Assignation OK : {assignMutation.data.n_ok} · {assignMutation.data.n_errors} erreurs
               </div>
             ) : null}
             {closeMutation.isSuccess ? (
-              <div className="text-xs text-[#3e7c5a]">
-                Clôture OK : {closeMutation.data.n_ok} ·{" "}
-                {closeMutation.data.n_errors} erreurs
+              <div
+                className="fx-mono"
+                style={{ fontSize: 12, color: "var(--verified)" }}
+              >
+                ✓ Clôture OK : {closeMutation.data.n_ok} · {closeMutation.data.n_errors} erreurs
               </div>
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
 
       {/* Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          {casesQuery.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-          ) : casesQuery.error ? (
-            <div className="p-4 text-sm text-[#a23e48]">
-              API indisponible : {(casesQuery.error as Error).message}
-            </div>
-          ) : (
-            <CasesTable
-              rows={rows}
-              selected={selected}
-              toggle={toggle}
-              toggleAll={toggleAll}
-            />
-          )}
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <h2>Cases</h2>
+          <span className="glyph">▣</span>
         </div>
-      </Card>
-    </div>
+        {casesQuery.isLoading ? (
+          <div className="fx-panel-body">
+            <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+              Chargement…
+            </span>
+          </div>
+        ) : casesQuery.error ? (
+          <div className="fx-panel-body">
+            <div className="fx-notice">
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">API indisponible</div>
+                <p className="nb">{(casesQuery.error as Error).message}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <CasesTable
+            rows={rows}
+            selected={selected}
+            toggle={toggle}
+            toggleAll={toggleAll}
+          />
+        )}
+      </div>
+    </ForensicPage>
   );
 }
 
@@ -256,66 +292,75 @@ function CasesTable({
 }) {
   if (!rows.length) {
     return (
-      <div className="p-4 text-sm text-[#5a6478]">Aucun case enregistré.</div>
+      <div className="fx-panel-body">
+        <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+          Aucun case enregistré.
+        </span>
+      </div>
     );
   }
   return (
-    <table data-testid="cases-table" className="w-full text-sm">
-      <thead className="bg-[#f4f6fa] text-[#5a6478]">
-        <tr>
-          <th className="w-8 px-3 py-2">
-            <input
-              type="checkbox"
-              checked={selected.size === rows.length && rows.length > 0}
-              onChange={toggleAll}
-              aria-label="Tout sélectionner"
-            />
-          </th>
-          <th className="px-3 py-2 text-left">Case ID</th>
-          <th className="px-3 py-2 text-left">Titre</th>
-          <th className="px-3 py-2 text-left">Sévérité</th>
-          <th className="px-3 py-2 text-left">Statut</th>
-          <th className="px-3 py-2 text-left">Vendor</th>
-          <th className="px-3 py-2 text-right">Exposition</th>
-          <th className="px-3 py-2 text-left">Assigné</th>
-          <th className="px-3 py-2 text-left">Créé</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr
-            key={row.case_id}
-            className="border-t border-[#e1e5ee] hover:bg-[#f9fafc]"
-          >
-            <td className="px-3 py-2">
+    <div className="fx-table-wrap">
+      <table data-testid="cases-table" className="fx-table">
+        <thead>
+          <tr>
+            <th style={{ width: 32 }}>
               <input
                 type="checkbox"
-                checked={selected.has(row.case_id)}
-                onChange={() => toggle(row.case_id)}
-                aria-label={`Sélectionner ${row.case_id}`}
+                checked={selected.size === rows.length && rows.length > 0}
+                onChange={toggleAll}
+                aria-label="Tout sélectionner"
+                style={{ accentColor: "var(--risk)" }}
               />
-            </td>
-            <td className="px-3 py-2 font-mono text-xs">{row.case_id}</td>
-            <td className="px-3 py-2">{row.title}</td>
-            <td className="px-3 py-2">
-              <SeverityBadge value={row.severity} />
-            </td>
-            <td className="px-3 py-2 text-xs">
-              {STATUS_LABELS[row.status] ?? row.status}
-            </td>
-            <td className="px-3 py-2 font-mono text-xs">
-              {row.vendor_id ?? "—"}
-            </td>
-            <td className="px-3 py-2 text-right">
-              {formatEur(row.exposure_eur)}
-            </td>
-            <td className="px-3 py-2 text-xs">{row.assignee ?? "—"}</td>
-            <td className="px-3 py-2 text-xs text-[#5a6478]">
-              {formatDate(row.created_at)}
-            </td>
+            </th>
+            <th>Case ID</th>
+            <th>Titre</th>
+            <th>Sévérité</th>
+            <th>Statut</th>
+            <th>Vendor</th>
+            <th className="num">Exposition</th>
+            <th>Assigné</th>
+            <th>Créé</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.case_id}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selected.has(row.case_id)}
+                  onChange={() => toggle(row.case_id)}
+                  aria-label={`Sélectionner ${row.case_id}`}
+                  style={{ accentColor: "var(--risk)" }}
+                />
+              </td>
+              <td className="key fx-mono" style={{ fontSize: 11 }}>{row.case_id}</td>
+              <td>{row.title}</td>
+              <td>
+                <SeverityBadge value={row.severity} />
+              </td>
+              <td>
+                <span className="fx-mono" style={{ fontSize: 11 }}>
+                  {STATUS_LABELS[row.status] ?? row.status}
+                </span>
+              </td>
+              <td className="fx-mono" style={{ fontSize: 11 }}>
+                {row.vendor_id ?? <span style={{ color: "var(--dim)" }}>—</span>}
+              </td>
+              <td className="num">{formatEur(row.exposure_eur)}</td>
+              <td className="fx-mono" style={{ fontSize: 11 }}>
+                {row.assignee ?? <span style={{ color: "var(--dim)" }}>—</span>}
+              </td>
+              <td>
+                <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                  {formatDate(row.created_at)}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { Download, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -20,8 +19,6 @@ import {
   loadCaseWorkflowRecord,
   saveCaseWorkflowRecord,
 } from "@/lib/case-workflow-bridge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatEuro } from "@/lib/p2p-demo-format";
 
 function downloadText(filename: string, content: string, type: string) {
@@ -35,6 +32,32 @@ function downloadText(filename: string, content: string, type: string) {
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
 }
+
+const selectStyle: React.CSSProperties = {
+  height: 38,
+  width: "100%",
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
+  padding: "0 12px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--fg)",
+  outline: "none",
+};
+
+const textareaStyle: React.CSSProperties = {
+  width: "100%",
+  minHeight: 112,
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
+  padding: "10px 12px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--fg)",
+  lineHeight: 1.6,
+  outline: "none",
+  resize: "vertical",
+};
 
 export function CaseWorkflowPanel({
   context,
@@ -91,6 +114,7 @@ export function CaseWorkflowPanel({
       "bg-[#eef3fb] text-[#1f3a6e]",
     [record.status],
   );
+  void statusTone; // retained for logic parity
 
   const updateRecord = (
     patch: Partial<
@@ -132,38 +156,67 @@ export function CaseWorkflowPanel({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Qualification audit</CardTitle>
-          <span className={`rounded px-2 py-1 text-xs font-semibold ${statusTone}`}>
-            {getCaseStatusLabel(record.status)}
-          </span>
+    <div className="fx-panel">
+      <div className="fx-panel-head">
+        <div>
+          <h2>Qualification audit</h2>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-md border border-[#e6ebf2] bg-[#f6f7fb] p-3 text-sm">
+        <span
+          className="fx-mono"
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            border: "1px solid var(--border-strong)",
+            padding: "2px 8px",
+          }}
+        >
+          {getCaseStatusLabel(record.status)}
+        </span>
+      </div>
+
+      <div className="fx-panel-body space-y-4">
+        {/* Case identity strip */}
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--border)",
+            padding: "12px 14px",
+          }}
+        >
           <div className="flex items-start gap-2">
-            <ShieldCheck aria-hidden className="mt-0.5 h-4 w-4 text-[#1f3a6e]" />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 14, color: "var(--risk)" }}>
+              §
+            </span>
             <div>
-              <div className="font-semibold text-[#141927]">{record.invoiceId}</div>
-              <div className="mt-1 text-xs leading-5 text-[#5a6478]">
-                {record.vendorName} - {record.riskScore}/100 -{" "}
+              <div
+                className="fx-mono"
+                style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600 }}
+              >
+                {record.invoiceId}
+              </div>
+              <div
+                className="fx-mono"
+                style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}
+              >
+                {record.vendorName} &mdash; {record.riskScore}/100 &mdash;{" "}
                 {formatEuro(record.exposureEur)}
               </div>
             </div>
           </div>
         </div>
 
+        {/* Status + Decision */}
         <div className={compact ? "grid gap-3" : "grid gap-3 md:grid-cols-2"}>
-          <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#5a6478]">
-            Statut
+          <label className="grid gap-1">
+            <span className="fx-eyebrow">Statut</span>
             <select
               value={record.status}
               onChange={(event) =>
                 updateRecord({ status: event.target.value as CaseStatus })
               }
-              className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm font-normal normal-case tracking-normal text-[#141927]"
+              style={selectStyle}
             >
               {CASE_STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -173,14 +226,14 @@ export function CaseWorkflowPanel({
             </select>
           </label>
 
-          <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#5a6478]">
-            Decision
+          <label className="grid gap-1">
+            <span className="fx-eyebrow">Decision</span>
             <select
               value={record.decision}
               onChange={(event) =>
                 updateRecord({ decision: event.target.value as CaseDecision })
               }
-              className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm font-normal normal-case tracking-normal text-[#141927]"
+              style={selectStyle}
             >
               {CASE_DECISION_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -191,36 +244,40 @@ export function CaseWorkflowPanel({
           </label>
         </div>
 
-        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#5a6478]">
-          Responsable
+        {/* Assignee */}
+        <label className="grid gap-1">
+          <span className="fx-eyebrow">Responsable</span>
           <input
             value={record.assignee}
             onChange={(event) => updateRecord({ assignee: event.target.value })}
             placeholder="Equipe audit, acheteur, controle interne..."
-            className="h-10 rounded-md border border-[#e1e5ee] bg-white px-3 text-sm font-normal normal-case tracking-normal text-[#141927]"
+            className="fx-input"
           />
         </label>
 
-        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#5a6478]">
-          Note d'investigation
+        {/* Note */}
+        <label className="grid gap-1">
+          <span className="fx-eyebrow">Note d&apos;investigation</span>
           <textarea
             value={record.note}
             onChange={(event) => updateRecord({ note: event.target.value })}
             placeholder="Decision, pieces verifiees, actions attendues..."
-            className="min-h-28 rounded-md border border-[#e1e5ee] bg-white px-3 py-2 text-sm font-normal normal-case leading-6 tracking-normal text-[#141927]"
+            style={textareaStyle}
           />
         </label>
 
+        {/* Actions row */}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={saveRecord} disabled={isSaving}>
-            <Save aria-hidden className="h-4 w-4" />
-            {isSaving ? "Sauvegarde..." : "Enregistrer"}
-          </Button>
-          <Button type="button" variant="outline" onClick={exportOne}>
-            <Download aria-hidden className="h-4 w-4" />
-            CSV
-          </Button>
-          <span className="text-xs text-[#5a6478]">
+          <button type="button" onClick={saveRecord} disabled={isSaving} className="fx-btn sm">
+            ✓ {isSaving ? "Sauvegarde..." : "Enregistrer"}
+          </button>
+          <button type="button" onClick={exportOne} className="fx-btn-ghost sm">
+            ↓ CSV
+          </button>
+          <span
+            className="fx-mono"
+            style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.04em" }}
+          >
             {savedAt
               ? `Sauve le ${new Intl.DateTimeFormat("fr-FR", {
                   dateStyle: "short",
@@ -230,15 +287,19 @@ export function CaseWorkflowPanel({
           </span>
         </div>
 
+        {/* Bridge message */}
         {bridgeMessage ? (
-          <p className="text-xs leading-5 text-[#5a6478]">{bridgeMessage}</p>
+          <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.6 }}>
+            {bridgeMessage}
+          </p>
         ) : null}
 
-        <p className="text-xs leading-5 text-[#5a6478]">
-          Statut actuel: {getCaseStatusLabel(record.status)} - Decision:{" "}
-          {getCaseDecisionLabel(record.decision)} - Mode: {bridgeMode}
+        {/* Status summary */}
+        <p className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.6 }}>
+          Statut actuel: {getCaseStatusLabel(record.status)} &mdash; Decision:{" "}
+          {getCaseDecisionLabel(record.decision)} &mdash; Mode: {bridgeMode}
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

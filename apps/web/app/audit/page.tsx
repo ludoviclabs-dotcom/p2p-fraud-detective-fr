@@ -3,10 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listAudit, verifyAudit } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle, Fingerprint } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default function AuditPage() {
   const [cursor, setCursor] = useState(0);
@@ -29,141 +27,192 @@ export default function AuditPage() {
   const nextCursor = auditQuery.data?.cursor_next;
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[#5a6478]">
-        Investigation
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <div className="fx-eyebrow">Investigation</div>
+          <h1 style={{ marginTop: 9 }}>
+            Piste d&apos;<span className="italic">audit</span>
+          </h1>
+          <p className="sub">
+            Journal immutable hash-chaîné SHA-256 + signatures Ed25519 (P5-5).
+            Vérifiable indépendamment via{" "}
+            <code
+              className="fx-mono"
+              style={{
+                background: "var(--panel-2)",
+                border: "1px solid var(--border)",
+                padding: "1px 6px",
+                fontSize: 11,
+              }}
+            >
+              GET /security/public-key
+            </code>
+            .
+          </p>
+        </div>
       </div>
-      <h1 className="mb-1 text-3xl font-bold text-[#0f1b33] dark:text-white">
-        Piste d'audit
-      </h1>
-      <p className="mb-6 text-sm text-[#5a6478]">
-        Journal immutable hash-chaîné SHA-256 + signatures Ed25519 (P5-5).
-        Vérifiable indépendamment via{" "}
-        <code className="rounded bg-[#f4f6fa] px-1 py-0.5 text-xs">
-          GET /security/public-key
-        </code>
-        .
-      </p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Fingerprint size={18} /> Vérification d'intégrité
-          </CardTitle>
-        </CardHeader>
-        <CardContent data-testid="audit-verify-panel" className="flex flex-wrap items-center gap-3">
-          <Button onClick={() => setVerifyRun(true)} disabled={verifyQuery.isFetching}>
-            {verifyQuery.isFetching ? "Vérification…" : "Recalculer la chaîne"}
-          </Button>
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <div>
+            <h2>Vérification d&apos;intégrité</h2>
+            <div className="sub">SHA-256 + Ed25519</div>
+          </div>
+          <span className="glyph">§</span>
+        </div>
+        <div
+          className="fx-panel-body"
+          data-testid="audit-verify-panel"
+          style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}
+        >
+          <button
+            className="fx-btn"
+            onClick={() => setVerifyRun(true)}
+            disabled={verifyQuery.isFetching}
+            type="button"
+          >
+            {verifyQuery.isFetching ? "◷ Vérification…" : "↻ Recalculer la chaîne"}
+          </button>
           {verifyQuery.data ? (
-            <div className="flex flex-col gap-1 text-sm">
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <div
-                className={
-                  verifyQuery.data.valid
-                    ? "flex items-center gap-2 text-[#3e7c5a]"
-                    : "flex items-center gap-2 text-[#a23e48]"
-                }
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  color: verifyQuery.data.valid
+                    ? "var(--verified)"
+                    : "var(--risk)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 13,
+                }}
               >
-                {verifyQuery.data.valid ? (
-                  <CheckCircle2 size={16} />
-                ) : (
-                  <AlertCircle size={16} />
-                )}
+                <span>{verifyQuery.data.valid ? "✓" : "⚠"}</span>
                 <span>
                   {verifyQuery.data.valid
-                    ? "✅ Chaîne valide"
-                    : `❌ Séquences invalides : ${(verifyQuery.data.invalid_seqs ?? []).join(", ")}`}
+                    ? "Chaîne valide"
+                    : `Séquences invalides : ${(verifyQuery.data.invalid_seqs ?? []).join(", ")}`}
                 </span>
               </div>
-              <div className="text-xs text-[#5a6478]">
-                {verifyQuery.data.n_total} entrées · {verifyQuery.data.n_signed} signées
-                Ed25519
+              <div
+                className="fx-mono"
+                style={{ fontSize: 11, color: "var(--muted)" }}
+              >
+                {verifyQuery.data.n_total} entrées · {verifyQuery.data.n_signed}{" "}
+                signées Ed25519
               </div>
               {verifyQuery.data.public_key_b64 ? (
-                <div className="font-mono text-[10px] text-[#5a6478]">
-                  Clé publique : {verifyQuery.data.public_key_b64.slice(0, 24)}…
+                <div
+                  className="fx-mono"
+                  style={{ fontSize: 10, color: "var(--dim)" }}
+                >
+                  Clé publique :{" "}
+                  {verifyQuery.data.public_key_b64.slice(0, 24)}…
                   {verifyQuery.data.public_key_b64.slice(-8)}
                 </div>
               ) : null}
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Entrées {entries.length} / {total}
-          </CardTitle>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          {auditQuery.isLoading ? (
-            <div className="p-4 text-sm text-[#5a6478]">Chargement…</div>
-          ) : auditQuery.error ? (
-            <div className="p-4 text-sm text-[#a23e48]">
-              API indisponible : {(auditQuery.error as Error).message}
+      <div className="fx-panel">
+        <div className="fx-panel-head">
+          <div>
+            <h2>Entrées</h2>
+            <div className="sub">
+              {entries.length} / {total}
             </div>
-          ) : (
-            <table data-testid="audit-table" className="w-full text-sm">
-              <thead className="bg-[#f4f6fa] text-[#5a6478]">
+          </div>
+          <span className="glyph">▣</span>
+        </div>
+        {auditQuery.isLoading ? (
+          <div className="fx-panel-body">
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((k) => (
+                <div key={k} className="fx-skel" style={{ height: 44 }} />
+              ))}
+            </div>
+          </div>
+        ) : auditQuery.error ? (
+          <div className="fx-panel-body">
+            <div className="fx-notice">
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">API indisponible</div>
+                <p className="nb">
+                  {(auditQuery.error as Error).message}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="fx-table-wrap">
+            <table data-testid="audit-table" className="fx-table">
+              <thead>
                 <tr>
-                  <th className="px-3 py-2 text-left">Seq</th>
-                  <th className="px-3 py-2 text-left">Quand</th>
-                  <th className="px-3 py-2 text-left">Acteur</th>
-                  <th className="px-3 py-2 text-left">Type</th>
-                  <th className="px-3 py-2 text-left">Hash (8)</th>
-                  <th className="px-3 py-2 text-left">Signature</th>
+                  <th>Seq</th>
+                  <th>Quand</th>
+                  <th>Acteur</th>
+                  <th>Type</th>
+                  <th>Hash (8)</th>
+                  <th>Signature</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.map((e: import("@p2pfd/shared-types").AuditEntryOut) => (
-                  <tr key={e.seq} className="border-t border-[#e1e5ee]">
-                    <td className="px-3 py-2 font-mono text-xs">{e.seq}</td>
-                    <td className="px-3 py-2 text-xs text-[#5a6478]">
-                      {formatDate(e.at)}
-                    </td>
-                    <td className="px-3 py-2 text-xs">{e.actor}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{e.kind}</td>
-                    <td className="px-3 py-2 font-mono text-xs">
-                      {e.hash.slice(0, 8)}…
-                    </td>
-                    <td className="px-3 py-2 text-xs">
+                  <tr key={e.seq}>
+                    <td className="key">{e.seq}</td>
+                    <td style={{ color: "var(--muted)" }}>{formatDate(e.at)}</td>
+                    <td>{e.actor}</td>
+                    <td>{e.kind}</td>
+                    <td>{e.hash.slice(0, 8)}…</td>
+                    <td>
                       {e.signature ? (
-                        <span className="text-[#3e7c5a]">✅</span>
+                        <span style={{ color: "var(--verified)" }}>✓</span>
                       ) : (
-                        <span className="text-[#9aa3b2]">—</span>
+                        <span style={{ color: "var(--dim)" }}>—</span>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-        <CardContent className="flex items-center justify-between">
-          <div className="text-xs text-[#5a6478]">
+          </div>
+        )}
+        <div
+          className="fx-panel-body"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderTop: "1px solid var(--border)",
+          }}
+        >
+          <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
             Cursor : {cursor} · Suivant : {nextCursor ?? "—"}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="fx-btn-ghost sm"
               onClick={() => setCursor(Math.max(0, cursor - 50))}
               disabled={cursor === 0}
+              type="button"
             >
               ← Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
+              className="fx-btn-ghost sm"
               onClick={() => nextCursor && setCursor(nextCursor)}
               disabled={!nextCursor}
+              type="button"
             >
               Suivant →
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </ForensicPage>
   );
 }

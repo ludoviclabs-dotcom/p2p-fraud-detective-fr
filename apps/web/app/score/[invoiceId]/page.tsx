@@ -1,21 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  BadgeEuro,
-  FileSearch,
-  Network,
-  ShieldAlert,
-} from "lucide-react";
 
 import { getFinding, getFindingContext, getFindingVendor } from "@/data/get-dataset";
 import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { getSignalLabel } from "@/lib/p2p-demo-taxonomy";
+import { ForensicPage } from "@/components/forensic-page";
 
 export default async function ScoreDetailPage({
   params,
@@ -32,122 +23,123 @@ export default async function ScoreDetailPage({
   const vendorNodes = context.nodes.filter((node) => node.kind === "vendor");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/rings"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F3A6E]"
-      >
-        <ArrowLeft aria-hidden className="h-4 w-4" />
-        Retour au graphe
-      </Link>
-
-      <section className="mt-6 rounded-md border border-[#D8DEE9] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5A6478]">
-              Score investigation
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-[#141927]">
-              {finding.invoiceId}
-            </h1>
-            <p className="mt-2 text-sm text-[#5A6478]">
-              {getSignalLabel(finding.signal)} - {finding.ruleId}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <SeverityBadge value={finding.severity} />
-            <span className="mono rounded-md bg-[#F6F7FB] px-3 py-2 text-sm text-[#141927]">
-              {finding.riskScore}/100
-            </span>
-          </div>
+    <ForensicPage>
+      <div className="fx-head">
+        <div>
+          <Link href="/rings" className="fx-link" style={{ marginBottom: 12, display: "inline-flex" }}>
+            ← Retour au graphe
+          </Link>
+          <div className="fx-eyebrow" style={{ marginTop: 8 }}>Score investigation</div>
+          <h1 style={{ marginTop: 9 }}>{finding.invoiceId}</h1>
+          <p className="sub">
+            {getSignalLabel(finding.signal)} — {finding.ruleId}
+          </p>
         </div>
-      </section>
+        <div className="fx-head-actions">
+          <SeverityBadge value={finding.severity} />
+          <span
+            className="fx-mono"
+            style={{
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
+              padding: "8px 14px",
+              fontSize: 13,
+              color: "var(--fg)",
+            }}
+          >
+            {finding.riskScore}/100
+          </span>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          icon={<BadgeEuro aria-hidden className="h-5 w-5" />}
-          label="Exposition"
-          value={formatEuro(finding.exposureEur)}
-        />
-        <KpiCard
-          icon={<FileSearch aria-hidden className="h-5 w-5" />}
-          label="Rule"
-          value={finding.ruleId}
-        />
-        <KpiCard
-          icon={<Network aria-hidden className="h-5 w-5" />}
-          label="Noeuds lies"
-          value={formatNumber(context.nodes.length)}
-        />
-        <KpiCard
-          icon={<ShieldAlert aria-hidden className="h-5 w-5" />}
-          label="Findings connexes"
-          value={formatNumber(context.relatedFindings.length)}
-        />
-      </section>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" style={{ marginBottom: 20 }}>
+        <div className="fx-stat info">
+          <div className="fx-stat-top"><span className="glyph">Σ</span></div>
+          <div className="lbl">Exposition</div>
+          <div className="val">{formatEuro(finding.exposureEur)}</div>
+        </div>
+        <div className="fx-stat warn">
+          <div className="fx-stat-top"><span className="glyph">§</span></div>
+          <div className="lbl">Rule</div>
+          <div className="val" style={{ fontSize: 18 }}>{finding.ruleId}</div>
+        </div>
+        <div className="fx-stat ok">
+          <div className="fx-stat-top"><span className="glyph">◫</span></div>
+          <div className="lbl">Nœuds liés</div>
+          <div className="val">{formatNumber(context.nodes.length)}</div>
+        </div>
+        <div className="fx-stat risk">
+          <div className="fx-stat-top"><span className="glyph">▲</span></div>
+          <div className="lbl">Findings connexes</div>
+          <div className="val">{formatNumber(context.relatedFindings.length)}</div>
+        </div>
+      </div>
 
-      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preuve exploitable</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Preuve exploitable</h2>
+              <span className="glyph">□</span>
+            </div>
+            <div className="fx-panel-body">
               <dl className="grid gap-4 md:grid-cols-2">
                 {Object.entries(finding.evidence).map(([key, value]) => (
-                  <div key={key} className="rounded-md border border-[#E6EBF2] bg-[#F6F7FB] p-4">
-                    <dt className="mono text-xs uppercase tracking-[0.12em] text-[#5A6478]">
-                      {key}
-                    </dt>
-                    <dd className="mt-2 text-sm font-medium text-[#141927]">
+                  <div
+                    key={key}
+                    style={{
+                      background: "var(--bg-2)",
+                      border: "1px solid var(--border)",
+                      padding: "14px 16px",
+                    }}
+                  >
+                    <dt className="fx-eyebrow">{key}</dt>
+                    <dd
+                      className="fx-mono"
+                      style={{ marginTop: 8, fontSize: 13, color: "var(--fg)" }}
+                    >
                       {renderEvidenceValue(value)}
                     </dd>
                   </div>
                 ))}
               </dl>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Findings connexes dans le graphe</CardTitle>
-            </CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[#F6F7FB] text-[#5A6478]">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Findings connexes dans le graphe</h2>
+              <span className="glyph">◇</span>
+            </div>
+            <div className="fx-table-wrap">
+              <table className="fx-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left">Invoice</th>
-                    <th className="px-4 py-3 text-left">Signal</th>
-                    <th className="px-4 py-3 text-left">Severite</th>
-                    <th className="px-4 py-3 text-right">Exposition</th>
+                    <th>Invoice</th>
+                    <th>Signal</th>
+                    <th>Sévérité</th>
+                    <th className="num">Exposition</th>
                   </tr>
                 </thead>
                 <tbody>
                   {context.relatedFindings.slice(0, 10).map((item) => (
-                    <tr key={item.id} className="border-t border-[#E6EBF2]">
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/score/${item.invoiceId}`}
-                          className="mono text-xs font-semibold text-[#1F3A6E]"
-                        >
+                    <tr key={item.id}>
+                      <td className="key">
+                        <Link href={`/score/${item.invoiceId}`} className="fx-link">
                           {item.invoiceId}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-[#141927]">
-                        {getSignalLabel(item.signal)}
-                      </td>
-                      <td className="px-4 py-3">
+                      <td>{getSignalLabel(item.signal)}</td>
+                      <td>
                         <SeverityBadge value={item.severity} />
                       </td>
-                      <td className="mono px-4 py-3 text-right text-[#141927]">
-                        {formatEuro(item.exposureEur)}
-                      </td>
+                      <td className="num">{formatEuro(item.exposureEur)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
         </div>
 
         <aside className="space-y-5">
@@ -167,76 +159,101 @@ export default async function ScoreDetailPage({
             }}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Fournisseur</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Fournisseur</h2>
+              <span className="glyph">★</span>
+            </div>
+            <div className="fx-panel-body space-y-3">
               <div>
-                <div className="font-semibold text-[#141927]">{finding.vendorName}</div>
-                <div className="mono mt-1 text-xs text-[#5A6478]">{finding.vendorId}</div>
+                <div
+                  className="fx-mono"
+                  style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}
+                >
+                  {finding.vendorName}
+                </div>
+                <div className="fx-mono" style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}>
+                  {finding.vendorId}
+                </div>
               </div>
               {vendor ? (
                 <>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-md bg-[#F6F7FB] p-3">
-                      <div className="text-xs text-[#5A6478]">SIREN</div>
-                      <div className="mono mt-1 text-[#141927]">{vendor.siren ?? "-"}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      style={{
+                        background: "var(--bg-2)",
+                        border: "1px solid var(--border)",
+                        padding: "11px 13px",
+                      }}
+                    >
+                      <div className="fx-eyebrow">SIREN</div>
+                      <div className="fx-mono" style={{ marginTop: 5, fontSize: 13, color: "var(--fg)" }}>
+                        {vendor.siren ?? "-"}
+                      </div>
                     </div>
-                    <div className="rounded-md bg-[#F6F7FB] p-3">
-                      <div className="text-xs text-[#5A6478]">Score</div>
-                      <div className="mono mt-1 text-[#141927]">{vendor.riskScore}/100</div>
+                    <div
+                      style={{
+                        background: "var(--bg-2)",
+                        border: "1px solid var(--border)",
+                        padding: "11px 13px",
+                      }}
+                    >
+                      <div className="fx-eyebrow">Score</div>
+                      <div className="fx-mono" style={{ marginTop: 5, fontSize: 13, color: "var(--fg)" }}>
+                        {vendor.riskScore}/100
+                      </div>
                     </div>
                   </div>
-                  <Link
-                    href={`/vendors/${vendor.vendorId}`}
-                    className="inline-flex items-center gap-2 rounded-md bg-[#1F3A6E] px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    Ouvrir la fiche
-                    <ArrowUpRight aria-hidden className="h-4 w-4" />
+                  <Link href={`/vendors/${vendor.vendorId}`} className="fx-btn sm">
+                    Ouvrir la fiche <span>↗</span>
                   </Link>
                 </>
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Contexte graphe</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Contexte graphe</h2>
+              <span className="glyph">◫</span>
+            </div>
+            <div className="fx-panel-body space-y-4">
               <GraphNodeList
-                title="IBAN masques"
+                title="IBAN masqués"
                 items={ibanNodes.map((node) => node.maskedValue ?? node.label)}
               />
               <GraphNodeList
-                title="Fournisseurs relies"
+                title="Fournisseurs reliés"
                 items={vendorNodes.map((node) => node.label)}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Prochaine action</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-[#5A6478]">
-              <p>
-                Valider la piece source, verifier l'IBAN masque, puis rattacher la
-                conclusion a la fiche fournisseur avant export audit.
-              </p>
-              <Link
-                href="/exports"
-                className="inline-flex items-center gap-2 font-semibold text-[#1F3A6E]"
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Prochaine action</h2>
+              <span className="glyph">▣</span>
+            </div>
+            <div className="fx-panel-body">
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  lineHeight: 1.65,
+                  color: "var(--muted)",
+                }}
               >
-                Preparer l'export
-                <ArrowUpRight aria-hidden className="h-4 w-4" />
+                Valider la pièce source, vérifier l&apos;IBAN masqué, puis rattacher la
+                conclusion à la fiche fournisseur avant export audit.
+              </p>
+              <Link href="/exports" className="fx-link" style={{ marginTop: 14 }}>
+                Préparer l&apos;export →
               </Link>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </aside>
-      </section>
-    </div>
+      </div>
+    </ForensicPage>
   );
 }
 
@@ -249,47 +266,33 @@ function renderEvidenceValue(value: unknown): string {
 function GraphNodeList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5A6478]">
-        {title}
-      </div>
+      <div className="fx-eyebrow">{title}</div>
       {items.length ? (
         <div className="mt-2 space-y-2">
           {items.slice(0, 8).map((item) => (
             <div
               key={item}
-              className="mono rounded-md bg-[#F6F7FB] px-3 py-2 text-xs text-[#141927]"
+              className="fx-mono"
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--border)",
+                padding: "8px 12px",
+                fontSize: 11,
+                color: "var(--fg)",
+              }}
             >
               {item}
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-[#5A6478]">Aucun noeud direct.</p>
+        <p
+          className="fx-mono"
+          style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}
+        >
+          Aucun nœud direct.
+        </p>
       )}
     </div>
-  );
-}
-
-function KpiCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Card>
-      <CardContent>
-        <div className="grid h-10 w-10 place-items-center rounded-md bg-[#EAF1FF] text-[#1F3A6E]">
-          {icon}
-        </div>
-        <div className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#5A6478]">
-          {label}
-        </div>
-        <div className="mt-2 break-words text-xl font-semibold text-[#141927]">{value}</div>
-      </CardContent>
-    </Card>
   );
 }

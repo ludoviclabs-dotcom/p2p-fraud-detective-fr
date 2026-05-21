@@ -2430,4 +2430,260 @@
     max-width: 100%;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+
+  /* ================ APP PAGES — forensic inner-page kit ================ */
+  .fx-page {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 30px 32px 72px;
+  }
+  @media (max-width: 720px) {
+    .fx-page { padding: 22px 18px 72px; }
+  }
+
+  /* Page header */
+  .fx-head {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    align-items: flex-end; justify-content: space-between;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 26px;
+  }
+  .fx-head h1 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 3vw, 42px);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    font-weight: 400;
+    color: var(--fg);
+    margin: 0;
+  }
+  .fx-head h1 .italic { font-style: italic; color: var(--risk); }
+  .fx-head .sub {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--fg-2);
+    max-width: 640px;
+  }
+  .fx-head-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .fx-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fx-mono { font-family: var(--font-mono); }
+
+  /* Buttons sized for app pages */
+  .fx-btn, .fx-btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 16px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .fx-btn { background: var(--risk); color: var(--fg); border-color: var(--risk); }
+  .fx-btn:hover { background: transparent; color: var(--risk); }
+  .fx-btn-ghost { background: transparent; color: var(--fg); border-color: var(--border-strong); }
+  .fx-btn-ghost:hover { border-color: var(--fg); }
+
+  /* Panel — bordered surface, optional header */
+  .fx-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+  .fx-panel-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+  .fx-panel-head h2 {
+    font-family: var(--font-display);
+    font-size: 20px; letter-spacing: -0.01em;
+    color: var(--fg); margin: 0; font-weight: 400;
+  }
+  .fx-panel-head .sub {
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--muted); letter-spacing: 0.02em;
+  }
+  .fx-panel-head .glyph { font-family: var(--font-mono); font-size: 15px; color: var(--muted); }
+  .fx-panel-body { padding: 20px; }
+
+  /* Card — simple padded surface */
+  .fx-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .fx-card-accent {
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-left: 2px solid var(--risk);
+    padding: 22px;
+  }
+
+  /* Stat / KPI card */
+  .fx-stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--border-strong);
+    padding: 18px 20px;
+  }
+  .fx-stat.risk { border-left-color: var(--risk); }
+  .fx-stat.warn { border-left-color: var(--warn); }
+  .fx-stat.ok { border-left-color: var(--verified); }
+  .fx-stat.info { border-left-color: var(--info); }
+  .fx-stat-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .fx-stat .glyph { font-family: var(--font-mono); font-size: 15px; color: var(--muted); }
+  .fx-stat.risk .glyph { color: var(--risk); }
+  .fx-stat.warn .glyph { color: var(--warn); }
+  .fx-stat.ok .glyph { color: var(--verified); }
+  .fx-stat.info .glyph { color: var(--info); }
+  .fx-stat .lbl {
+    margin-top: 16px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fx-stat .val {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: 32px; line-height: 1;
+    color: var(--fg);
+  }
+  .fx-stat .pill {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 3px 7px; letter-spacing: 0.06em;
+    background: var(--risk-soft); color: var(--risk);
+  }
+
+  /* Table */
+  .fx-table-wrap { overflow-x: auto; }
+  .fx-table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 12px;
+  }
+  .fx-table thead th {
+    text-align: left;
+    padding: 11px 20px;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted);
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .fx-table thead th.num { text-align: right; }
+  .fx-table tbody td {
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-2);
+  }
+  .fx-table tbody tr:last-child td { border-bottom: none; }
+  .fx-table tbody tr:hover { background: var(--panel-2); }
+  .fx-table td.num { text-align: right; color: var(--fg); }
+  .fx-table td.key { color: var(--fg); }
+
+  /* Severity tag */
+  .fx-tag {
+    display: inline-block;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 3px 7px;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+  }
+  .fx-tag.critical { background: var(--risk); color: var(--fg); border-color: var(--risk); }
+  .fx-tag.high { background: var(--warn); color: var(--bg); border-color: var(--warn); }
+  .fx-tag.medium { color: var(--warn); border-color: var(--warn); }
+  .fx-tag.low { color: var(--verified); border-color: var(--verified); }
+
+  /* Progress bar */
+  .fx-bar { height: 6px; background: var(--bg); border: 1px solid var(--border); }
+  .fx-bar > i { display: block; height: 100%; background: var(--risk); }
+
+  /* Inline link */
+  .fx-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--risk); text-decoration: none;
+  }
+  .fx-link:hover { color: var(--fg); }
+
+  /* Numbered step */
+  .fx-step { display: flex; gap: 12px; }
+  .fx-step .n {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    border: 1px solid var(--border-strong);
+    font-family: var(--font-mono); font-size: 11px; color: var(--risk);
+  }
+  .fx-step .t { font-size: 13px; color: var(--fg); font-weight: 500; }
+  .fx-step .d {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); margin-top: 2px; line-height: 1.5;
+  }
+
+  /* Notice / empty / error state */
+  .fx-notice {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--warn);
+    padding: 18px 20px;
+    display: flex; gap: 14px;
+  }
+  .fx-notice .glyph { font-family: var(--font-mono); font-size: 16px; color: var(--warn); }
+  .fx-notice .nt { font-size: 14px; font-weight: 600; color: var(--fg); }
+  .fx-notice .nb {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); line-height: 1.6; margin-top: 4px;
+  }
+
+  /* Loading skeleton */
+  .fx-skel {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    animation: forensicPulse 1.4s ease-in-out infinite;
+  }
+
+  /* Shared ui/* primitives (Card, Button, Input) — used inside .forensic pages */
+  .fx-ui-card { background: var(--panel); border: 1px solid var(--border); }
+  .fx-ui-card-head {
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+  .fx-ui-card-title {
+    font-family: var(--font-display); font-size: 18px; font-weight: 400;
+    letter-spacing: -0.01em; color: var(--fg); margin: 0;
+  }
+  .fx-ui-card-desc {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); line-height: 1.5;
+  }
+  .fx-ui-card-body { padding: 16px 18px; }
+
+  .fx-btn.sm, .fx-btn-ghost.sm { padding: 7px 12px; font-size: 10px; }
+
+  .fx-input {
+    height: 38px; width: 100%;
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 0 12px;
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg);
+    outline: none; transition: border-color .15s;
+  }
+  .fx-input::placeholder { color: var(--muted); }
+  .fx-input:focus-visible { border-color: var(--risk); }
+  .fx-input:disabled { opacity: 0.5; cursor: not-allowed; }
 }

@@ -3,14 +3,7 @@ import { cn } from "@/lib/utils";
 
 export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        "rounded-md border border-[#e6ebf2] bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.04]",
-        className,
-      )}
-      {...props}
-    />
+    <div ref={ref} className={cn("fx-ui-card", className)} {...props} />
   ),
 );
 Card.displayName = "Card";
@@ -19,14 +12,7 @@ export const CardHeader = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex flex-col gap-1 border-b border-[#e6ebf2] px-5 py-4 dark:border-white/10",
-      className,
-    )}
-    {...props}
-  />
+  <div ref={ref} className={cn("fx-ui-card-head", className)} {...props} />
 ));
 CardHeader.displayName = "CardHeader";
 
@@ -34,14 +20,7 @@ export const CardTitle = forwardRef<
   HTMLHeadingElement,
   HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      "text-base font-semibold text-[#111827] dark:text-white",
-      className,
-    )}
-    {...props}
-  />
+  <h3 ref={ref} className={cn("fx-ui-card-title", className)} {...props} />
 ));
 CardTitle.displayName = "CardTitle";
 
@@ -49,11 +28,7 @@ export const CardDescription = forwardRef<
   HTMLParagraphElement,
   HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn("text-sm text-[#667085]", className)}
-    {...props}
-  />
+  <p ref={ref} className={cn("fx-ui-card-desc", className)} {...props} />
 ));
 CardDescription.displayName = "CardDescription";
 
@@ -61,6 +36,6 @@ export const CardContent = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("px-5 py-4", className)} {...props} />
+  <div ref={ref} className={cn("fx-ui-card-body", className)} {...props} />
 ));
 CardContent.displayName = "CardContent";
