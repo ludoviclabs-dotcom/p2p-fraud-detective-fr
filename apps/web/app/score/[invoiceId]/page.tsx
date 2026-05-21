@@ -6,6 +6,7 @@ import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { getSignalLabel } from "@/lib/p2p-demo-taxonomy";
+import { case360Href, getScenarioForP2PFindingSignal } from "@/lib/risk/case-links";
 import { ForensicPage } from "@/components/forensic-page";
 
 export default async function ScoreDetailPage({
@@ -21,6 +22,7 @@ export default async function ScoreDetailPage({
   const context = getFindingContext(finding.id);
   const ibanNodes = context.nodes.filter((node) => node.kind === "iban");
   const vendorNodes = context.nodes.filter((node) => node.kind === "vendor");
+  const case360Scenario = getScenarioForP2PFindingSignal(finding.signal);
 
   return (
     <ForensicPage>
@@ -36,6 +38,9 @@ export default async function ScoreDetailPage({
           </p>
         </div>
         <div className="fx-head-actions">
+          <Link href={case360Href(case360Scenario.caseId)} className="fx-btn">
+            Ouvrir Case 360 <span>↗</span>
+          </Link>
           <SeverityBadge value={finding.severity} />
           <span
             className="fx-mono"
@@ -226,6 +231,22 @@ export default async function ScoreDetailPage({
                 title="Fournisseurs reliés"
                 items={vendorNodes.map((node) => node.label)}
               />
+            </div>
+          </div>
+
+          <div className="fx-panel">
+            <div className="fx-panel-head">
+              <h2>Case 360 recommandé</h2>
+              <span className="glyph">◎</span>
+            </div>
+            <div className="fx-panel-body">
+              <div className="fx-eyebrow">{case360Scenario.caseId}</div>
+              <p className="fx-mono" style={{ marginTop: 8, fontSize: 12, lineHeight: 1.65, color: "var(--muted)" }}>
+                {case360Scenario.description}
+              </p>
+              <Link href={case360Href(case360Scenario.caseId)} className="fx-link" style={{ marginTop: 14 }}>
+                Voir la timeline, les reason codes et l’Evidence Pack →
+              </Link>
             </div>
           </div>
 

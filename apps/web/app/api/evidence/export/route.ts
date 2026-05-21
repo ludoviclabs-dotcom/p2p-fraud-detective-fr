@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     transaction?: unknown;
     analystNotes?: string;
     auditTrail?: unknown;
+    timeline?: unknown;
   };
   const scenario = body.caseId ? getRiskScenarioByCaseId(body.caseId) : undefined;
   const transaction = scenario?.transaction ?? body.transaction;
@@ -44,6 +45,9 @@ export async function POST(request: Request) {
     analystNotes: body.analystNotes,
     auditTrail: Array.isArray(body.auditTrail)
       ? (body.auditTrail as ReturnType<typeof buildEvidencePack>["auditTrail"])
+      : undefined,
+    timeline: Array.isArray(body.timeline)
+      ? (body.timeline as ReturnType<typeof buildEvidencePack>["timeline"])
       : undefined,
   });
 

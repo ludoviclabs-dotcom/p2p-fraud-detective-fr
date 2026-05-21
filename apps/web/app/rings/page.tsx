@@ -1,11 +1,15 @@
+import Link from "next/link";
+
 import { GraphExplorer } from "@/components/p2p-graph-explorer";
 import { getP2PDataset } from "@/data/get-dataset";
 import { formatDate, formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { SEVERITY_COLORS } from "@/lib/p2p-demo-taxonomy";
+import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
 import { ForensicPage } from "@/components/forensic-page";
 
 export default function RingsPage() {
   const dataset = getP2PDataset();
+  const primaryCase = getPrimaryCase360Scenario();
 
   return (
     <ForensicPage>
@@ -20,6 +24,11 @@ export default function RingsPage() {
             sont masqués avant publication ; la page reste utilisable sur Vercel sans backend
             FastAPI.
           </p>
+        </div>
+        <div className="fx-head-actions">
+          <Link href={case360Href(primaryCase.caseId)} className="fx-btn">
+            Ouvrir Case 360 <span>↗</span>
+          </Link>
         </div>
       </div>
 

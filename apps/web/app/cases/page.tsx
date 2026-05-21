@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -13,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEur, formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
+import { RISK_SCENARIOS } from "@/data/risk-scenarios";
+import { case360Href } from "@/lib/risk/case-links";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Nouveau",
@@ -181,6 +184,36 @@ export default function CasesPage() {
                 {rows.length} case(s) — {selected.size} sélectionné(s)
               </span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <div>
+            <h2>Dossiers 360 synthétiques</h2>
+            <div className="sub">Scénarios reliés au moteur de risque et à l’export Evidence Pack.</div>
+          </div>
+          <span className="glyph">◎</span>
+        </div>
+        <div className="fx-panel-body">
+          <div className="grid gap-3 md:grid-cols-3">
+            {RISK_SCENARIOS.slice(0, 6).map((scenario) => (
+              <Link
+                key={scenario.caseId}
+                href={case360Href(scenario.caseId)}
+                className="fx-card"
+                style={{ textDecoration: "none", minHeight: 104 }}
+              >
+                <div className="fx-eyebrow">{scenario.caseId}</div>
+                <div className="fx-mono" style={{ marginTop: 8, fontSize: 12, color: "var(--fg)", fontWeight: 600 }}>
+                  {scenario.shortTitle}
+                </div>
+                <p className="fx-mono" style={{ marginTop: 6, fontSize: 11, lineHeight: 1.45, color: "var(--muted)" }}>
+                  {scenario.expectedTypology}
+                </p>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

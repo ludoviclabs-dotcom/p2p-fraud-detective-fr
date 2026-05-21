@@ -1,14 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listAudit, verifyAudit } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
+import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
 
 export default function AuditPage() {
   const [cursor, setCursor] = useState(0);
   const [verifyRun, setVerifyRun] = useState(false);
+  const primaryCase = getPrimaryCase360Scenario();
 
   const auditQuery = useQuery({
     queryKey: ["audit", cursor],
@@ -50,6 +53,11 @@ export default function AuditPage() {
             </code>
             .
           </p>
+        </div>
+        <div className="fx-head-actions">
+          <Link href={case360Href(primaryCase.caseId)} className="fx-btn">
+            Ouvrir Case 360 <span>↗</span>
+          </Link>
         </div>
       </div>
 

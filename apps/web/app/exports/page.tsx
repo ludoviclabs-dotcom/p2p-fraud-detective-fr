@@ -3,10 +3,12 @@ import Link from "next/link";
 import { CaseWorkflowExport } from "@/components/case-workflow-export";
 import { getP2PDataset } from "@/data/get-dataset";
 import { SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
+import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
 import { ForensicPage } from "@/components/forensic-page";
 
 export default function ExportsPage() {
   const dataset = getP2PDataset();
+  const primaryCase = getPrimaryCase360Scenario();
   const suggestedCases = [...dataset.findings]
     .sort(
       (a, b) =>
@@ -50,12 +52,13 @@ export default function ExportsPage() {
         </div>
       </div>
 
-      <section className="mt-4 grid gap-3 md:grid-cols-4" style={{ marginBottom: 24 }}>
+      <section className="mt-4 grid gap-3 md:grid-cols-5" style={{ marginBottom: 24 }}>
         {[
           ["1", "Dashboard", "/dashboard"],
           ["2", "Graphe rings", "/rings"],
           ["3", "Score détaillé", "/score"],
-          ["4", "Export audit", "/exports"],
+          ["4", "Fraud Case 360", case360Href(primaryCase.caseId)],
+          ["5", "Export audit", "/exports"],
         ].map(([step, label, href]) => (
           <Link
             key={step}

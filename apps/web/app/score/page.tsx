@@ -5,6 +5,7 @@ import { CaseWorkflowStatusBadge } from "@/components/case-workflow-status-badge
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
 import { getSignalLabel, SEVERITY_ORDER } from "@/lib/p2p-demo-taxonomy";
+import { case360Href, getScenarioForP2PFindingSignal } from "@/lib/risk/case-links";
 import { ForensicPage } from "@/components/forensic-page";
 
 export default function ScoreIndexPage() {
@@ -76,34 +77,43 @@ export default function ScoreIndexPage() {
                 <th>Signal</th>
                 <th>Sévérité</th>
                 <th>Workflow</th>
+                <th>Case 360</th>
                 <th className="num">Score</th>
                 <th className="num">Exposition</th>
               </tr>
             </thead>
             <tbody>
-              {findings.map((finding) => (
-                <tr key={finding.id}>
-                  <td className="key">
-                    <Link href={`/score/${finding.invoiceId}`} className="fx-link">
-                      {finding.invoiceId}
-                    </Link>
-                  </td>
-                  <td>
-                    <Link href={`/vendors/${finding.vendorId}`} className="fx-link">
-                      {finding.vendorName}
-                    </Link>
-                  </td>
-                  <td>{getSignalLabel(finding.signal)}</td>
-                  <td>
-                    <SeverityBadge value={finding.severity} />
-                  </td>
-                  <td>
-                    <CaseWorkflowStatusBadge caseIds={[`case:${finding.id}`]} />
-                  </td>
-                  <td className="num">{finding.riskScore}/100</td>
-                  <td className="num">{formatEuro(finding.exposureEur)}</td>
-                </tr>
-              ))}
+              {findings.map((finding) => {
+                const case360Scenario = getScenarioForP2PFindingSignal(finding.signal);
+                return (
+                  <tr key={finding.id}>
+                    <td className="key">
+                      <Link href={`/score/${finding.invoiceId}`} className="fx-link">
+                        {finding.invoiceId}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link href={`/vendors/${finding.vendorId}`} className="fx-link">
+                        {finding.vendorName}
+                      </Link>
+                    </td>
+                    <td>{getSignalLabel(finding.signal)}</td>
+                    <td>
+                      <SeverityBadge value={finding.severity} />
+                    </td>
+                    <td>
+                      <CaseWorkflowStatusBadge caseIds={[`case:${finding.id}`]} />
+                    </td>
+                    <td>
+                      <Link href={case360Href(case360Scenario.caseId)} className="fx-link">
+                        {case360Scenario.shortTitle}
+                      </Link>
+                    </td>
+                    <td className="num">{finding.riskScore}/100</td>
+                    <td className="num">{formatEuro(finding.exposureEur)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
