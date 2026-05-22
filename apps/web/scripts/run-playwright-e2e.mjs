@@ -5,7 +5,12 @@ import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const port = 3100;
+const port = Number(process.env.PLAYWRIGHT_PORT ?? process.env.PORT ?? "3100");
+const baseURL = `http://127.0.0.1:${port}`;
+const cliArgs = process.argv.slice(2);
+if (cliArgs[0] === "--") {
+  cliArgs.shift();
+}
 
 function spawnCommand(command, args, options = {}) {
   return spawn(command, args, {
@@ -46,6 +51,31 @@ function waitForExit(child) {
   });
 }
 
+async function runCommand(command, args, options = {}) {
+  const child = spawnCommand(command, args, options);
+  const { code, signal } = await waitForExit(child);
+
+  if (signal) {
+    throw new Error(`${command} exited with signal ${signal}`);
+  }
+
+  if (code !== 0) {
+    throw new Error(`${command} exited with code ${code}`);
+  }
+}
+
+async function waitForServer(child, host, targetPort, timeoutMs = 60_000) {
+  const exitPromise = waitForExit(child).then(({ code, signal }) => {
+    throw new Error(
+      `next start exited before ${baseURL} was reachable (code ${code ?? "n/a"}, signal ${
+        signal ?? "n/a"
+      })`,
+    );
+  });
+
+  await Promise.race([waitForPort(host, targetPort, timeoutMs), exitPromise]);
+}
+
 async function terminateServer(child) {
   if (!child || child.exitCode !== null) return;
 
@@ -72,6 +102,12 @@ async function terminateServer(child) {
   child.kill("SIGKILL");
 }
 
+await runCommand(
+  process.execPath,
+  ["./node_modules/next/dist/bin/next", "build"],
+  { stdio: "inherit" },
+);
+
 const nextServer = spawnCommand(
   process.execPath,
   ["./node_modules/next/dist/bin/next", "start", "--port", String(port)],
@@ -79,30 +115,19 @@ const nextServer = spawnCommand(
 );
 
 try {
-  await waitForPort("127.0.0.1", port);
+  await waitForServer(nextServer, "127.0.0.1", port);
 
-  const runner =
-    process.platform === "win32"
-      ? spawnCommand(
-          "cmd.exe",
-          ["/d", "/s", "/c", ".\\node_modules\\.bin\\playwright.CMD test"],
-          {
-            env: {
-              PLAYWRIGHT_SKIP_WEBSERVER: "1",
-            },
-            stdio: "inherit",
-          },
-        )
-      : spawnCommand(
-          process.execPath,
-          ["./node_modules/playwright/cli.js", "test"],
-          {
-            env: {
-              PLAYWRIGHT_SKIP_WEBSERVER: "1",
-            },
-            stdio: "inherit",
-          },
-        );
+  const runner = spawnCommand(
+    process.execPath,
+    ["./node_modules/@playwright/test/cli.js", "test", ...cliArgs],
+    {
+      env: {
+        PLAYWRIGHT_SKIP_WEBSERVER: "1",
+        PLAYWRIGHT_BASE_URL: baseURL,
+      },
+      stdio: "inherit",
+    },
+  );
 
   const { code, signal } = await waitForExit(runner);
 

@@ -15,13 +15,15 @@ test("cases page supports demo triage actions", async ({ page }) => {
   await page.locator("[data-testid='cases-status-filter']").selectOption("");
   await expect.poll(async () => rows.count()).toBeGreaterThan(1);
 
-  const checkboxes = page.locator("[data-testid='cases-table'] tbody input[type='checkbox']");
+  const checkboxes = page.locator(
+    "[data-testid='cases-table'] tbody input[type='checkbox']",
+  );
   await checkboxes.nth(0).check();
   await checkboxes.nth(1).check();
   await expect(page.locator("[data-testid='cases-bulk-panel']")).toBeVisible();
 
-  await page.getByPlaceholder("Assigner à (email)").fill("qa.audit@example.test");
-  await page.getByRole("button", { name: "👥 Assigner" }).click();
+  await page.getByPlaceholder(/email/i).fill("qa.audit@example.test");
+  await page.getByTestId("cases-bulk-assign-button").click();
   await expect(page.locator("[data-testid='cases-bulk-panel']")).toBeHidden();
   await expect
     .poll(async () => page.getByText("qa.audit@example.test").count())

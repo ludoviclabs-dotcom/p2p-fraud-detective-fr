@@ -6,7 +6,7 @@ test("upload page returns a demo detection result", async ({ page }) => {
   await page.goto("/upload");
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Import des données" }),
+    page.getByRole("heading", { level: 1, name: /Import des/i }),
   ).toBeVisible();
 
   await page.locator("[data-testid='upload-input']").setInputFiles({
@@ -15,7 +15,7 @@ test("upload page returns a demo detection result", async ({ page }) => {
     buffer: Buffer.from("invoice_id,amount\nINV-001,1200\n", "utf8"),
   });
 
-  await page.getByRole("button", { name: "🚀 Lancer la détection" }).click();
+  await page.getByTestId("upload-detect-button").click();
   await expect(page.locator("[data-testid='upload-result']")).toBeVisible();
   await expect
     .poll(

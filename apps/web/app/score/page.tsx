@@ -105,7 +105,11 @@ export default function ScoreIndexPage() {
                       <CaseWorkflowStatusBadge caseIds={[`case:${finding.id}`]} />
                     </td>
                     <td>
-                      <Link href={case360Href(case360Scenario.caseId)} className="fx-link">
+                      <Link
+                        href={case360Href(case360Scenario.caseId)}
+                        className="fx-link"
+                        data-testid="score-case-360-link"
+                      >
                         {case360Scenario.shortTitle}
                       </Link>
                     </td>

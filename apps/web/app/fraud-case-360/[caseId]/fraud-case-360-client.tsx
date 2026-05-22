@@ -255,7 +255,13 @@ export function FraudCase360Client({
             <Button type="button" className="w-full" onClick={() => record("block_recommended")}>
               Recommander blocage
             </Button>
-            <Button type="button" variant="secondary" className="w-full" onClick={exportEvidence}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              data-testid="case-360-export-evidence"
+              onClick={exportEvidence}
+            >
               ↓ Exporter evidence pack
             </Button>
             {exportStatus ? (
@@ -295,7 +301,7 @@ export function FraudCase360Client({
           </div>
         </div>
 
-        <div className="fx-panel">
+        <div className="fx-panel" data-testid="case-360-timeline">
           <div className="fx-panel-head">
             <h2>Timeline</h2>
             <span className="glyph">◷</span>
@@ -568,7 +574,7 @@ function AuditChainPanel({
 }) {
   const visibleEntries = evidence?.auditTrail ?? auditTrail;
   return (
-    <div className="fx-panel">
+    <div className="fx-panel" data-testid="case-360-audit-chain">
       <div className="fx-panel-head">
         <div className="flex items-center gap-2">
           <span className="glyph">§</span>
@@ -583,6 +589,7 @@ function AuditChainPanel({
         </div>
         {evidence ? (
           <div
+            data-testid="case-360-root-hash"
             className="fx-mono"
             style={{
               background: "var(--bg)",
@@ -635,7 +642,7 @@ function EvidencePanel({
   setNotes: (value: string) => void;
 }) {
   return (
-    <div className="fx-panel">
+    <div className="fx-panel" data-testid="case-360-evidence-panel">
       <div className="fx-panel-head">
         <div className="flex items-center gap-2">
           <span className="glyph">□</span>
@@ -674,10 +681,11 @@ function EvidencePanel({
               <Kpi label="Sources" value={`${evidence.sourceRefs.length}`} />
               <Kpi label="Root hash" value={evidence.integrity.rootHash.slice(0, 12)} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" data-testid="case-360-source-refs">
               {evidence.sourceRefs.map((source) => (
                 <div
                   key={source.id}
+                  data-testid="case-360-source-ref"
                   style={{
                     background: "var(--bg-2)",
                     border: "1px solid var(--border)",
