@@ -76,6 +76,7 @@ export default function AuditPage() {
         >
           <button
             className="fx-btn"
+            data-testid="audit-verify-button"
             onClick={() => setVerifyRun(true)}
             disabled={verifyQuery.isFetching}
             type="button"

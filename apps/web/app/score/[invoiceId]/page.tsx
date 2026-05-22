@@ -267,7 +267,12 @@ export default async function ScoreDetailPage({
                 Valider la pièce source, vérifier l&apos;IBAN masqué, puis rattacher la
                 conclusion à la fiche fournisseur avant export audit.
               </p>
-              <Link href="/exports" className="fx-link" style={{ marginTop: 14 }}>
+              <Link
+                href="/exports"
+                className="fx-link"
+                data-testid="score-detail-export-link"
+                style={{ marginTop: 14 }}
+              >
                 Préparer l&apos;export →
               </Link>
             </div>

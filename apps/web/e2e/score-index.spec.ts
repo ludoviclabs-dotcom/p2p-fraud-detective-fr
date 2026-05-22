@@ -13,7 +13,7 @@ test("score index drills into evidence then vendor detail", async ({ page }) => 
   await invoiceLinks.first().click();
   await expect(page).toHaveURL(/\/score\//);
   await expect(page.getByText("Preuve exploitable")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Preparer l'export" })).toBeVisible();
+  await expect(page.getByTestId("score-detail-export-link")).toBeVisible();
 
   await page.getByRole("link", { name: "Ouvrir la fiche" }).click();
   await expect(page).toHaveURL(/\/vendors\//);

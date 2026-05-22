@@ -170,6 +170,7 @@ export default function UploadPage() {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
               className="fx-btn"
+              data-testid="upload-detect-button"
               onClick={upload}
               disabled={!file || uploading}
               type="button"

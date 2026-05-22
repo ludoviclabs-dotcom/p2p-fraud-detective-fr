@@ -231,6 +231,7 @@ export default function CasesPage() {
                 onChange={(e) => setBulkAssignee(e.target.value)}
               />
               <Button
+                data-testid="cases-bulk-assign-button"
                 onClick={() => bulkAssignee && assignMutation.mutate(bulkAssignee)}
                 disabled={!bulkAssignee || assignMutation.isPending}
               >
