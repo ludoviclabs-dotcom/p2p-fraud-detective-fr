@@ -17,6 +17,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from p2p_fraud.evidence.service import (
+    EvidenceService,
+    EvidenceSubjectNotFoundError,
+    EvidenceSubjectNotSupported,
+)
+from p2p_fraud.evidence.types import EvidencePackInput
 from p2p_fraud.sepa.analyzer import AnalyzedDebit, SepaAnalyzer
 from p2p_fraud.sepa.debit_event import DebitEventInput
 from p2p_fraud.sepa.mandate import (
@@ -41,6 +47,11 @@ def _require_auth_sepa() -> str:
 
 def _get_analyzer() -> SepaAnalyzer:
     """Stub : l'instance SepaAnalyzer réelle est injectée par `main.py`."""
+    raise NotImplementedError("Override via main.app.dependency_overrides")
+
+
+def _get_evidence_service() -> EvidenceService:
+    """Stub : l'instance EvidenceService réelle est injectée par `main.py`."""
     raise NotImplementedError("Override via main.app.dependency_overrides")
 
 
@@ -331,3 +342,115 @@ def risk_assess(
         )
     result = analyzer.analyze(payload.event, actor=actor, tenant_id=tenant_id)
     return _analysis_to_out(result)
+
+
+# ─── Endpoints Evidence Pack ─────────────────────────────────────────────────
+
+
+class EvidencePackOut(BaseModel):
+    evidence_pack_id: str
+    tenant_id: str | None
+    subject_type: str
+    subject_id: str
+    domain: str
+    engine_version: str
+    pack_hash: str
+    audit_anchor_hash: str | None
+    audit_anchor_seq: int | None
+    has_report: bool
+    actor: str | None
+    created_at: str
+    payload: dict[str, Any]
+
+
+class EvidenceVerifyOut(BaseModel):
+    evidence_pack_id: str
+    valid: bool
+    hash_matches: bool
+    audit_chain_valid: bool
+    audit_anchor_present: bool
+    checked_at: str
+    errors: list[str]
+
+
+@router.post("/evidence", response_model=EvidencePackOut, status_code=201)
+def create_evidence_pack(
+    payload: EvidencePackInput,
+    actor: Annotated[str, Depends(_require_auth_sepa)],
+    evidence: Annotated[EvidenceService, Depends(_get_evidence_service)],
+    tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
+) -> EvidencePackOut:
+    """Crée un Evidence Pack pour un sujet (DEBIT_EVENT en v0)."""
+    try:
+        record = evidence.create(payload, actor=actor, tenant_id=tenant_id)
+    except EvidenceSubjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Sujet introuvable : {exc}") from exc
+    except EvidenceSubjectNotSupported as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _evidence_to_out(record)
+
+
+@router.get("/evidence/{evidence_pack_id}", response_model=EvidencePackOut)
+def get_evidence_pack(
+    evidence_pack_id: str,
+    actor: Annotated[str, Depends(_require_auth_sepa)],
+    evidence: Annotated[EvidenceService, Depends(_get_evidence_service)],
+    tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
+) -> EvidencePackOut:
+    record = evidence.get(evidence_pack_id, tenant_id=tenant_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Evidence pack introuvable")
+    return _evidence_to_out(record)
+
+
+@router.get("/evidence/{evidence_pack_id}/report")
+def get_evidence_report_html(
+    evidence_pack_id: str,
+    actor: Annotated[str, Depends(_require_auth_sepa)],
+    evidence: Annotated[EvidenceService, Depends(_get_evidence_service)],
+    tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
+):
+    """Renvoie le rapport HTML rendu (sans déchiffrement d'IBAN)."""
+    from fastapi.responses import HTMLResponse
+
+    html = evidence.get_report_html(evidence_pack_id, tenant_id=tenant_id)
+    if html is None:
+        raise HTTPException(status_code=404, detail="Rapport introuvable")
+    return HTMLResponse(content=html)
+
+
+@router.post("/evidence/{evidence_pack_id}/verify", response_model=EvidenceVerifyOut)
+def verify_evidence_pack(
+    evidence_pack_id: str,
+    actor: Annotated[str, Depends(_require_auth_sepa)],
+    evidence: Annotated[EvidenceService, Depends(_get_evidence_service)],
+    tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
+) -> EvidenceVerifyOut:
+    result = evidence.verify(evidence_pack_id, tenant_id=tenant_id)
+    return EvidenceVerifyOut(
+        evidence_pack_id=result.evidence_pack_id,
+        valid=result.valid,
+        hash_matches=result.hash_matches,
+        audit_chain_valid=result.audit_chain_valid,
+        audit_anchor_present=result.audit_anchor_present,
+        checked_at=result.checked_at,
+        errors=list(result.errors),
+    )
+
+
+def _evidence_to_out(record) -> EvidencePackOut:
+    return EvidencePackOut(
+        evidence_pack_id=record.evidence_pack_id,
+        tenant_id=record.tenant_id,
+        subject_type=record.subject_type,
+        subject_id=record.subject_id,
+        domain=record.domain,
+        engine_version=record.engine_version,
+        pack_hash=record.pack_hash,
+        audit_anchor_hash=record.audit_anchor_hash,
+        audit_anchor_seq=record.audit_anchor_seq,
+        has_report=record.has_report,
+        actor=record.actor,
+        created_at=record.created_at,
+        payload=record.payload,
+    )

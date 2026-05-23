@@ -279,3 +279,44 @@ class DebitEventRow(Base):
             unique=True,
         ),
     )
+
+
+class EvidencePackRow(Base):
+    """Dossier de preuve exportable — métadonnées + ancrage hash chain.
+
+    Le contenu sérialisé (JSON canonical + HTML) est stocké dans `payload_json`
+    et `report_html` directement (suffisant pour un MVP single-node). Pour la
+    production, prévoir un blob storage externe et stocker uniquement la
+    `storage_key` (ex. S3 path).
+
+    `pack_hash` = SHA-256 du payload_json canonical. C'est l'empreinte
+    vérifiable réplicable depuis le bundle exporté. `audit_anchor_hash`
+    pointe sur le `hash` du dernier événement de la chain au moment de la
+    création — permet de prouver l'antériorité.
+    """
+
+    __tablename__ = "evidence_packs"
+
+    evidence_pack_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    subject_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    subject_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    domain: Mapped[str] = mapped_column(String(32), nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    pack_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    audit_anchor_hash: Mapped[str | None] = mapped_column(String(64))
+    audit_anchor_seq: Mapped[int | None] = mapped_column(Integer)
+
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    report_html: Mapped[str | None] = mapped_column(Text)
+    storage_key: Mapped[str | None] = mapped_column(String(255))
+
+    actor: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_evidence_packs_tenant", "tenant_id"),
+        Index("idx_evidence_packs_subject", "subject_type", "subject_id"),
+        Index("idx_evidence_packs_hash", "pack_hash"),
+    )
