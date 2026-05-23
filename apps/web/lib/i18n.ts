@@ -23,6 +23,7 @@ export const TRANSLATIONS: Translations = {
   "nav.sandbox": { fr: "Scenarios fraude", en: "Fraud scenarios" },
   "nav.p2p_scenarios": { fr: "Scenarios P2P", en: "P2P scenarios" },
   "nav.risk_test_lab": { fr: "Test Lab", en: "Test Lab" },
+  "nav.risk_lab_sepa": { fr: "Risk Lab SEPA", en: "Risk Lab SEPA" },
   "nav.case_360": { fr: "Fraud Case 360", en: "Fraud Case 360" },
   "nav.risk_docs": { fr: "Docs & glossaire", en: "Docs & glossary" },
   "nav.cases": { fr: "File d'investigation", en: "Investigation queue" },

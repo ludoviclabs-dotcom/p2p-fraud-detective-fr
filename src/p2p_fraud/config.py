@@ -61,6 +61,16 @@ class Settings(BaseSettings):
     # ─── Crypto (chiffrement IBAN au repos) ──────────────────────────────────
     p2p_fraud_data_key: str = ""
 
+    # ─── HMAC IBAN fingerprint (Sprint 1 MandateGuard) ───────────────────────
+    # Secret distinct du Fernet de chiffrement. Permet de calculer un
+    # `iban_fingerprint = HMAC_SHA256(secret, normalize_iban(iban))` utilisable
+    # pour indexer/rechercher sans jamais stocker l'IBAN en clair (ADR-0002 du
+    # spec MandateGuard). Rotation indépendante de la clé Fernet.
+    # Génération recommandée :
+    #     python -c "import secrets; print(secrets.token_urlsafe(32))"
+    # Si vide → secret éphémère par instance (mode démo, warning au boot).
+    iban_hmac_secret: str = ""
+
     # ─── Auth applicative ────────────────────────────────────────────────────
     p2p_fraud_users_path: str = ""
     p2p_fraud_auth_required: bool = False
@@ -88,6 +98,15 @@ class Settings(BaseSettings):
     webhook_url: str = ""
     webhook_secret: str = ""  # secret HMAC partagé avec le SIEM destinataire
     webhook_timeout: float = 5.0  # seconds (connect + read combinés)
+
+    # ─── Webhook ENTRANT (Sprint 5 MandateGuard) ─────────────────────────────
+    # Quand un PSP/banque pousse un événement (prélèvement, mandat, ICS…)
+    # vers nous, la requête doit être signée HMAC-SHA256 avec ce secret.
+    # Headers attendus : X-MG-Timestamp (ISO 8601), X-MG-Signature
+    # (sha256=<hex>), X-MG-Idempotency-Key (anti-replay applicatif).
+    # Si vide → tout endpoint protégé par `verify_inbound_webhook` refuse
+    # toute requête entrante (fail-closed).
+    webhook_inbound_secret: str = ""
 
     # ─── Observabilité (P4-6) ────────────────────────────────────────────────
     sentry_dsn: str = ""

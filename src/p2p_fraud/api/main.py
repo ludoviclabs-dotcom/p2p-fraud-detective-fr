@@ -125,6 +125,25 @@ from p2p_fraud.api.v1 import (  # noqa: E402
 
 app.include_router(v1_router)
 
+# Router SEPA Mandate Guard (Sprint 3 MandateGuard)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _get_analyzer as _sepa_get_analyzer_stub,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _get_evidence_service as _sepa_get_evidence_stub,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _get_webhook_idempotency_store as _sepa_get_webhook_store_stub,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _require_auth_sepa,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    router as sepa_router,
+)
+
+app.include_router(sepa_router)
+
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -154,11 +173,55 @@ def _case_service() -> CaseService:
     return _CASE_SERVICE
 
 
+_SEPA_ANALYZER: Any = None
+_EVIDENCE_SERVICE: Any = None
+
+
+def _sepa_analyzer() -> Any:
+    """Renvoie l'instance singleton du SepaAnalyzer (partagée avec CaseService)."""
+    global _SEPA_ANALYZER
+    if _SEPA_ANALYZER is None:
+        from p2p_fraud.sepa.analyzer import SepaAnalyzer
+
+        _SEPA_ANALYZER = SepaAnalyzer(db_path=get_settings().fraud_cases_db)
+    return _SEPA_ANALYZER
+
+
+def _evidence_service() -> Any:
+    """Renvoie l'instance singleton EvidenceService (DB partagée)."""
+    global _EVIDENCE_SERVICE
+    if _EVIDENCE_SERVICE is None:
+        from p2p_fraud.evidence.service import EvidenceService
+
+        _EVIDENCE_SERVICE = EvidenceService(analyzer=_sepa_analyzer())
+    return _EVIDENCE_SERVICE
+
+
+_WEBHOOK_STORE: Any = None
+
+
+def _webhook_idempotency_store() -> Any:
+    """Renvoie l'instance singleton du store d'idempotence webhook entrant."""
+    global _WEBHOOK_STORE
+    if _WEBHOOK_STORE is None:
+        from p2p_fraud.api.webhook_security import WebhookIdempotencyStore
+
+        analyzer = _sepa_analyzer()
+        _WEBHOOK_STORE = WebhookIdempotencyStore(engine=analyzer._engine)  # type: ignore[attr-defined]
+    return _WEBHOOK_STORE
+
+
 # ─── Injection des dépendances v1 ────────────────────────────────────────────
 # Override les stubs `_require_auth_v1` et `_get_service` du router v1 avec
 # les vraies implémentations du main app (auth bearer + CaseService).
 app.dependency_overrides[_require_auth_v1] = _require_auth
 app.dependency_overrides[_v1_get_service_stub] = _case_service
+
+# ─── Injection des dépendances SEPA Mandate Guard + Evidence + Webhooks ──────
+app.dependency_overrides[_require_auth_sepa] = _require_auth
+app.dependency_overrides[_sepa_get_analyzer_stub] = _sepa_analyzer
+app.dependency_overrides[_sepa_get_evidence_stub] = _evidence_service
+app.dependency_overrides[_sepa_get_webhook_store_stub] = _webhook_idempotency_store
 
 
 # ─── Request / Response models ────────────────────────────────────────────────

@@ -109,3 +109,214 @@ class AlertHistoryRow(Base):
     finding_rule_id: Mapped[str | None] = mapped_column(String(128))
     channel: Mapped[str] = mapped_column(String(32), nullable=False)
     delivered: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+# ─── SEPA Mandate Guard — Sprint 2 ───────────────────────────────────────────
+# Tables introduites par le module MandateGuard SEPA. Toutes portent une
+# colonne `tenant_id` nullable pour permettre la transition vers du multi-
+# tenant sans nouvelle migration (le filtrage applicatif est ajouté
+# lorsque l'isolation devient nécessaire).
+#
+# Convention SEPA :
+# - ICS : Identifiant Créancier SEPA (≤35 chars)
+# - RUM : Référence Unique de Mandat (≤35 chars)
+# - IBAN : chiffré (Fernet) + fingerprint HMAC pour recherche, jamais en clair
+# - amount stocké en cents (Integer) pour précision exacte
+
+
+class CreditorRow(Base):
+    """Créancier SEPA — identifié par son ICS dans le tenant."""
+
+    __tablename__ = "creditors"
+
+    creditor_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    ics: Mapped[str] = mapped_column(String(35), nullable=False)
+    normalized_name: Mapped[str | None] = mapped_column(String(255))
+    country: Mapped[str | None] = mapped_column(String(2))
+    reputation: Mapped[int] = mapped_column(Integer, nullable=False, server_default="50")
+    first_seen_at: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_creditors_ics", "ics"),
+        Index("idx_creditors_tenant", "tenant_id"),
+        Index("uq_creditors_tenant_ics", "tenant_id", "ics", unique=True),
+    )
+
+
+class BankAccountRow(Base):
+    """Compte bancaire (débiteur ou émetteur) — IBAN chiffré + fingerprint."""
+
+    __tablename__ = "bank_accounts"
+
+    account_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    label: Mapped[str | None] = mapped_column(String(255))
+    iban_ciphertext: Mapped[str] = mapped_column(Text, nullable=False)
+    iban_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="EUR")
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_bank_accounts_fingerprint", "iban_fingerprint"),
+        Index("idx_bank_accounts_tenant", "tenant_id"),
+        Index("uq_bank_accounts_tenant_fp", "tenant_id", "iban_fingerprint", unique=True),
+    )
+
+
+class MandateRow(Base):
+    """Mandat SEPA — autorisation de prélèvement d'un créancier vers un débiteur.
+
+    Cycle de vie : DRAFT → ACTIVE → REVOKED (terminal) ou EXPIRED (terminal).
+    Le scheme distingue SDD_CORE (B2C) de SDD_B2B. Le sequence_type indique
+    si le mandat couvre un premier (FRST), un récurrent (RCUR), un unique
+    (OOFF) ou un final (FNAL).
+    """
+
+    __tablename__ = "mandates"
+
+    mandate_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    creditor_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    debtor_account_id: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    rum: Mapped[str] = mapped_column(String(35), nullable=False)
+    scheme: Mapped[str] = mapped_column(String(16), nullable=False, server_default="SDD_CORE")
+    sequence_type: Mapped[str] = mapped_column(String(8), nullable=False, server_default="RCUR")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="DRAFT")
+
+    max_amount_cents: Mapped[int | None] = mapped_column(Integer)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="EUR")
+    frequency: Mapped[str | None] = mapped_column(String(32))
+    valid_from: Mapped[str | None] = mapped_column(Text)
+    valid_to: Mapped[str | None] = mapped_column(Text)
+
+    signed_at: Mapped[str | None] = mapped_column(Text)
+    revoked_at: Mapped[str | None] = mapped_column(Text)
+
+    document_key: Mapped[str | None] = mapped_column(String(255))
+    commitment_hash: Mapped[str | None] = mapped_column(String(64))
+    current_revision_id: Mapped[str | None] = mapped_column(String(64))
+
+    created_by: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_mandates_creditor", "creditor_id"),
+        Index("idx_mandates_debtor", "debtor_account_id"),
+        Index("idx_mandates_status", "status"),
+        Index("idx_mandates_rum", "rum"),
+        Index(
+            "uq_mandates_creditor_debtor_rum",
+            "tenant_id",
+            "creditor_id",
+            "debtor_account_id",
+            "rum",
+            unique=True,
+        ),
+    )
+
+
+class MandateRevisionRow(Base):
+    """Snapshot historique d'un mandat (création, signature, révocation, amendement)."""
+
+    __tablename__ = "mandate_revisions"
+
+    revision_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    mandate_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    reason: Mapped[str] = mapped_column(String(32), nullable=False)
+    snapshot_ciphertext: Mapped[str] = mapped_column(Text, nullable=False)
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    signature_provider: Mapped[str | None] = mapped_column(String(64))
+    signature_evidence_key: Mapped[str | None] = mapped_column(String(255))
+    actor: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (Index("idx_mandate_revisions_mandate", "mandate_id"),)
+
+
+class DebitEventRow(Base):
+    """Prélèvement SEPA observé — entrée d'analyse, idempotente par tenant+key."""
+
+    __tablename__ = "debit_events"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    debtor_account_id: Mapped[str | None] = mapped_column(String(64))
+
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+
+    creditor_id: Mapped[str | None] = mapped_column(String(64))
+    creditor_ics: Mapped[str | None] = mapped_column(String(35))
+    creditor_name_raw: Mapped[str | None] = mapped_column(String(255))
+    rum: Mapped[str | None] = mapped_column(String(35))
+
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="EUR")
+    booking_date: Mapped[str | None] = mapped_column(Text)
+    due_date: Mapped[str | None] = mapped_column(Text)
+    debtor_iban_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    raw_key: Mapped[str | None] = mapped_column(String(255))
+    raw_json: Mapped[str | None] = mapped_column(Text)
+
+    matched_mandate_id: Mapped[str | None] = mapped_column(String(64))
+
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_debit_events_tenant", "tenant_id"),
+        Index("idx_debit_events_creditor_ics", "creditor_ics"),
+        Index("idx_debit_events_rum", "rum"),
+        Index("idx_debit_events_iban_fp", "debtor_iban_fingerprint"),
+        Index(
+            "uq_debit_events_idempotency",
+            "tenant_id",
+            "idempotency_key",
+            unique=True,
+        ),
+    )
+
+
+class EvidencePackRow(Base):
+    """Dossier de preuve exportable — métadonnées + ancrage hash chain.
+
+    Le contenu sérialisé (JSON canonical + HTML) est stocké dans `payload_json`
+    et `report_html` directement (suffisant pour un MVP single-node). Pour la
+    production, prévoir un blob storage externe et stocker uniquement la
+    `storage_key` (ex. S3 path).
+
+    `pack_hash` = SHA-256 du payload_json canonical. C'est l'empreinte
+    vérifiable réplicable depuis le bundle exporté. `audit_anchor_hash`
+    pointe sur le `hash` du dernier événement de la chain au moment de la
+    création — permet de prouver l'antériorité.
+    """
+
+    __tablename__ = "evidence_packs"
+
+    evidence_pack_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(64))
+    subject_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    subject_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    domain: Mapped[str] = mapped_column(String(32), nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    pack_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    audit_anchor_hash: Mapped[str | None] = mapped_column(String(64))
+    audit_anchor_seq: Mapped[int | None] = mapped_column(Integer)
+
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    report_html: Mapped[str | None] = mapped_column(Text)
+    storage_key: Mapped[str | None] = mapped_column(String(255))
+
+    actor: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        Index("idx_evidence_packs_tenant", "tenant_id"),
+        Index("idx_evidence_packs_subject", "subject_type", "subject_id"),
+        Index("idx_evidence_packs_hash", "pack_hash"),
+    )
