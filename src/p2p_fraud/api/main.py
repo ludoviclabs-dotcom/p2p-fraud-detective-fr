@@ -133,6 +133,9 @@ from p2p_fraud.api.sepa_router import (  # noqa: E402
     _get_evidence_service as _sepa_get_evidence_stub,
 )
 from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _get_webhook_idempotency_store as _sepa_get_webhook_store_stub,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
     _require_auth_sepa,
 )
 from p2p_fraud.api.sepa_router import (  # noqa: E402
@@ -194,16 +197,31 @@ def _evidence_service() -> Any:
     return _EVIDENCE_SERVICE
 
 
+_WEBHOOK_STORE: Any = None
+
+
+def _webhook_idempotency_store() -> Any:
+    """Renvoie l'instance singleton du store d'idempotence webhook entrant."""
+    global _WEBHOOK_STORE
+    if _WEBHOOK_STORE is None:
+        from p2p_fraud.api.webhook_security import WebhookIdempotencyStore
+
+        analyzer = _sepa_analyzer()
+        _WEBHOOK_STORE = WebhookIdempotencyStore(engine=analyzer._engine)  # type: ignore[attr-defined]
+    return _WEBHOOK_STORE
+
+
 # ─── Injection des dépendances v1 ────────────────────────────────────────────
 # Override les stubs `_require_auth_v1` et `_get_service` du router v1 avec
 # les vraies implémentations du main app (auth bearer + CaseService).
 app.dependency_overrides[_require_auth_v1] = _require_auth
 app.dependency_overrides[_v1_get_service_stub] = _case_service
 
-# ─── Injection des dépendances SEPA Mandate Guard + Evidence ─────────────────
+# ─── Injection des dépendances SEPA Mandate Guard + Evidence + Webhooks ──────
 app.dependency_overrides[_require_auth_sepa] = _require_auth
 app.dependency_overrides[_sepa_get_analyzer_stub] = _sepa_analyzer
 app.dependency_overrides[_sepa_get_evidence_stub] = _evidence_service
+app.dependency_overrides[_sepa_get_webhook_store_stub] = _webhook_idempotency_store
 
 
 # ─── Request / Response models ────────────────────────────────────────────────

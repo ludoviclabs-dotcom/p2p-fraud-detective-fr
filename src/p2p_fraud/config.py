@@ -99,6 +99,15 @@ class Settings(BaseSettings):
     webhook_secret: str = ""  # secret HMAC partagé avec le SIEM destinataire
     webhook_timeout: float = 5.0  # seconds (connect + read combinés)
 
+    # ─── Webhook ENTRANT (Sprint 5 MandateGuard) ─────────────────────────────
+    # Quand un PSP/banque pousse un événement (prélèvement, mandat, ICS…)
+    # vers nous, la requête doit être signée HMAC-SHA256 avec ce secret.
+    # Headers attendus : X-MG-Timestamp (ISO 8601), X-MG-Signature
+    # (sha256=<hex>), X-MG-Idempotency-Key (anti-replay applicatif).
+    # Si vide → tout endpoint protégé par `verify_inbound_webhook` refuse
+    # toute requête entrante (fail-closed).
+    webhook_inbound_secret: str = ""
+
     # ─── Observabilité (P4-6) ────────────────────────────────────────────────
     sentry_dsn: str = ""
 

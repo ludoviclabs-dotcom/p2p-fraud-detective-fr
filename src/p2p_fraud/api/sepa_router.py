@@ -12,11 +12,17 @@ est override depuis `main.py` (cf. dépendance `_case_service` historique).
 
 from __future__ import annotations
 
+import json
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from p2p_fraud.api.webhook_security import (
+    VerifiedWebhook,
+    WebhookIdempotencyStore,
+    verify_inbound_webhook,
+)
 from p2p_fraud.evidence.service import (
     EvidenceService,
     EvidenceSubjectNotFoundError,
@@ -52,6 +58,11 @@ def _get_analyzer() -> SepaAnalyzer:
 
 def _get_evidence_service() -> EvidenceService:
     """Stub : l'instance EvidenceService réelle est injectée par `main.py`."""
+    raise NotImplementedError("Override via main.app.dependency_overrides")
+
+
+def _get_webhook_idempotency_store() -> WebhookIdempotencyStore:
+    """Stub : store d'idempotence webhook injecté par `main.py`."""
     raise NotImplementedError("Override via main.app.dependency_overrides")
 
 
@@ -436,6 +447,47 @@ def verify_evidence_pack(
         checked_at=result.checked_at,
         errors=list(result.errors),
     )
+
+
+# ─── Webhook inbound : prélèvement signé PSP/banque ──────────────────────────
+
+
+@router.post("/webhooks/debit", status_code=202)
+async def webhook_inbound_debit(
+    request: Request,
+    analyzer: Annotated[SepaAnalyzer, Depends(_get_analyzer)],
+    store: Annotated[WebhookIdempotencyStore, Depends(_get_webhook_idempotency_store)],
+    tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
+) -> dict[str, Any]:
+    """Reçoit un prélèvement signé HMAC d'un partenaire (PSP, banque).
+
+    Headers requis :
+    - X-MG-Timestamp     : ISO 8601 UTC, fenêtre +/- 5 min
+    - X-MG-Signature     : sha256=<hex> sur le body brut
+    - X-MG-Idempotency-Key : (recommandé) anti-replay applicatif
+
+    Corps : `DebitEventInput` JSON. L'analyzer est invoqué et le verdict
+    retourné de manière synchrone (le caller peut décider de bloquer).
+    """
+    verified: VerifiedWebhook = await verify_inbound_webhook(
+        request, store=store, source="psp-inbound"
+    )
+    try:
+        body_obj = json.loads(verified.body.decode("utf-8"))
+        payload = DebitEventInput.model_validate(body_obj)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Body invalide : {exc}",
+        ) from exc
+
+    result = analyzer.analyze(payload, actor="webhook:psp", tenant_id=tenant_id)
+    out = _analysis_to_out(result)
+    return {
+        "received_at": verified.timestamp.isoformat(),
+        "idempotency_key": verified.idempotency_key,
+        "analysis": out.model_dump(),
+    }
 
 
 def _evidence_to_out(record) -> EvidencePackOut:
