@@ -26,6 +26,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { href: "/p2p-scenarios", labelKey: "nav.p2p_scenarios", glyph: "⊞", badge: "new" },
       { href: "/risk-test-lab", labelKey: "nav.risk_test_lab", glyph: "⊟", badge: "new" },
+      { href: "/risk-lab-sepa", labelKey: "nav.risk_lab_sepa", glyph: "§", badge: "new" },
       { href: "/detection-studio", labelKey: "nav.detection_studio", glyph: "✦", badge: "new" },
       { href: "/fraud-case-360/CASE-APP-BANK-001", labelKey: "nav.case_360", glyph: "◎", badge: "new" },
       { href: "/risk-docs", labelKey: "nav.risk_docs", glyph: "≡", badge: "new" },
