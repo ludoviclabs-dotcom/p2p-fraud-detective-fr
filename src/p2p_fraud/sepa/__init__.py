@@ -11,6 +11,12 @@ Ed25519). Les IBAN ne sont jamais persistés en clair — chiffrement Fernet
 + fingerprint HMAC (cf. `security/iban.py`, `security/crypto.py`).
 """
 
+from p2p_fraud.sepa.analyzer import (
+    SEPA_ENGINE_VERSION,
+    AnalyzedDebit,
+    SepaAnalyzer,
+    build_sepa_engine,
+)
 from p2p_fraud.sepa.debit_event import DebitEventInput, DebitEventRecord, DebitEventService
 from p2p_fraud.sepa.mandate import (
     MandateInput,
@@ -20,9 +26,12 @@ from p2p_fraud.sepa.mandate import (
     MandateStateError,
 )
 from p2p_fraud.sepa.matcher import MandateMatcher, MatchResult, MatchWarning
+from p2p_fraud.sepa.rules import SepaRiskContext, build_sepa_rules
 from p2p_fraud.sepa.types import MandateScheme, MandateStatus, SequenceType
 
 __all__ = [
+    "SEPA_ENGINE_VERSION",
+    "AnalyzedDebit",
     "DebitEventInput",
     "DebitEventRecord",
     "DebitEventService",
@@ -36,5 +45,9 @@ __all__ = [
     "MandateStatus",
     "MatchResult",
     "MatchWarning",
+    "SepaAnalyzer",
+    "SepaRiskContext",
     "SequenceType",
+    "build_sepa_engine",
+    "build_sepa_rules",
 ]

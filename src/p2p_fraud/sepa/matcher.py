@@ -12,7 +12,7 @@ qui sera consommé par les règles SEPA du Risk Core en Sprint 3
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 from p2p_fraud.sepa.debit_event import DebitEventRecord
@@ -35,7 +35,7 @@ class MatchResult:
     mandate: MandateRecord | None
     candidates: tuple[MandateRecord, ...] = ()
     warnings: tuple[MatchWarning, ...] = ()
-    inactive_candidates: tuple[MandateRecord, ...] = field(default_factory=tuple)
+    inactive_candidates: tuple[MandateRecord, ...] = ()
 
     @property
     def matched(self) -> bool:
@@ -92,8 +92,20 @@ class MandateMatcher:
             rum=rum,
         )
 
+        # Candidats inactifs (révoqués / expirés / suspendus / drafts) qui
+        # matchent les axes — utilisé par les règles MANDATE_REVOKED, etc.
+        all_status_candidates = self._mandates.find_candidates_any_status(
+            tenant_id=tenant_id,
+            debtor_iban_fingerprint=fp,
+            creditor_ics=ics,
+            rum=rum,
+        )
+        inactive_candidates = tuple(
+            m for m in all_status_candidates if m.status.value != "ACTIVE"
+        )
+
         # Si rien et qu'on avait une RUM, retenter sans RUM pour signaler
-        # un éventuel mismatch RUM (sera converti en signal RUM_MISMATCH au Sprint 3).
+        # un éventuel mismatch RUM (converti en signal RUM_MISMATCH au Sprint 3).
         if not candidates and rum is not None:
             candidates_no_rum = self._mandates.find_active_candidates(
                 tenant_id=tenant_id,
@@ -106,6 +118,7 @@ class MandateMatcher:
                     mandate=None,
                     candidates=tuple(candidates_no_rum),
                     warnings=tuple(warnings),
+                    inactive_candidates=inactive_candidates,
                 )
 
         if len(candidates) > 1:
@@ -116,4 +129,5 @@ class MandateMatcher:
             mandate=mandate,
             candidates=tuple(candidates),
             warnings=tuple(warnings),
+            inactive_candidates=inactive_candidates,
         )

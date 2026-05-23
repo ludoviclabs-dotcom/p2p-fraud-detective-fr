@@ -354,20 +354,61 @@ class MandateService:
         creditor_ics: str,
         rum: str | None = None,
     ) -> list[MandateRecord]:
-        """Variante qui retourne tous les candidats (utile pour détecter
+        """Variante qui retourne tous les candidats actifs (utile pour détecter
         AMBIGUOUS_MANDATE_MATCH).
         """
+        return self._find_candidates(
+            tenant_id=tenant_id,
+            debtor_iban_fingerprint=debtor_iban_fingerprint,
+            creditor_ics=creditor_ics,
+            rum=rum,
+            statuses=(MandateStatus.ACTIVE.value,),
+        )
+
+    def find_candidates_any_status(
+        self,
+        *,
+        tenant_id: str | None = None,
+        debtor_iban_fingerprint: str,
+        creditor_ics: str,
+        rum: str | None = None,
+    ) -> list[MandateRecord]:
+        """Tous les candidats matchant les axes (toutes statuses).
+
+        Utile pour exposer les mandats révoqués à la règle MANDATE_REVOKED
+        sans modifier la liste retournée par `find_active_candidates`.
+        """
+        return self._find_candidates(
+            tenant_id=tenant_id,
+            debtor_iban_fingerprint=debtor_iban_fingerprint,
+            creditor_ics=creditor_ics,
+            rum=rum,
+            statuses=None,
+        )
+
+    def _find_candidates(
+        self,
+        *,
+        tenant_id: str | None,
+        debtor_iban_fingerprint: str,
+        creditor_ics: str,
+        rum: str | None,
+        statuses: tuple[str, ...] | None,
+    ) -> list[MandateRecord]:
         sql = (
             "SELECT m.* FROM mandates m "
             "JOIN bank_accounts ba ON ba.account_id = m.debtor_account_id "
             "JOIN creditors c ON c.creditor_id = m.creditor_id "
-            "WHERE m.status = :st AND ba.iban_fingerprint = :fp AND c.ics = :ics"
+            "WHERE ba.iban_fingerprint = :fp AND c.ics = :ics"
         )
         params: dict[str, Any] = {
-            "st": MandateStatus.ACTIVE.value,
             "fp": debtor_iban_fingerprint,
             "ics": creditor_ics,
         }
+        if statuses:
+            placeholders = ",".join(f":st{i}" for i in range(len(statuses)))
+            sql += f" AND m.status IN ({placeholders})"
+            params.update({f"st{i}": s for i, s in enumerate(statuses)})
         if tenant_id is not None:
             sql += " AND m.tenant_id = :tid"
             params["tid"] = tenant_id

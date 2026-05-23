@@ -125,6 +125,19 @@ from p2p_fraud.api.v1 import (  # noqa: E402
 
 app.include_router(v1_router)
 
+# Router SEPA Mandate Guard (Sprint 3 MandateGuard)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _get_analyzer as _sepa_get_analyzer_stub,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    _require_auth_sepa,
+)
+from p2p_fraud.api.sepa_router import (  # noqa: E402
+    router as sepa_router,
+)
+
+app.include_router(sepa_router)
+
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -154,11 +167,28 @@ def _case_service() -> CaseService:
     return _CASE_SERVICE
 
 
+_SEPA_ANALYZER: Any = None
+
+
+def _sepa_analyzer() -> Any:
+    """Renvoie l'instance singleton du SepaAnalyzer (partagée avec CaseService)."""
+    global _SEPA_ANALYZER
+    if _SEPA_ANALYZER is None:
+        from p2p_fraud.sepa.analyzer import SepaAnalyzer
+
+        _SEPA_ANALYZER = SepaAnalyzer(db_path=get_settings().fraud_cases_db)
+    return _SEPA_ANALYZER
+
+
 # ─── Injection des dépendances v1 ────────────────────────────────────────────
 # Override les stubs `_require_auth_v1` et `_get_service` du router v1 avec
 # les vraies implémentations du main app (auth bearer + CaseService).
 app.dependency_overrides[_require_auth_v1] = _require_auth
 app.dependency_overrides[_v1_get_service_stub] = _case_service
+
+# ─── Injection des dépendances SEPA Mandate Guard ────────────────────────────
+app.dependency_overrides[_require_auth_sepa] = _require_auth
+app.dependency_overrides[_sepa_get_analyzer_stub] = _sepa_analyzer
 
 
 # ─── Request / Response models ────────────────────────────────────────────────
