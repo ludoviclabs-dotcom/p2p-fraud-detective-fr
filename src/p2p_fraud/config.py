@@ -61,6 +61,16 @@ class Settings(BaseSettings):
     # ─── Crypto (chiffrement IBAN au repos) ──────────────────────────────────
     p2p_fraud_data_key: str = ""
 
+    # ─── HMAC IBAN fingerprint (Sprint 1 MandateGuard) ───────────────────────
+    # Secret distinct du Fernet de chiffrement. Permet de calculer un
+    # `iban_fingerprint = HMAC_SHA256(secret, normalize_iban(iban))` utilisable
+    # pour indexer/rechercher sans jamais stocker l'IBAN en clair (ADR-0002 du
+    # spec MandateGuard). Rotation indépendante de la clé Fernet.
+    # Génération recommandée :
+    #     python -c "import secrets; print(secrets.token_urlsafe(32))"
+    # Si vide → secret éphémère par instance (mode démo, warning au boot).
+    iban_hmac_secret: str = ""
+
     # ─── Auth applicative ────────────────────────────────────────────────────
     p2p_fraud_users_path: str = ""
     p2p_fraud_auth_required: bool = False
