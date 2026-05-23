@@ -62,9 +62,7 @@ def test_risk_signal_is_frozen():
 
 def test_risk_signal_validates_score_range():
     with pytest.raises(Exception):  # noqa: B017 (pydantic ValidationError)
-        RiskSignal(
-            code="X", title="t", message="m", severity=Severity.LOW, score=150
-        )
+        RiskSignal(code="X", title="t", message="m", severity=Severity.LOW, score=150)
 
 
 def test_assessment_result_is_frozen():
@@ -125,9 +123,7 @@ def test_to_level_thresholds():
 
 
 def test_decide_dispute_ready_requires_critical_and_high_score():
-    assert (
-        decide(85, [_sig(Severity.CRITICAL, 85)]) == RiskDecision.DISPUTE_READY
-    )
+    assert decide(85, [_sig(Severity.CRITICAL, 85)]) == RiskDecision.DISPUTE_READY
 
 
 def test_decide_block_recommended_at_75():
@@ -239,9 +235,7 @@ def test_engine_assess_empty_rules():
 
 
 def test_engine_assess_single_critical_rule():
-    rule = _SyntheticRule(
-        "NO_ACTIVE_MANDATE", Severity.CRITICAL, 80, RiskDomain.SEPA_DIRECT_DEBIT
-    )
+    rule = _SyntheticRule("NO_ACTIVE_MANDATE", Severity.CRITICAL, 80, RiskDomain.SEPA_DIRECT_DEBIT)
     engine = RiskEngine(
         [rule],
         engine_version="sepa-v0.1.0",
@@ -260,9 +254,7 @@ def test_engine_assess_multiple_rules_combined():
         _SyntheticRule("R1", Severity.HIGH, 50, RiskDomain.SUPPLIER_PAYMENT),
         _SyntheticRule("R2", Severity.MEDIUM, 25, RiskDomain.SUPPLIER_PAYMENT),
     ]
-    engine = RiskEngine(
-        rules, engine_version="p2p-v0.1.0", domain=RiskDomain.SUPPLIER_PAYMENT
-    )
+    engine = RiskEngine(rules, engine_version="p2p-v0.1.0", domain=RiskDomain.SUPPLIER_PAYMENT)
     result = engine.assess(None)
     assert result.score == 75
     assert result.decision == RiskDecision.BLOCK_RECOMMENDED
@@ -324,9 +316,7 @@ def test_finding_to_signal_with_rule_id_remap():
         severity=Severity.HIGH,
         rule_id="MD_IBAN_NO_4EYES",
     )
-    sig = finding_to_signal(
-        finding, rule_id_to_code={"MD_IBAN_NO_4EYES": "FOUR_EYES_BREACH"}
-    )
+    sig = finding_to_signal(finding, rule_id_to_code={"MD_IBAN_NO_4EYES": "FOUR_EYES_BREACH"})
     assert sig.code == "FOUR_EYES_BREACH"
     # Le titre vient du registre canonique
     assert "4-eyes" in sig.title.lower() or "yeux" in sig.title.lower()

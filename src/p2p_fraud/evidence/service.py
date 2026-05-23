@@ -152,9 +152,7 @@ class EvidenceService:
         evidence_pack_id = _new_id()
         now = _now_iso()
         report_html = (
-            render_html_report(built.payload, built.pack_hash)
-            if self._include_html
-            else None
+            render_html_report(built.payload, built.pack_hash) if self._include_html else None
         )
 
         with self._engine.begin() as conn:
@@ -215,9 +213,7 @@ class EvidenceService:
             row = conn.execute(text(sql), params).mappings().first()
             return self._row_to_record(row) if row else None
 
-    def get_report_html(
-        self, evidence_pack_id: str, *, tenant_id: str | None = None
-    ) -> str | None:
+    def get_report_html(self, evidence_pack_id: str, *, tenant_id: str | None = None) -> str | None:
         with self._engine.begin() as conn:
             sql = "SELECT report_html FROM evidence_packs WHERE evidence_pack_id = :id"
             params: dict = {"id": evidence_pack_id}
@@ -235,10 +231,7 @@ class EvidenceService:
         tenant_id: str | None = None,
         limit: int = 50,
     ) -> list[EvidencePackRecord]:
-        sql = (
-            "SELECT * FROM evidence_packs "
-            "WHERE subject_type = :st AND subject_id = :sid"
-        )
+        sql = "SELECT * FROM evidence_packs WHERE subject_type = :st AND subject_id = :sid"
         params: dict = {"st": subject_type, "sid": subject_id, "limit": limit}
         if tenant_id is not None:
             sql += " AND COALESCE(tenant_id,'') = COALESCE(:tid,'')"
@@ -280,9 +273,7 @@ class EvidenceService:
     def _latest_audit_anchor(self) -> tuple[int | None, str | None]:
         with self._engine.begin() as conn:
             row = conn.execute(
-                text(
-                    "SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1"
-                )
+                text("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1")
             ).first()
         if row is None:
             return None, None
@@ -297,12 +288,16 @@ class EvidenceService:
         Pour les volumes plus importants, on ajouterait un index applicatif.
         """
         with self._engine.begin() as conn:
-            rows = conn.execute(
-                text(
-                    "SELECT seq, at, actor, kind, payload, prev_hash, hash "
-                    "FROM audit_log ORDER BY seq ASC"
+            rows = (
+                conn.execute(
+                    text(
+                        "SELECT seq, at, actor, kind, payload, prev_hash, hash "
+                        "FROM audit_log ORDER BY seq ASC"
+                    )
                 )
-            ).mappings().all()
+                .mappings()
+                .all()
+            )
         out: list[dict[str, Any]] = []
         for r in rows:
             try:

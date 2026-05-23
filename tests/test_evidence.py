@@ -137,9 +137,7 @@ def test_create_evidence_pack_for_debit_event(service):
     analyzed = service.analyzer.analyze(_debit_payload(), actor="alice")
 
     record = service.create(
-        EvidencePackInput(
-            subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id
-        ),
+        EvidencePackInput(subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id),
         actor="alice",
     )
     assert record.evidence_pack_id.startswith("evp-")
@@ -189,9 +187,7 @@ def test_list_for_subject_returns_packs(service):
         EvidencePackInput(subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id),
         actor="alice",
     )
-    packs = service.list_for_subject(
-        subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id
-    )
+    packs = service.list_for_subject(subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id)
     assert len(packs) == 1
 
 
@@ -227,13 +223,9 @@ def test_audit_records_evidence_pack_created(service):
 def test_payload_does_not_leak_iban_clear(service):
     """Le payload canonical ne doit jamais contenir l'IBAN clair."""
     iban = "FR7630001007941234567890185"
-    mandate = service.analyzer.mandates.create(
-        _mandate_payload(debtor_iban=iban), actor="alice"
-    )
+    mandate = service.analyzer.mandates.create(_mandate_payload(debtor_iban=iban), actor="alice")
     service.analyzer.mandates.sign(mandate.mandate_id, actor="alice")
-    analyzed = service.analyzer.analyze(
-        _debit_payload(debtor_iban=iban), actor="alice"
-    )
+    analyzed = service.analyzer.analyze(_debit_payload(debtor_iban=iban), actor="alice")
     record = service.create(
         EvidencePackInput(subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id),
         actor="alice",
@@ -296,9 +288,7 @@ def test_verify_unknown_pack_returns_invalid(service):
 
 
 def test_evidence_isolated_by_tenant(service):
-    analyzed = service.analyzer.analyze(
-        _debit_payload(), actor="alice", tenant_id="t-1"
-    )
+    analyzed = service.analyzer.analyze(_debit_payload(), actor="alice", tenant_id="t-1")
     record = service.create(
         EvidencePackInput(subject_type="DEBIT_EVENT", subject_id=analyzed.event.event_id),
         actor="alice",

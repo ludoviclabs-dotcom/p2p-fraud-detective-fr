@@ -147,10 +147,7 @@ class SepaAnalyzer:
         # SQLite ne supporte pas les comparaisons date < text de façon
         # fiable ; on rapatrie les derniers événements et le filtrage
         # temporel est appliqué par la règle UnusualFrequencyRule.
-        sql = (
-            "SELECT * FROM debit_events "
-            "WHERE debtor_iban_fingerprint = :fp "
-        )
+        sql = "SELECT * FROM debit_events WHERE debtor_iban_fingerprint = :fp "
         params: dict = {"fp": fingerprint}
         if tenant_id is not None:
             sql += "AND COALESCE(tenant_id,'') = COALESCE(:tid,'') "

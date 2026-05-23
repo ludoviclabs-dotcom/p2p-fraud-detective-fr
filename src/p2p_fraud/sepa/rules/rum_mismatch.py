@@ -26,11 +26,7 @@ class RumMismatchRule:
 
     def evaluate(self, ctx: SepaRiskContext) -> list[RiskSignal]:
         # Cas 1 : event a une RUM, candidats sans RUM existent (= mismatch)
-        if (
-            ctx.event.rum
-            and ctx.match.mandate is None
-            and ctx.match.candidates
-        ):
+        if ctx.event.rum and ctx.match.mandate is None and ctx.match.candidates:
             other_rums = sorted({c.rum for c in ctx.match.candidates if c.rum})
             return [
                 RiskSignal(

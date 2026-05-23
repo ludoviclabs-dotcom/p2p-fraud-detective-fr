@@ -112,12 +112,8 @@ class EvidenceBuilder:
         return {
             "matched": match.matched,
             "mandate": self._serialize_mandate(match.mandate) if match.mandate else None,
-            "candidates_active": [
-                self._serialize_mandate(m) for m in match.candidates
-            ],
-            "candidates_inactive": [
-                self._serialize_mandate(m) for m in match.inactive_candidates
-            ],
+            "candidates_active": [self._serialize_mandate(m) for m in match.candidates],
+            "candidates_inactive": [self._serialize_mandate(m) for m in match.inactive_candidates],
             "warnings": [w.value for w in match.warnings],
         }
 

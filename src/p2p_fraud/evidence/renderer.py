@@ -25,9 +25,7 @@ def _row(label: str, value: Any) -> str:
 
 
 def _section(title: str, body: str) -> str:
-    return (
-        f"<section><h2>{_escape(title)}</h2>{body}</section>"
-    )
+    return f"<section><h2>{_escape(title)}</h2>{body}</section>"
 
 
 def render_html_report(payload: dict[str, Any], pack_hash: str) -> str:
@@ -149,8 +147,12 @@ footer{color:#9ca3af;font-size:.8rem;margin-top:24px;text-align:center}
         f"ID {_escape(subject.get('id'))}</div>"
         + _section("Métadonnées", f"<table>{head_rows}</table>")
         + _section("Décision", decision_block)
-        + _section("Signaux de risque", f"<ul class='signals'>{signals_html}</ul>"
-                   if signals else "<p>Aucun signal — décision ALLOW.</p>")
+        + _section(
+            "Signaux de risque",
+            f"<ul class='signals'>{signals_html}</ul>"
+            if signals
+            else "<p>Aucun signal — décision ALLOW.</p>",
+        )
         + _section("Événement source", f"<table>{event_rows}</table>")
         + _section("Appariement mandat", f"<table>{match_block}</table>")
         + (
@@ -158,11 +160,7 @@ footer{color:#9ca3af;font-size:.8rem;margin-top:24px;text-align:center}
             if timeline
             else ""
         )
-        + (
-            _section("Notes", f"<p>{_escape(notes)}</p>")
-            if notes
-            else ""
-        )
+        + (_section("Notes", f"<p>{_escape(notes)}</p>") if notes else "")
         + f"<footer>Pack hash : <code>{_escape(pack_hash)}</code></footer>"
         "</body></html>"
     )

@@ -65,11 +65,14 @@ class UnusualFrequencyRule:
                 # accepts ISO date or datetime
                 if "T" in bd:
                     from datetime import datetime
+
                     parsed = datetime.fromisoformat(bd)
                 else:
                     from datetime import date as _date
+
                     parsed_d = _date.fromisoformat(bd)
                     from datetime import UTC, datetime
+
                     parsed = datetime.combine(parsed_d, datetime.min.time(), UTC)
                 if parsed >= window_start:
                     recent_count += 1

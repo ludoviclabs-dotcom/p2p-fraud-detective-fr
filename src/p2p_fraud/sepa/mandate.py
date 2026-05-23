@@ -198,9 +198,7 @@ class MandateService:
                 now=now,
             )
             conn.execute(
-                text(
-                    "UPDATE mandates SET current_revision_id = :rid WHERE mandate_id = :mid"
-                ),
+                text("UPDATE mandates SET current_revision_id = :rid WHERE mandate_id = :mid"),
                 {"rid": revision["revision_id"], "mid": mandate_id},
             )
 
@@ -298,9 +296,7 @@ class MandateService:
 
     # ─── Lecture ─────────────────────────────────────────────────────────────
 
-    def get(
-        self, mandate_id: str, *, tenant_id: str | None = None
-    ) -> MandateRecord | None:
+    def get(self, mandate_id: str, *, tenant_id: str | None = None) -> MandateRecord | None:
         with self._engine.begin() as conn:
             row = self._fetch_mandate(conn, mandate_id=mandate_id, tenant_id=tenant_id)
             return self._row_to_record(conn, row) if row else None
@@ -426,10 +422,14 @@ class MandateService:
             row = self._fetch_mandate(conn, mandate_id=mandate_id, tenant_id=tenant_id)
             if not row:
                 return None
-            ba = conn.execute(
-                text("SELECT iban_ciphertext FROM bank_accounts WHERE account_id = :id"),
-                {"id": row["debtor_account_id"]},
-            ).mappings().first()
+            ba = (
+                conn.execute(
+                    text("SELECT iban_ciphertext FROM bank_accounts WHERE account_id = :id"),
+                    {"id": row["debtor_account_id"]},
+                )
+                .mappings()
+                .first()
+            )
             if not ba:
                 return None
             return self._crypto.decrypt(ba["iban_ciphertext"])
@@ -457,9 +457,7 @@ class MandateService:
                 raise MandateNotFoundError(mandate_id)
             current = MandateStatus(row["status"])
             if not can_transition(current, target):
-                raise MandateStateError(
-                    f"Transition refusée : {current.value} → {target.value}"
-                )
+                raise MandateStateError(f"Transition refusée : {current.value} → {target.value}")
 
             updates = {
                 "status": target.value,
@@ -493,9 +491,7 @@ class MandateService:
                 signature_evidence_key=signature_evidence_key,
             )
             conn.execute(
-                text(
-                    "UPDATE mandates SET current_revision_id = :rid WHERE mandate_id = :mid"
-                ),
+                text("UPDATE mandates SET current_revision_id = :rid WHERE mandate_id = :mid"),
                 {"rid": revision["revision_id"], "mid": mandate_id},
             )
 
@@ -522,14 +518,22 @@ class MandateService:
         return conn.execute(text(sql), params).mappings().first()
 
     def _row_to_record(self, conn, row: Any) -> MandateRecord:
-        creditor = conn.execute(
-            text("SELECT ics, normalized_name FROM creditors WHERE creditor_id = :id"),
-            {"id": row["creditor_id"]},
-        ).mappings().first()
-        account = conn.execute(
-            text("SELECT iban_fingerprint FROM bank_accounts WHERE account_id = :id"),
-            {"id": row["debtor_account_id"]},
-        ).mappings().first()
+        creditor = (
+            conn.execute(
+                text("SELECT ics, normalized_name FROM creditors WHERE creditor_id = :id"),
+                {"id": row["creditor_id"]},
+            )
+            .mappings()
+            .first()
+        )
+        account = (
+            conn.execute(
+                text("SELECT iban_fingerprint FROM bank_accounts WHERE account_id = :id"),
+                {"id": row["debtor_account_id"]},
+            )
+            .mappings()
+            .first()
+        )
         return MandateRecord(
             mandate_id=row["mandate_id"],
             tenant_id=row["tenant_id"],
@@ -565,13 +569,17 @@ class MandateService:
         country: str | None,
         now: str,
     ) -> str:
-        existing = conn.execute(
-            text(
-                "SELECT creditor_id FROM creditors "
-                "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') AND ics = :ics"
-            ),
-            {"tid": tenant_id, "ics": ics},
-        ).mappings().first()
+        existing = (
+            conn.execute(
+                text(
+                    "SELECT creditor_id FROM creditors "
+                    "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') AND ics = :ics"
+                ),
+                {"tid": tenant_id, "ics": ics},
+            )
+            .mappings()
+            .first()
+        )
         if existing:
             conn.execute(
                 text(
@@ -615,14 +623,18 @@ class MandateService:
         currency: str,
         now: str,
     ) -> str:
-        existing = conn.execute(
-            text(
-                "SELECT account_id FROM bank_accounts "
-                "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') "
-                "AND iban_fingerprint = :fp"
-            ),
-            {"tid": tenant_id, "fp": fingerprint},
-        ).mappings().first()
+        existing = (
+            conn.execute(
+                text(
+                    "SELECT account_id FROM bank_accounts "
+                    "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') "
+                    "AND iban_fingerprint = :fp"
+                ),
+                {"tid": tenant_id, "fp": fingerprint},
+            )
+            .mappings()
+            .first()
+        )
         if existing:
             conn.execute(
                 text(

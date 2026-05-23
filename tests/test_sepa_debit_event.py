@@ -96,10 +96,14 @@ def test_ingest_raw_json_redacts_iban(service):
     iban = "FR7630001007941234567890185"
     rec = service.ingest(_payload(debtor_iban=iban), actor="alice")
     with service._engine.begin() as conn:
-        row = conn.execute(
-            text("SELECT raw_json FROM debit_events WHERE event_id = :id"),
-            {"id": rec.event_id},
-        ).mappings().first()
+        row = (
+            conn.execute(
+                text("SELECT raw_json FROM debit_events WHERE event_id = :id"),
+                {"id": rec.event_id},
+            )
+            .mappings()
+            .first()
+        )
     assert row is not None
     raw = row["raw_json"]
     assert iban not in raw
@@ -163,6 +167,7 @@ def test_mark_matched_updates_mandate_id(service):
 
 def test_amount_must_be_positive():
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         DebitEventInput(
             source="manual",
@@ -175,6 +180,7 @@ def test_amount_must_be_positive():
 
 def test_iban_too_short_rejected():
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         DebitEventInput(
             source="manual",

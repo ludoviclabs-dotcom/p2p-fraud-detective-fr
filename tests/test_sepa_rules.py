@@ -147,9 +147,7 @@ def test_mandate_revoked_fires_when_revoked_candidate():
     revoked_at = "2026-01-15T10:00:00+00:00"
     match = MatchResult(
         mandate=None,
-        inactive_candidates=(
-            _mandate(status=MandateStatus.REVOKED, revoked_at=revoked_at),
-        ),
+        inactive_candidates=(_mandate(status=MandateStatus.REVOKED, revoked_at=revoked_at),),
     )
     signals = rule.evaluate(_ctx(match=match))
     assert len(signals) == 1
@@ -343,5 +341,6 @@ def test_build_sepa_rules_contains_all_six():
 
 def test_all_rules_target_sepa_domain():
     from p2p_fraud.risk_core.types import RiskDomain
+
     for rule in build_sepa_rules():
         assert rule.domain == RiskDomain.SEPA_DIRECT_DEBIT

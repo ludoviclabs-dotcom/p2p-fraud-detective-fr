@@ -100,9 +100,7 @@ class MandateMatcher:
             creditor_ics=ics,
             rum=rum,
         )
-        inactive_candidates = tuple(
-            m for m in all_status_candidates if m.status.value != "ACTIVE"
-        )
+        inactive_candidates = tuple(m for m in all_status_candidates if m.status.value != "ACTIVE")
 
         # Si rien et qu'on avait une RUM, retenter sans RUM pour signaler
         # un éventuel mismatch RUM (converti en signal RUM_MISMATCH au Sprint 3).

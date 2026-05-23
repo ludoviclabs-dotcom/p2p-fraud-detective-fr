@@ -128,14 +128,18 @@ class DebitEventService:
         si la clé d'idempotence est déjà connue pour ce tenant.
         """
         with self._engine.begin() as conn:
-            existing = conn.execute(
-                text(
-                    "SELECT * FROM debit_events "
-                    "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') "
-                    "AND idempotency_key = :key"
-                ),
-                {"tid": tenant_id, "key": payload.idempotency_key},
-            ).mappings().first()
+            existing = (
+                conn.execute(
+                    text(
+                        "SELECT * FROM debit_events "
+                        "WHERE COALESCE(tenant_id,'') = COALESCE(:tid,'') "
+                        "AND idempotency_key = :key"
+                    ),
+                    {"tid": tenant_id, "key": payload.idempotency_key},
+                )
+                .mappings()
+                .first()
+            )
             if existing:
                 log.debug(
                     "debit_event idempotent hit",
@@ -205,9 +209,7 @@ class DebitEventService:
 
     # ─── Lecture ─────────────────────────────────────────────────────────────
 
-    def get(
-        self, event_id: str, *, tenant_id: str | None = None
-    ) -> DebitEventRecord | None:
+    def get(self, event_id: str, *, tenant_id: str | None = None) -> DebitEventRecord | None:
         sql = "SELECT * FROM debit_events WHERE event_id = :eid"
         params: dict[str, Any] = {"eid": event_id}
         if tenant_id is not None:

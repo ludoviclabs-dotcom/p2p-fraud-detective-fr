@@ -66,9 +66,7 @@ def test_verify_signature_ok():
     body = b'{"x":42}'
     ts = _now_iso()
     sig = compute_signature(body, SECRET)
-    result = verify_signature(
-        body, timestamp_header=ts, signature_header=sig, secret=SECRET
-    )
+    result = verify_signature(body, timestamp_header=ts, signature_header=sig, secret=SECRET)
     assert isinstance(result, datetime)
 
 
@@ -85,8 +83,11 @@ def test_verify_signature_rejects_old_timestamp():
     sig = compute_signature(body, SECRET)
     with pytest.raises(WebhookVerificationError):
         verify_signature(
-            body, timestamp_header=old, signature_header=sig,
-            secret=SECRET, tolerance_seconds=300,
+            body,
+            timestamp_header=old,
+            signature_header=sig,
+            secret=SECRET,
+            tolerance_seconds=300,
         )
 
 
@@ -96,25 +97,28 @@ def test_verify_signature_rejects_future_timestamp():
     sig = compute_signature(body, SECRET)
     with pytest.raises(WebhookVerificationError):
         verify_signature(
-            body, timestamp_header=future, signature_header=sig,
-            secret=SECRET, tolerance_seconds=300,
+            body,
+            timestamp_header=future,
+            signature_header=sig,
+            secret=SECRET,
+            tolerance_seconds=300,
         )
 
 
 def test_verify_signature_rejects_missing_signature():
     body = b'{"x":1}'
     with pytest.raises(WebhookVerificationError):
-        verify_signature(
-            body, timestamp_header=_now_iso(), signature_header=None, secret=SECRET
-        )
+        verify_signature(body, timestamp_header=_now_iso(), signature_header=None, secret=SECRET)
 
 
 def test_verify_signature_rejects_malformed_signature():
     body = b'{"x":1}'
     with pytest.raises(WebhookVerificationError):
         verify_signature(
-            body, timestamp_header=_now_iso(),
-            signature_header="abcdef-no-prefix", secret=SECRET,
+            body,
+            timestamp_header=_now_iso(),
+            signature_header="abcdef-no-prefix",
+            secret=SECRET,
         )
 
 
@@ -122,8 +126,10 @@ def test_verify_signature_rejects_invalid_signature():
     body = b'{"x":1}'
     with pytest.raises(WebhookVerificationError):
         verify_signature(
-            body, timestamp_header=_now_iso(),
-            signature_header="sha256=" + "0" * 64, secret=SECRET,
+            body,
+            timestamp_header=_now_iso(),
+            signature_header="sha256=" + "0" * 64,
+            secret=SECRET,
         )
 
 
@@ -132,8 +138,10 @@ def test_verify_signature_rejects_wrong_secret():
     sig = compute_signature(body, b"other-secret")
     with pytest.raises(WebhookVerificationError):
         verify_signature(
-            body, timestamp_header=_now_iso(),
-            signature_header=sig, secret=SECRET,
+            body,
+            timestamp_header=_now_iso(),
+            signature_header=sig,
+            secret=SECRET,
         )
 
 

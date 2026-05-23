@@ -160,8 +160,7 @@ class WebhookIdempotencyStore:
         with self._engine.begin() as conn:
             row = conn.execute(
                 text(
-                    f"SELECT idempotency_key FROM {self._TABLE} "
-                    "WHERE idempotency_key = :k LIMIT 1"
+                    f"SELECT idempotency_key FROM {self._TABLE} WHERE idempotency_key = :k LIMIT 1"
                 ),
                 {"k": key},
             ).first()
@@ -188,9 +187,7 @@ class WebhookIdempotencyStore:
         cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         with self._engine.begin() as conn:
             result = conn.execute(
-                text(
-                    f"DELETE FROM {self._TABLE} WHERE received_at < :c"
-                ),
+                text(f"DELETE FROM {self._TABLE} WHERE received_at < :c"),
                 {"c": cutoff},
             )
         return result.rowcount or 0

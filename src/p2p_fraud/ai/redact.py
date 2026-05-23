@@ -40,10 +40,7 @@ class LeakingFieldError(ValueError):
     """Le payload contient encore une donnée sensible après redaction."""
 
     def __init__(self, field_name: str, pattern: str) -> None:
-        super().__init__(
-            f"Donnée sensible non redactée dans '{field_name}' "
-            f"(pattern={pattern})"
-        )
+        super().__init__(f"Donnée sensible non redactée dans '{field_name}' (pattern={pattern})")
         self.field_name = field_name
         self.pattern = pattern
 
@@ -179,9 +176,7 @@ def is_safe_for_llm(
     return not leaks
 
 
-def _scan_value(
-    value: Any, path: str, cfg: RedactionConfig, leaks: list[tuple[str, str]]
-) -> None:
+def _scan_value(value: Any, path: str, cfg: RedactionConfig, leaks: list[tuple[str, str]]) -> None:
     if isinstance(value, dict):
         for k, v in value.items():
             if k in cfg.preserve_fields:
@@ -194,8 +189,6 @@ def _scan_value(
         _scan_text(value, path, cfg, leaks)
 
 
-def _scan_text(
-    text: str, path: str, cfg: RedactionConfig, leaks: list[tuple[str, str]]
-) -> None:
+def _scan_text(text: str, path: str, cfg: RedactionConfig, leaks: list[tuple[str, str]]) -> None:
     if cfg.redact_iban and IBAN_LEAK_PATTERN.search(text):
         leaks.append((path, "IBAN"))

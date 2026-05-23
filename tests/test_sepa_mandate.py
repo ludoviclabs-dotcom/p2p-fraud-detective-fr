@@ -79,10 +79,14 @@ def test_create_mandate_persists_to_db(service):
 def test_create_mandate_creates_revision(service):
     rec = service.create(_payload(), actor="alice")
     with service._engine.begin() as conn:
-        revisions = conn.execute(
-            text("SELECT * FROM mandate_revisions WHERE mandate_id = :id"),
-            {"id": rec.mandate_id},
-        ).mappings().all()
+        revisions = (
+            conn.execute(
+                text("SELECT * FROM mandate_revisions WHERE mandate_id = :id"),
+                {"id": rec.mandate_id},
+            )
+            .mappings()
+            .all()
+        )
     assert len(revisions) == 1
     assert revisions[0]["reason"] == "CREATED"
     assert revisions[0]["actor"] == "alice"
@@ -93,18 +97,23 @@ def test_create_mandate_iban_not_in_clear_in_db(service):
     iban = "FR7630001007941234567890185"
     rec = service.create(_payload(debtor_iban=iban), actor="alice")
     with service._engine.begin() as conn:
-        ba = conn.execute(
-            text(
-                "SELECT iban_ciphertext, iban_fingerprint FROM bank_accounts "
-                "WHERE account_id = :id"
-            ),
-            {"id": rec.debtor_account_id},
-        ).mappings().first()
+        ba = (
+            conn.execute(
+                text(
+                    "SELECT iban_ciphertext, iban_fingerprint FROM bank_accounts "
+                    "WHERE account_id = :id"
+                ),
+                {"id": rec.debtor_account_id},
+            )
+            .mappings()
+            .first()
+        )
     assert ba is not None
     assert iban not in ba["iban_ciphertext"]
     assert ba["iban_ciphertext"].startswith("enc:v1:")
     # Fingerprint cohérent avec security.iban
     from p2p_fraud.security.iban import iban_fingerprint
+
     assert ba["iban_fingerprint"] == iban_fingerprint(iban)
 
 
@@ -161,12 +170,16 @@ def test_sign_creates_revision(service):
     rec = service.create(_payload(), actor="alice")
     service.sign(rec.mandate_id, actor="alice")
     with service._engine.begin() as conn:
-        revisions = conn.execute(
-            text(
-                "SELECT reason FROM mandate_revisions WHERE mandate_id = :id ORDER BY created_at"
-            ),
-            {"id": rec.mandate_id},
-        ).mappings().all()
+        revisions = (
+            conn.execute(
+                text(
+                    "SELECT reason FROM mandate_revisions WHERE mandate_id = :id ORDER BY created_at"
+                ),
+                {"id": rec.mandate_id},
+            )
+            .mappings()
+            .all()
+        )
     reasons = [r["reason"] for r in revisions]
     assert reasons == ["CREATED", "SIGNED"]
 
@@ -243,6 +256,7 @@ def test_list_filters_by_tenant(service):
 
 def test_find_active_candidate_returns_match(service):
     from p2p_fraud.security.iban import iban_fingerprint
+
     iban = "FR7630001007941234567890185"
     rec = service.create(_payload(debtor_iban=iban), actor="alice")
     service.sign(rec.mandate_id, actor="alice")
@@ -257,6 +271,7 @@ def test_find_active_candidate_returns_match(service):
 
 def test_find_active_candidate_excludes_draft(service):
     from p2p_fraud.security.iban import iban_fingerprint
+
     iban = "FR7630001007941234567890185"
     service.create(_payload(debtor_iban=iban), actor="alice")
     # pas signé : reste en DRAFT
@@ -270,6 +285,7 @@ def test_find_active_candidate_excludes_draft(service):
 
 def test_find_active_candidate_excludes_revoked(service):
     from p2p_fraud.security.iban import iban_fingerprint
+
     iban = "FR7630001007941234567890185"
     rec = service.create(_payload(debtor_iban=iban), actor="alice")
     service.sign(rec.mandate_id, actor="alice")
@@ -285,6 +301,7 @@ def test_find_active_candidate_excludes_revoked(service):
 def test_find_active_candidates_returns_all_matching(service):
     """Plusieurs mandats avec même IBAN+ICS mais RUM différentes → tous retournés."""
     from p2p_fraud.security.iban import iban_fingerprint
+
     iban = "FR7630001007941234567890185"
     r1 = service.create(_payload(debtor_iban=iban, rum="RUM-1"), actor="alice")
     r2 = service.create(_payload(debtor_iban=iban, rum="RUM-2"), actor="alice")

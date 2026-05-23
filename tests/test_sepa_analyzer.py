@@ -110,13 +110,9 @@ def test_revoked_mandate_triggers_block_recommended(analyzer):
 
 
 def test_amount_exceeds_limit_boosts_score(analyzer):
-    mandate = analyzer.mandates.create(
-        _mandate_payload(max_amount_cents=5000), actor="alice"
-    )
+    mandate = analyzer.mandates.create(_mandate_payload(max_amount_cents=5000), actor="alice")
     analyzer.mandates.sign(mandate.mandate_id, actor="alice")
-    result = analyzer.analyze(
-        _debit_payload(amount_cents=20000), actor="alice"
-    )
+    result = analyzer.analyze(_debit_payload(amount_cents=20000), actor="alice")
     codes = {s.code for s in result.assessment.signals}
     assert "MANDATE_AMOUNT_EXCEEDED" in codes
     # 70 points pour AMOUNT_EXCEEDED + critical → REVIEW au moins
@@ -127,13 +123,9 @@ def test_amount_exceeds_limit_boosts_score(analyzer):
 
 
 def test_rum_mismatch_produces_signal(analyzer):
-    mandate = analyzer.mandates.create(
-        _mandate_payload(rum="RUM-A"), actor="alice"
-    )
+    mandate = analyzer.mandates.create(_mandate_payload(rum="RUM-A"), actor="alice")
     analyzer.mandates.sign(mandate.mandate_id, actor="alice")
-    result = analyzer.analyze(
-        _debit_payload(rum="RUM-B"), actor="alice"
-    )
+    result = analyzer.analyze(_debit_payload(rum="RUM-B"), actor="alice")
     codes = {s.code for s in result.assessment.signals}
     assert "RUM_MISMATCH" in codes
 
@@ -175,6 +167,7 @@ def test_audit_does_not_leak_iban(analyzer):
     iban = "FR7630001007941234567890185"
     analyzer.analyze(_debit_payload(debtor_iban=iban), actor="alice")
     import json
+
     for entry in analyzer.audit.all():
         as_str = json.dumps(entry.payload)
         assert iban not in as_str
@@ -223,9 +216,7 @@ def test_idempotent_analyze_returns_same_event(analyzer):
 
 def test_tenant_isolation_in_analyze(analyzer):
     """Mandat de tenant-1 ne match pas un événement de tenant-2."""
-    mandate = analyzer.mandates.create(
-        _mandate_payload(), actor="alice", tenant_id="tenant-1"
-    )
+    mandate = analyzer.mandates.create(_mandate_payload(), actor="alice", tenant_id="tenant-1")
     analyzer.mandates.sign(mandate.mandate_id, actor="alice", tenant_id="tenant-1")
     result = analyzer.analyze(_debit_payload(), actor="alice", tenant_id="tenant-2")
     assert not result.match.matched

@@ -34,7 +34,9 @@ class EvidenceVerifier:
         self._engine = engine
         self._audit = audit_log
 
-    def verify(self, evidence_pack_id: str, *, tenant_id: str | None = None) -> EvidenceVerificationResult:
+    def verify(
+        self, evidence_pack_id: str, *, tenant_id: str | None = None
+    ) -> EvidenceVerificationResult:
         errors: list[str] = []
         with self._engine.begin() as conn:
             sql = "SELECT * FROM evidence_packs WHERE evidence_pack_id = :id"
@@ -81,12 +83,14 @@ class EvidenceVerifier:
         anchor_hash = row["audit_anchor_hash"]
         if anchor_seq is not None:
             with self._engine.begin() as conn:
-                anchor_row = conn.execute(
-                    text(
-                        "SELECT seq, hash FROM audit_log WHERE seq = :seq LIMIT 1"
-                    ),
-                    {"seq": anchor_seq},
-                ).mappings().first()
+                anchor_row = (
+                    conn.execute(
+                        text("SELECT seq, hash FROM audit_log WHERE seq = :seq LIMIT 1"),
+                        {"seq": anchor_seq},
+                    )
+                    .mappings()
+                    .first()
+                )
             if anchor_row is None:
                 errors.append(f"audit_anchor_seq {anchor_seq} absent")
             elif anchor_row["hash"] != anchor_hash:
@@ -102,9 +106,7 @@ class EvidenceVerifier:
         if not chain_ok:
             errors.append(f"audit chain rompue aux seq : {broken[:10]}")
 
-        valid = hash_matches and chain_ok and (
-            anchor_seq is None or audit_anchor_present
-        )
+        valid = hash_matches and chain_ok and (anchor_seq is None or audit_anchor_present)
         return EvidenceVerificationResult(
             evidence_pack_id=evidence_pack_id,
             valid=valid,

@@ -44,9 +44,7 @@ def upgrade() -> None:
     )
     op.create_index("idx_creditors_ics", "creditors", ["ics"])
     op.create_index("idx_creditors_tenant", "creditors", ["tenant_id"])
-    op.create_index(
-        "uq_creditors_tenant_ics", "creditors", ["tenant_id", "ics"], unique=True
-    )
+    op.create_index("uq_creditors_tenant_ics", "creditors", ["tenant_id", "ics"], unique=True)
 
     # ─── Bank accounts ───────────────────────────────────────────────────────
     op.create_table(
@@ -60,9 +58,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.Text(), nullable=False),
         sa.Column("updated_at", sa.Text(), nullable=False),
     )
-    op.create_index(
-        "idx_bank_accounts_fingerprint", "bank_accounts", ["iban_fingerprint"]
-    )
+    op.create_index("idx_bank_accounts_fingerprint", "bank_accounts", ["iban_fingerprint"])
     op.create_index("idx_bank_accounts_tenant", "bank_accounts", ["tenant_id"])
     op.create_index(
         "uq_bank_accounts_tenant_fp",
@@ -79,18 +75,14 @@ def upgrade() -> None:
         sa.Column("creditor_id", sa.String(length=64), nullable=False),
         sa.Column("debtor_account_id", sa.String(length=64), nullable=False),
         sa.Column("rum", sa.String(length=35), nullable=False),
-        sa.Column(
-            "scheme", sa.String(length=16), nullable=False, server_default="SDD_CORE"
-        ),
+        sa.Column("scheme", sa.String(length=16), nullable=False, server_default="SDD_CORE"),
         sa.Column(
             "sequence_type",
             sa.String(length=8),
             nullable=False,
             server_default="RCUR",
         ),
-        sa.Column(
-            "status", sa.String(length=16), nullable=False, server_default="DRAFT"
-        ),
+        sa.Column("status", sa.String(length=16), nullable=False, server_default="DRAFT"),
         sa.Column("max_amount_cents", sa.Integer(), nullable=True),
         sa.Column("currency", sa.String(length=3), nullable=False, server_default="EUR"),
         sa.Column("frequency", sa.String(length=32), nullable=True),
@@ -129,9 +121,7 @@ def upgrade() -> None:
         sa.Column("actor", sa.String(length=128), nullable=True),
         sa.Column("created_at", sa.Text(), nullable=False),
     )
-    op.create_index(
-        "idx_mandate_revisions_mandate", "mandate_revisions", ["mandate_id"]
-    )
+    op.create_index("idx_mandate_revisions_mandate", "mandate_revisions", ["mandate_id"])
 
     # ─── Debit events ────────────────────────────────────────────────────────
     op.create_table(
@@ -158,9 +148,7 @@ def upgrade() -> None:
     op.create_index("idx_debit_events_tenant", "debit_events", ["tenant_id"])
     op.create_index("idx_debit_events_creditor_ics", "debit_events", ["creditor_ics"])
     op.create_index("idx_debit_events_rum", "debit_events", ["rum"])
-    op.create_index(
-        "idx_debit_events_iban_fp", "debit_events", ["debtor_iban_fingerprint"]
-    )
+    op.create_index("idx_debit_events_iban_fp", "debit_events", ["debtor_iban_fingerprint"])
     op.create_index(
         "uq_debit_events_idempotency",
         "debit_events",

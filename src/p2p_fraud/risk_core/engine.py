@@ -40,8 +40,7 @@ class RiskEngine(Generic[T]):
         if mismatched:
             ids = ", ".join(r.id for r in mismatched)
             raise ValueError(
-                f"RiskEngine pour {domain.value} initialisé avec règles d'un "
-                f"autre domaine : {ids}"
+                f"RiskEngine pour {domain.value} initialisé avec règles d'un autre domaine : {ids}"
             )
         self._rules: tuple[RiskRule[T], ...] = tuple(rules)
         self._engine_version = engine_version

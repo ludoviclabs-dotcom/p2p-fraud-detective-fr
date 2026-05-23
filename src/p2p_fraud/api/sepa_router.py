@@ -223,10 +223,10 @@ def list_mandates(
         try:
             status_enum = MandateStatus(status_filter)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=f"status invalide : {status_filter}") from exc
-    records = analyzer.mandates.list(
-        tenant_id=tenant_id, status=status_enum, limit=limit
-    )
+            raise HTTPException(
+                status_code=400, detail=f"status invalide : {status_filter}"
+            ) from exc
+    records = analyzer.mandates.list(tenant_id=tenant_id, status=status_enum, limit=limit)
     return [MandateOut.from_record(r) for r in records]
 
 
