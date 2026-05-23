@@ -18,18 +18,28 @@ from .engine import make_engine
 from .models import (
     AlertHistoryRow,
     AuditLogRow,
+    BankAccountRow,
     Base,
     CaseEventRow,
     CaseRow,
+    CreditorRow,
+    DebitEventRow,
+    MandateRevisionRow,
+    MandateRow,
     MentionRow,
 )
 
 __all__ = [
     "AlertHistoryRow",
     "AuditLogRow",
+    "BankAccountRow",
     "Base",
     "CaseEventRow",
     "CaseRow",
+    "CreditorRow",
+    "DebitEventRow",
+    "MandateRevisionRow",
+    "MandateRow",
     "MentionRow",
     "make_engine",
 ]
