@@ -29,14 +29,28 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (isLocale(stored)) setLocaleState(stored);
+    try {
+      const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+      if (isLocale(stored)) setLocaleState(stored);
+    } catch {
+      // Ignore storage failures so the language switch still works in memory.
+    }
   }, []);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale;
+    }
+  }, [locale]);
 
   const setLocale = (nextLocale: Locale) => {
     setLocaleState(nextLocale);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+      try {
+        window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+      } catch {
+        // Keep the selected locale for this session even if persistence fails.
+      }
     }
   };
 

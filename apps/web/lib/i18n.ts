@@ -78,6 +78,175 @@ export const TRANSLATIONS: Translations = {
   "shell.badge_live": { fr: "Live", en: "Live" },
   "shell.badge_risk": { fr: "Risque", en: "Risk" },
   "shell.badge_new": { fr: "Demo", en: "Demo" },
+  "dashboard.kicker": {
+    fr: "Cockpit P2P · vue consolidee",
+    en: "P2P cockpit · consolidated view",
+  },
+  "dashboard.title": { fr: "Cockpit risque P2P", en: "P2P risk cockpit" },
+  "dashboard.description": {
+    fr: "Vue consolidee des risques fournisseurs, triee par exposition financiere et prete pour la decision audit.",
+    en: "Consolidated vendor risk view, sorted by financial exposure and ready for audit decisioning.",
+  },
+  "dashboard.analyze_scenario": {
+    fr: "Analyser un scenario",
+    en: "Analyze scenario",
+  },
+  "dashboard.prepare_export": {
+    fr: "Preparer l'export",
+    en: "Prepare export",
+  },
+  "dashboard.backend_unavailable_title": {
+    fr: "Backend indisponible",
+    en: "Backend unavailable",
+  },
+  "dashboard.backend_unavailable_body": {
+    fr: "Les KPI live ne sont pas accessibles. Vous pouvez tout de meme lancer une demo synthetique pour explorer le parcours.",
+    en: "Live KPIs are not available. You can still launch a synthetic demo to explore the workflow.",
+  },
+  "dashboard.launch_sandbox": {
+    fr: "Lancer la sandbox",
+    en: "Launch sandbox",
+  },
+  "dashboard.top_vendors_title": {
+    fr: "Top fournisseurs par exposition",
+    en: "Top vendors by exposure",
+  },
+  "dashboard.top_vendors_subtitle": {
+    fr: "Le tri favorise l'impact financier, pas seulement le score brut.",
+    en: "Ranking favors financial impact, not only the raw score.",
+  },
+  "dashboard.vendors_unloaded_title": {
+    fr: "Fournisseurs non charges",
+    en: "Vendors not loaded",
+  },
+  "dashboard.vendors_unloaded_body": {
+    fr: "Verifiez la variable NEXT_PUBLIC_API_URL ou explorez un scenario precharge.",
+    en: "Check NEXT_PUBLIC_API_URL or explore a preloaded scenario.",
+  },
+  "dashboard.view_scenarios": {
+    fr: "Voir les scenarios",
+    en: "View scenarios",
+  },
+  "dashboard.priority_kicker": {
+    fr: "Priorite du jour",
+    en: "Today's priority",
+  },
+  "dashboard.priority_title": {
+    fr: "Reduire l'exposition critique",
+    en: "Reduce critical exposure",
+  },
+  "dashboard.priority_body": {
+    fr: "Traitez d'abord les fournisseurs a criticite maximale avec retard SLA ou absence d'assignation. Chaque case doit produire une preuve d'audit exploitable.",
+    en: "Prioritize maximum-criticality vendors with SLA delays or missing assignment. Every case must produce usable audit evidence.",
+  },
+  "dashboard.next_action": { fr: "Next action", en: "Next action" },
+  "dashboard.assign_reviewer": {
+    fr: "Assigner reviewer",
+    en: "Assign reviewer",
+  },
+  "dashboard.evidence": { fr: "Preuve", en: "Evidence" },
+  "dashboard.audit_trail": { fr: "Audit trail", en: "Audit trail" },
+  "dashboard.kpi_total_exposure": {
+    fr: "Exposition totale",
+    en: "Total exposure",
+  },
+  "dashboard.kpi_critical_exposure": {
+    fr: "Exposition critique",
+    en: "Critical exposure",
+  },
+  "dashboard.kpi_open_cases": {
+    fr: "Cases ouverts",
+    en: "Open cases",
+  },
+  "dashboard.kpi_sla_delays": {
+    fr: "Retards SLA",
+    en: "SLA delays",
+  },
+  "dashboard.kpi_unassigned": {
+    fr: "{count} non assignes",
+    en: "{count} unassigned",
+  },
+  "dashboard.trend_created": {
+    fr: "Cases crees",
+    en: "Cases created",
+  },
+  "dashboard.trend_closed": {
+    fr: "Cases clotures",
+    en: "Cases closed",
+  },
+  "dashboard.trend_critical_alerts": {
+    fr: "Alertes critiques",
+    en: "Critical alerts",
+  },
+  "dashboard.trend_audit_activity": {
+    fr: "Activite audit",
+    en: "Audit activity",
+  },
+  "dashboard.trend_window": {
+    fr: "Tendance 30 jours",
+    en: "30-day trend",
+  },
+  "dashboard.breakdown_unavailable_title": {
+    fr: "Breakdown demo indisponible",
+    en: "Demo breakdown unavailable",
+  },
+  "dashboard.breakdown_unavailable_body": {
+    fr: "Les metriques statiques du graphe ne sont pas accessibles pour le moment.",
+    en: "Static graph metrics are not available right now.",
+  },
+  "dashboard.open_graph": { fr: "Ouvrir le graphe", en: "Open graph" },
+  "dashboard.vercel_demo": { fr: "Demo Vercel", en: "Vercel demo" },
+  "dashboard.signal_breakdown": {
+    fr: "Repartition des signaux",
+    en: "Signal breakdown",
+  },
+  "dashboard.explore_graph": {
+    fr: "Explorer le graphe",
+    en: "Explore graph",
+  },
+  "dashboard.recommended_path": {
+    fr: "Parcours recommande",
+    en: "Recommended path",
+  },
+  "dashboard.step_qualify_title": {
+    fr: "Qualifier la case",
+    en: "Qualify the case",
+  },
+  "dashboard.step_qualify_body": {
+    fr: "Verifier score, source et exposition.",
+    en: "Check score, source and exposure.",
+  },
+  "dashboard.step_vendor_title": {
+    fr: "Ouvrir fournisseur 360",
+    en: "Open Vendor 360",
+  },
+  "dashboard.step_vendor_body": {
+    fr: "Valider liens SIREN, IBAN et historique.",
+    en: "Validate SIREN, IBAN and history links.",
+  },
+  "dashboard.step_export_title": {
+    fr: "Exporter la preuve",
+    en: "Export evidence",
+  },
+  "dashboard.step_export_body": {
+    fr: "Signer et archiver la piste d'audit.",
+    en: "Sign and archive the audit trail.",
+  },
+  "dashboard.empty_findings_title": {
+    fr: "Aucun finding charge",
+    en: "No findings loaded",
+  },
+  "dashboard.empty_findings_body": {
+    fr: "Le Top 10 se calcule sur les findings de la session. Lancez un scenario synthetique pour voir le cockpit rempli.",
+    en: "The Top 10 is calculated from session findings. Launch a synthetic scenario to populate the cockpit.",
+  },
+  "dashboard.table_vendor": { fr: "Fournisseur", en: "Vendor" },
+  "dashboard.table_exposure": { fr: "Exposition", en: "Exposure" },
+  "dashboard.table_findings": { fr: "Findings", en: "Findings" },
+  "dashboard.table_severity": { fr: "Severite", en: "Severity" },
+  "dashboard.table_action": { fr: "Action", en: "Action" },
+  "dashboard.open_360": { fr: "Ouvrir 360", en: "Open 360" },
+  "dashboard.retry": { fr: "Reessayer", en: "Retry" },
   "alerts.kicker": { fr: "Pilotage", en: "Operations" },
   "alerts.title": { fr: "Alertes & monitoring", en: "Alerts & monitoring" },
   "alerts.description": {
