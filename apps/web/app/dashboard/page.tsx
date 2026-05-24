@@ -13,6 +13,7 @@ import {
 import { formatNumber } from "@/lib/p2p-demo-format";
 import { formatEur } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
+import { useLocale } from "@/components/locale-provider";
 
 type KpiTone = "info" | "risk" | "warn" | "ok";
 
@@ -82,6 +83,7 @@ function Sparkline({
 }
 
 export default function DashboardPage() {
+  const { t } = useLocale();
   const kpisQuery = useQuery({
     queryKey: ["cockpit", "kpis"],
     queryFn: getCockpitKpis,
@@ -102,21 +104,16 @@ export default function DashboardPage() {
     <ForensicPage>
       <div className="fx-head">
         <div>
-          <div className="fx-eyebrow">Cockpit P2P · vue consolidée</div>
-          <h1 style={{ marginTop: 9 }}>
-            Cockpit risque <span className="italic">P2P</span>
-          </h1>
-          <p className="sub">
-            Vue consolidée des risques fournisseurs, triée par exposition financière et prête
-            pour la décision audit.
-          </p>
+          <div className="fx-eyebrow">{t("dashboard.kicker")}</div>
+          <h1 style={{ marginTop: 9 }}>{t("dashboard.title")}</h1>
+          <p className="sub">{t("dashboard.description")}</p>
         </div>
         <div className="fx-head-actions">
           <Link href="/sandbox" className="fx-btn">
-            Analyser un scénario <span>↗</span>
+            {t("dashboard.analyze_scenario")} <span>↗</span>
           </Link>
           <Link href="/exports" className="fx-btn-ghost">
-            Préparer l&apos;export
+            {t("dashboard.prepare_export")}
           </Link>
         </div>
       </div>
@@ -127,10 +124,10 @@ export default function DashboardPage() {
             <KpiSkeleton />
           ) : kpisQuery.error ? (
             <ActionState
-              title="Backend indisponible"
-              body="Les KPI live ne sont pas accessibles. Vous pouvez tout de même lancer une démo synthétique pour explorer le parcours."
+              title={t("dashboard.backend_unavailable_title")}
+              body={t("dashboard.backend_unavailable_body")}
               actionHref="/sandbox"
-              actionLabel="Lancer la sandbox"
+              actionLabel={t("dashboard.launch_sandbox")}
             />
           ) : (
             <KpiGrid data={kpisQuery.data!} />
@@ -144,10 +141,8 @@ export default function DashboardPage() {
         <div className="fx-panel">
           <div className="fx-panel-head">
             <div>
-              <h2>Top fournisseurs par exposition</h2>
-              <div className="sub">
-                Le tri favorise l&apos;impact financier, pas seulement le score brut.
-              </div>
+              <h2>{t("dashboard.top_vendors_title")}</h2>
+              <div className="sub">{t("dashboard.top_vendors_subtitle")}</div>
             </div>
             <span className="glyph">◫</span>
           </div>
@@ -156,10 +151,10 @@ export default function DashboardPage() {
           ) : vendorsQuery.error ? (
             <div className="fx-panel-body">
               <ActionState
-                title="Fournisseurs non chargés"
-                body="Vérifiez la variable NEXT_PUBLIC_API_URL ou explorez un scénario préchargé."
+                title={t("dashboard.vendors_unloaded_title")}
+                body={t("dashboard.vendors_unloaded_body")}
                 actionHref="/sandbox"
-                actionLabel="Voir les scénarios"
+                actionLabel={t("dashboard.view_scenarios")}
               />
             </div>
           ) : (
@@ -181,11 +176,13 @@ export default function DashboardPage() {
 }
 
 function PriorityPanel() {
+  const { t } = useLocale();
+
   return (
     <div className="fx-card-accent">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="fx-eyebrow">Priorité du jour</div>
+          <div className="fx-eyebrow">{t("dashboard.priority_kicker")}</div>
           <div
             style={{
               fontFamily: "var(--font-display)",
@@ -195,7 +192,7 @@ function PriorityPanel() {
               marginTop: 8,
             }}
           >
-            Réduire l&apos;exposition critique
+            {t("dashboard.priority_title")}
           </div>
         </div>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, color: "var(--risk)" }}>▲</span>
@@ -209,13 +206,12 @@ function PriorityPanel() {
           marginTop: 14,
         }}
       >
-        Traitez d&apos;abord les fournisseurs à criticité maximale avec retard SLA ou absence
-        d&apos;assignation. Chaque case doit produire une preuve d&apos;audit exploitable.
+        {t("dashboard.priority_body")}
       </p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         {[
-          ["Next action", "Assigner reviewer"],
-          ["Preuve", "Audit trail"],
+          [t("dashboard.next_action"), t("dashboard.assign_reviewer")],
+          [t("dashboard.evidence"), t("dashboard.audit_trail")],
         ].map(([k, v]) => (
           <div
             key={k}
@@ -246,33 +242,37 @@ function KpiSkeleton() {
 }
 
 function KpiGrid({ data }: { data: CockpitKPIs }) {
+  const { t } = useLocale();
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KPICard
-          label="Exposition totale"
+          label={t("dashboard.kpi_total_exposure")}
           value={formatEur(data.exposure_total_eur)}
           tone="info"
           glyph="Σ"
         />
         <KPICard
-          label="Exposition critique"
+          label={t("dashboard.kpi_critical_exposure")}
           value={formatEur(data.exposure_critical_eur)}
           tone="risk"
           glyph="▲"
         />
         <KPICard
-          label="Cases ouverts"
+          label={t("dashboard.kpi_open_cases")}
           value={String(data.n_cases_open)}
           tone="warn"
           glyph="▣"
         />
         <KPICard
-          label="Retards SLA"
+          label={t("dashboard.kpi_sla_delays")}
           value={String(data.n_cases_overdue)}
           delta={
             data.n_cases_unassigned_critical > 0
-              ? `${data.n_cases_unassigned_critical} non assignés`
+              ? t("dashboard.kpi_unassigned", {
+                  count: data.n_cases_unassigned_critical,
+                })
               : undefined
           }
           tone="ok"
@@ -281,19 +281,19 @@ function KpiGrid({ data }: { data: CockpitKPIs }) {
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <TrendCard title="Cases créés" points={data.trend_cases_created ?? []} color="var(--info)" />
+        <TrendCard title={t("dashboard.trend_created")} points={data.trend_cases_created ?? []} color="var(--info)" />
         <TrendCard
-          title="Cases clôturés"
+          title={t("dashboard.trend_closed")}
           points={data.trend_cases_closed ?? []}
           color="var(--verified)"
         />
         <TrendCard
-          title="Alertes critiques"
+          title={t("dashboard.trend_critical_alerts")}
           points={data.trend_critical_alerts ?? []}
           color="var(--risk)"
         />
         <TrendCard
-          title="Activité audit"
+          title={t("dashboard.trend_audit_activity")}
           points={data.trend_audit_activity ?? []}
           color="var(--warn)"
         />
@@ -311,6 +311,8 @@ function TrendCard({
   points: { date: string; value: number }[];
   color: string;
 }) {
+  const { t } = useLocale();
+
   return (
     <div className="fx-card">
       <div className="flex items-center justify-between gap-3">
@@ -321,7 +323,7 @@ function TrendCard({
       </div>
       <Sparkline points={points} color={color} />
       <div className="fx-eyebrow" style={{ marginTop: 8 }}>
-        Tendance 30 jours
+        {t("dashboard.trend_window")}
       </div>
     </div>
   );
@@ -336,6 +338,8 @@ function SignalBreakdownCard({
   isLoading: boolean;
   isError: boolean;
 }) {
+  const { t } = useLocale();
+
   if (isLoading) {
     return <div className="fx-skel" style={{ height: 286 }} />;
   }
@@ -343,10 +347,10 @@ function SignalBreakdownCard({
   if (isError || !data) {
     return (
       <ActionState
-        title="Breakdown démo indisponible"
-        body="Les métriques statiques du graphe ne sont pas accessibles pour le moment."
+        title={t("dashboard.breakdown_unavailable_title")}
+        body={t("dashboard.breakdown_unavailable_body")}
         actionHref="/rings"
-        actionLabel="Ouvrir le graphe"
+        actionLabel={t("dashboard.open_graph")}
       />
     );
   }
@@ -361,8 +365,8 @@ function SignalBreakdownCard({
     <div className="fx-panel" data-testid="dashboard-signal-breakdown">
       <div className="fx-panel-head">
         <div>
-          <div className="fx-eyebrow">Démo Vercel</div>
-          <h2 style={{ marginTop: 3 }}>Répartition des signaux</h2>
+          <div className="fx-eyebrow">{t("dashboard.vercel_demo")}</div>
+          <h2 style={{ marginTop: 3 }}>{t("dashboard.signal_breakdown")}</h2>
         </div>
         <span className="glyph">▦</span>
       </div>
@@ -400,7 +404,7 @@ function SignalBreakdownCard({
         </div>
 
         <Link href="/rings" className="fx-link" style={{ marginTop: 18 }}>
-          Explorer le graphe →
+          {t("dashboard.explore_graph")} →
         </Link>
       </div>
     </div>
@@ -408,6 +412,8 @@ function SignalBreakdownCard({
 }
 
 function RecommendedPath() {
+  const { t } = useLocale();
+
   return (
     <div className="fx-card">
       <div className="flex items-center gap-2">
@@ -421,14 +427,14 @@ function RecommendedPath() {
             textTransform: "uppercase",
           }}
         >
-          Parcours recommandé
+          {t("dashboard.recommended_path")}
         </span>
       </div>
       <div className="mt-5 space-y-4">
         {[
-          ["1", "Qualifier la case", "Vérifier score, source et exposition."],
-          ["2", "Ouvrir fournisseur 360", "Valider liens SIREN, IBAN et historique."],
-          ["3", "Exporter la preuve", "Signer et archiver la piste d'audit."],
+          ["1", t("dashboard.step_qualify_title"), t("dashboard.step_qualify_body")],
+          ["2", t("dashboard.step_vendor_title"), t("dashboard.step_vendor_body")],
+          ["3", t("dashboard.step_export_title"), t("dashboard.step_export_body")],
         ].map(([step, title, body]) => (
           <div key={step} className="fx-step">
             <div className="n">{step}</div>
@@ -454,14 +460,16 @@ function TableSkeleton() {
 }
 
 function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
+  const { t } = useLocale();
+
   if (!rows.length) {
     return (
       <div className="fx-panel-body">
         <ActionState
-          title="Aucun finding chargé"
-          body="Le Top 10 se calcule sur les findings de la session. Lancez un scénario synthétique pour voir le cockpit rempli."
+          title={t("dashboard.empty_findings_title")}
+          body={t("dashboard.empty_findings_body")}
           actionHref="/sandbox"
-          actionLabel="Analyser un scénario"
+          actionLabel={t("dashboard.analyze_scenario")}
         />
       </div>
     );
@@ -477,11 +485,11 @@ function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
       <table className="fx-table" data-testid="dashboard-top-vendors">
         <thead>
           <tr>
-            <th>Fournisseur</th>
-            <th className="num">Exposition</th>
-            <th className="num">Findings</th>
-            <th>Sévérité</th>
-            <th className="num">Action</th>
+            <th>{t("dashboard.table_vendor")}</th>
+            <th className="num">{t("dashboard.table_exposure")}</th>
+            <th className="num">{t("dashboard.table_findings")}</th>
+            <th>{t("dashboard.table_severity")}</th>
+            <th className="num">{t("dashboard.table_action")}</th>
           </tr>
         </thead>
         <tbody>
@@ -500,7 +508,7 @@ function TopVendorsTable({ rows }: { rows: TopVendor[] }) {
                   href={`/vendors/${encodeURIComponent(row.vendor_id)}`}
                   className="fx-link"
                 >
-                  Ouvrir 360 →
+                  {t("dashboard.open_360")} →
                 </Link>
               </td>
             </tr>
@@ -522,6 +530,8 @@ function ActionState({
   actionHref: string;
   actionLabel: string;
 }) {
+  const { t } = useLocale();
+
   return (
     <div className="fx-notice">
       <span className="glyph">⚠</span>
@@ -537,7 +547,7 @@ function ActionState({
             className="fx-btn-ghost"
             onClick={() => window.location.reload()}
           >
-            ↻ Réessayer
+            ↻ {t("dashboard.retry")}
           </button>
         </div>
       </div>

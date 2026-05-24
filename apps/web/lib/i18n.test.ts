@@ -13,7 +13,22 @@ describe("i18n dictionary", () => {
     expect(translate("stream.fallback_polling", "fr", { seconds: 5 })).toBe(
       "Fallback polling - 5s",
     );
+    expect(translate("dashboard.kpi_unassigned", "en", { count: 3 })).toBe(
+      "3 unassigned",
+    );
     expect(translate("missing.key", "en")).toBe("missing.key");
+  });
+
+  it("contains English dashboard copy for the main cockpit view", () => {
+    expect(translate("dashboard.kicker", "en")).toBe(
+      "P2P cockpit · consolidated view",
+    );
+    expect(translate("dashboard.top_vendors_title", "en")).toBe(
+      "Top vendors by exposure",
+    );
+    expect(translate("dashboard.recommended_path", "en")).toBe(
+      "Recommended path",
+    );
   });
 
   it("validates supported locale values", () => {
