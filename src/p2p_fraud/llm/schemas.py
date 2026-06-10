@@ -1,0 +1,78 @@
+"""Schémas Pydantic des sorties IA structurées — source de vérité unique (ADR-0007).
+
+Tous les schémas de génération IA du produit vivent ici. Règles communes :
+
+- chaque affirmation factuelle (`GroundedClaim`) cite les `source_ids` du
+  source pack fourni au modèle — la validation de provenance est faite en
+  code par `llm/provenance.py`, jamais déléguée au modèle ;
+- le chemin « preuve insuffisante » est first-class : `missing_evidence` +
+  `human_review_required` sont présents sur toute sortie ;
+- aucune sortie ne porte de décision automatique — uniquement des
+  recommandations de revue humaine.
+
+Le frontend Next.js consomme le JSON typé de ces modèles via `/api/v1` ;
+ne pas dupliquer ces schémas en Zod côté TypeScript.
+"""
+
+from __future__ import annotations
+
+from enum import StrEnum
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class GroundedClaim(BaseModel):
+    """Affirmation factuelle sourcée — l'unité de base de toute sortie IA."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(..., description="L'affirmation, en français formel.")
+    source_ids: list[str] = Field(
+        ...,
+        description="Identifiants des sources du source pack étayant l'affirmation. "
+        "Ne jamais citer un identifiant absent du source pack.",
+    )
+
+
+class AuditChainStatus(StrEnum):
+    """Verdict technique de la vérification de chaîne — produit par le code, pas le LLM."""
+
+    INTACT = "intact"
+    BROKEN = "broken"
+    EMPTY = "empty"
+
+
+class AuditExplanation(BaseModel):
+    """Explication en langage audit du résultat de vérification cryptographique.
+
+    Le statut technique (`chain_status`, séquences invalides, signatures) est
+    calculé par `AuditLog.verify_chain()` AVANT l'appel modèle. Le modèle ne
+    vérifie rien : il traduit le verdict pour un CAC / DAF / contrôleur interne.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    headline: str = Field(
+        ...,
+        description="Conclusion en une phrase, compréhensible par un non-technicien.",
+    )
+    explanation: list[GroundedClaim] = Field(
+        ...,
+        description="Explication pas à pas du verdict, chaque point sourcé.",
+    )
+    audit_implications: list[GroundedClaim] = Field(
+        ...,
+        description="Conséquences pour l'audit (valeur probante, diligences).",
+    )
+    missing_evidence: list[str] = Field(
+        default_factory=list,
+        description="Éléments absents du verdict technique qui limiteraient la conclusion.",
+    )
+    human_review_required: bool = Field(
+        ...,
+        description="True si une revue humaine est nécessaire (toujours true en cas de rupture).",
+    )
+    recommended_next_actions: list[str] = Field(
+        default_factory=list,
+        description="Actions concrètes recommandées (jamais de décision automatique).",
+    )

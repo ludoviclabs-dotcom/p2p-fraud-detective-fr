@@ -198,6 +198,35 @@ class AuditVerifyResult(BaseModel):
     public_key_b64: str = ""
 
 
+class AuditExplainResult(BaseModel):
+    """Verdict technique (code) + explication audit (IA structurée, ADR-0007)."""
+
+    chain_status: str  # "intact" | "broken" | "empty"
+    n_total: int
+    n_signed: int
+    invalid_seqs: list[int] = Field(default_factory=list)
+    signatures_checked: bool = False
+    explanation: dict[str, Any]  # AuditExplanation sérialisé (llm/schemas.py)
+    model: str
+    prompt_version: str
+
+
+class FeedbackRuleStats(BaseModel):
+    """Verdicts de clôture agrégés par rule_id — boucle de feedback détection."""
+
+    rule_id: str
+    n_closed: int
+    n_confirmed: int
+    n_false_positive: int
+    n_rejected: int
+    false_positive_rate: float
+
+
+class FeedbackStats(BaseModel):
+    n_cases_closed: int
+    rules: list[FeedbackRuleStats] = Field(default_factory=list)
+
+
 class NarrativeBody(BaseModel):
     vendor_id: str
     vendor_name: str | None = None
@@ -962,6 +991,87 @@ def audit_verify(
         n_signed=n_signed,
         public_key_b64=signer.public_key_b64,
     )
+
+
+@router.post("/audit/explain", response_model=AuditExplainResult)
+def audit_explain(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    audit_or_service: Annotated[Any, Depends(_get_service)],
+) -> AuditExplainResult:
+    """Vérifie la chaîne (code déterministe) puis traduit le verdict en langage audit.
+
+    Feature pilote du socle IA de confiance (ADR-0007) : le LLM n'effectue
+    aucune vérification — il explique le verdict déjà calculé par
+    `verify_chain()`. Sortie structurée, sourcée (provenance validée en code)
+    et journalisée au ledger `ai.generation` du même audit log.
+    """
+    from p2p_fraud.llm.audit_explainer import compute_verdict, explain_verdict
+    from p2p_fraud.security.signing import make_signer_from_settings
+
+    audit: AuditLog = (
+        audit_or_service.audit_log if hasattr(audit_or_service, "audit_log") else audit_or_service
+    )
+    signer = make_signer_from_settings()
+    verdict = compute_verdict(audit, public_key_b64=signer.public_key_b64)
+    try:
+        result = explain_verdict(verdict, audit_log=audit, actor="api")
+    except ValueError as exc:
+        # Clé API absente ou sortie inexploitable → 503 explicite, pas de 500 opaque.
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return AuditExplainResult(
+        chain_status=verdict.chain_status.value,
+        n_total=verdict.n_total,
+        n_signed=verdict.n_signed,
+        invalid_seqs=verdict.invalid_seqs,
+        signatures_checked=verdict.signatures_checked,
+        explanation=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.get("/cases/feedback-stats", response_model=FeedbackStats)
+def cases_feedback_stats(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> FeedbackStats:
+    """Verdicts de clôture agrégés par rule_id — boucle de feedback détection.
+
+    Les statuts CLOSED_CONFIRMED / CLOSED_FALSE_POSITIVE / CLOSED_REJECTED
+    capturés à la clôture des cas sont agrégés par règle (le rule_id est
+    encodé dans les finding_ids sous la forme "RULE::invoice"). C'est la
+    matière première du backtest de règles du futur Detection Studio.
+    """
+    confirmed: Counter[str] = Counter()
+    false_positive: Counter[str] = Counter()
+    rejected: Counter[str] = Counter()
+    n_closed = 0
+    for case in service.list_cases():
+        if not case.status.is_closed:
+            continue
+        n_closed += 1
+        rule_ids = {fid.split("::", 1)[0] for fid in case.finding_ids if fid}
+        for rule_id in rule_ids or {"unknown"}:
+            if case.status == CaseStatus.CLOSED_CONFIRMED:
+                confirmed[rule_id] += 1
+            elif case.status == CaseStatus.CLOSED_FALSE_POSITIVE:
+                false_positive[rule_id] += 1
+            elif case.status == CaseStatus.CLOSED_REJECTED:
+                rejected[rule_id] += 1
+    rules = []
+    for rule_id in sorted(set(confirmed) | set(false_positive) | set(rejected)):
+        total = confirmed[rule_id] + false_positive[rule_id] + rejected[rule_id]
+        rules.append(
+            FeedbackRuleStats(
+                rule_id=rule_id,
+                n_closed=total,
+                n_confirmed=confirmed[rule_id],
+                n_false_positive=false_positive[rule_id],
+                n_rejected=rejected[rule_id],
+                false_positive_rate=(false_positive[rule_id] / total) if total else 0.0,
+            )
+        )
+    return FeedbackStats(n_cases_closed=n_closed, rules=rules)
 
 
 # ─── 5. Exports PDF ──────────────────────────────────────────────────────────

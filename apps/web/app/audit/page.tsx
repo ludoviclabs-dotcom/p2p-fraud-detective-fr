@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { listAudit, verifyAudit } from "@/lib/api-client";
+import { explainAudit, listAudit, verifyAudit } from "@/lib/api-client";
+import type { AuditExplainResult, GroundedClaim } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
 import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
@@ -11,6 +12,7 @@ import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
 export default function AuditPage() {
   const [cursor, setCursor] = useState(0);
   const [verifyRun, setVerifyRun] = useState(false);
+  const [explainRun, setExplainRun] = useState(false);
   const primaryCase = getPrimaryCase360Scenario();
 
   const auditQuery = useQuery({
@@ -23,6 +25,14 @@ export default function AuditPage() {
     queryFn: verifyAudit,
     enabled: verifyRun,
     staleTime: 0,
+  });
+
+  const explainQuery = useQuery({
+    queryKey: ["audit-explain"],
+    queryFn: explainAudit,
+    enabled: explainRun,
+    staleTime: 0,
+    retry: false,
   });
 
   const entries = auditQuery.data?.entries ?? [];
@@ -126,6 +136,48 @@ export default function AuditPage() {
         </div>
       </div>
 
+      <div className="fx-panel" style={{ marginBottom: 16 }}>
+        <div className="fx-panel-head">
+          <div>
+            <h2>Explication audit</h2>
+            <div className="sub">
+              Verdict calculé par le code · traduit pour CAC / DAF par IA (sortie
+              structurée, sources validées)
+            </div>
+          </div>
+          <span className="glyph">¶</span>
+        </div>
+        <div className="fx-panel-body" data-testid="audit-explain-panel">
+          <button
+            className="fx-btn"
+            data-testid="audit-explain-button"
+            onClick={() => setExplainRun(true)}
+            disabled={explainQuery.isFetching}
+            type="button"
+          >
+            {explainQuery.isFetching
+              ? "◷ Génération…"
+              : "¶ Expliquer le verdict pour l'audit"}
+          </button>
+          {explainQuery.error ? (
+            <div className="fx-notice" style={{ marginTop: 14 }}>
+              <span className="glyph">⚠</span>
+              <div>
+                <div className="nt">Explication indisponible</div>
+                <p className="nb">
+                  Le backend FastAPI (et sa clé ANTHROPIC_API_KEY) doit être
+                  configuré pour générer l&apos;explication. La vérification
+                  cryptographique ci-dessus reste 100&nbsp;% fonctionnelle sans IA.
+                </p>
+              </div>
+            </div>
+          ) : null}
+          {explainQuery.data ? (
+            <ExplanationView result={explainQuery.data} />
+          ) : null}
+        </div>
+      </div>
+
       <div className="fx-panel">
         <div className="fx-panel-head">
           <div>
@@ -223,5 +275,122 @@ export default function AuditPage() {
         </div>
       </div>
     </ForensicPage>
+  );
+}
+
+function SourceChips({ sourceIds }: { sourceIds: string[] }) {
+  return (
+    <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, marginLeft: 8 }}>
+      {sourceIds.map((sid) => (
+        <code
+          key={sid}
+          className="fx-mono"
+          style={{
+            background: "var(--panel-2)",
+            border: "1px solid var(--border)",
+            color: "var(--info)",
+            padding: "0 5px",
+            fontSize: 10,
+          }}
+        >
+          {sid}
+        </code>
+      ))}
+    </span>
+  );
+}
+
+function ClaimList({ claims }: { claims: GroundedClaim[] }) {
+  return (
+    <ul style={{ margin: 0, padding: 0, listStyle: "none" }} className="space-y-2">
+      {claims.map((claim) => (
+        <li key={claim.text} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
+          {claim.text}
+          <SourceChips sourceIds={claim.source_ids} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ExplanationView({ result }: { result: AuditExplainResult }) {
+  const broken = result.chain_status === "broken";
+  const statusColor = broken ? "var(--risk)" : "var(--verified)";
+  return (
+    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+          borderLeft: `3px solid ${statusColor}`,
+          padding: "12px 14px",
+        }}
+      >
+        <div className="fx-eyebrow" style={{ color: statusColor }}>
+          {broken ? "⚠ Rupture détectée" : result.chain_status === "empty" ? "Journal vide" : "✓ Chaîne intacte"}
+        </div>
+        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--fg)" }}>
+          {result.explanation.headline}
+        </p>
+      </div>
+
+      {result.explanation.human_review_required ? (
+        <div className="fx-notice">
+          <span className="glyph">★</span>
+          <div>
+            <div className="nt">Revue humaine requise</div>
+            <p className="nb">
+              L&apos;IA ne prend aucune décision : un reviewer doit valider les
+              conclusions et conduire les diligences recommandées.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div>
+        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Explication</div>
+        <ClaimList claims={result.explanation.explanation} />
+      </div>
+
+      {result.explanation.audit_implications.length ? (
+        <div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Implications pour l&apos;audit</div>
+          <ClaimList claims={result.explanation.audit_implications} />
+        </div>
+      ) : null}
+
+      {result.explanation.recommended_next_actions.length ? (
+        <div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Diligences recommandées</div>
+          <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
+            {result.explanation.recommended_next_actions.map((action) => (
+              <li key={action} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
+                {action}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {result.explanation.missing_evidence.length ? (
+        <div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8, color: "var(--warn)" }}>
+            Preuves manquantes
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
+            {result.explanation.missing_evidence.map((item) => (
+              <li key={item} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--muted)" }}>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className="fx-mono" style={{ fontSize: 10, color: "var(--dim)" }}>
+        Généré par {result.model} · prompt {result.prompt_version} · journalisé au
+        ledger ai.generation · {result.n_total} entrées · {result.n_signed} signées
+      </div>
+    </div>
   );
 }

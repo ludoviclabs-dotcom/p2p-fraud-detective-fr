@@ -174,6 +174,37 @@ export const listAudit = (cursor = 0, limit = 100) =>
 export const verifyAudit = () =>
   api.get<AuditVerifyResult>("/api/v1/audit/verify");
 
+// Sortie IA structurée de l'Audit Log Explainer (ADR-0007).
+// Schéma source : src/p2p_fraud/llm/schemas.py — régénérer via `pnpm sdk:gen-types`
+// quand le type OpenAPI sera publié.
+export interface GroundedClaim {
+  text: string;
+  source_ids: string[];
+}
+
+export interface AuditExplanation {
+  headline: string;
+  explanation: GroundedClaim[];
+  audit_implications: GroundedClaim[];
+  missing_evidence: string[];
+  human_review_required: boolean;
+  recommended_next_actions: string[];
+}
+
+export interface AuditExplainResult {
+  chain_status: "intact" | "broken" | "empty";
+  n_total: number;
+  n_signed: number;
+  invalid_seqs: number[];
+  signatures_checked: boolean;
+  explanation: AuditExplanation;
+  model: string;
+  prompt_version: string;
+}
+
+export const explainAudit = () =>
+  api.post<AuditExplainResult>("/api/v1/audit/explain");
+
 export const bulkAssignCases = (body: {
   case_ids: string[];
   assignee: string;
