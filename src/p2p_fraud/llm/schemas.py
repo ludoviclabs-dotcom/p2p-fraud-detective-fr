@@ -17,6 +17,7 @@ ne pas dupliquer ces schémas en Zod côté TypeScript.
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,4 +76,72 @@ class AuditExplanation(BaseModel):
     recommended_next_actions: list[str] = Field(
         default_factory=list,
         description="Actions concrètes recommandées (jamais de décision automatique).",
+    )
+
+
+class RiskSignal(GroundedClaim):
+    """Signal de risque sourcé — un claim enrichi d'un rule_id et d'une sévérité.
+
+    Hérite de GroundedClaim pour que la validation de provenance s'applique
+    automatiquement (`_collect_claims` collecte par isinstance).
+    """
+
+    rule_id: str = Field(
+        ...,
+        description="Identifiant de la règle/du détecteur à l'origine du signal "
+        "(tel que présent dans les sources, ex. IBAN_CHANGE_NO_4EYES).",
+    )
+    severity: Literal["low", "medium", "high", "critical"] = Field(
+        ...,
+        description="Sévérité du signal, reprise des sources — jamais réévaluée à la hausse.",
+    )
+
+
+class FraudCase360(BaseModel):
+    """Dossier d'enquête généré pour un cas de fraude P2P (Phase 3, ADR-0007).
+
+    Toutes les données factuelles proviennent du source pack (case, événements,
+    findings) construit par le code. Le dossier sépare strictement faits
+    vérifiés, signaux, contradictions et données manquantes — et n'autorise
+    jamais une décision automatique : `human_review_required` est de toute
+    façon forcé à true en code après génération.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    executive_summary: str = Field(
+        ...,
+        description="Synthèse exécutive du dossier en 3-5 phrases, français formel.",
+    )
+    severity_assessment: Literal["low", "medium", "high", "critical"] = Field(
+        ...,
+        description="Sévérité globale du dossier, cohérente avec celle du cas en source.",
+    )
+    verified_facts: list[GroundedClaim] = Field(
+        ...,
+        description="Faits vérifiés, chacun sourcé. Ne créer AUCUN fait absent des sources.",
+    )
+    risk_signals: list[RiskSignal] = Field(
+        ...,
+        description="Signaux de risque issus des détecteurs présents dans les sources.",
+    )
+    contradictions: list[str] = Field(
+        default_factory=list,
+        description="Incohérences entre éléments du dossier (vide si aucune).",
+    )
+    missing_evidence: list[str] = Field(
+        default_factory=list,
+        description="Données manquantes pour conclure (à demander au reviewer).",
+    )
+    open_questions: list[str] = Field(
+        default_factory=list,
+        description="Questions ouvertes à instruire lors de la revue humaine.",
+    )
+    human_review_required: bool = Field(
+        ...,
+        description="Toujours true : un dossier généré exige une revue humaine.",
+    )
+    recommended_next_actions: list[str] = Field(
+        default_factory=list,
+        description="Diligences recommandées (jamais de blocage automatique).",
     )

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { explainAudit, listAudit, verifyAudit } from "@/lib/api-client";
-import type { AuditExplainResult, GroundedClaim } from "@/lib/api-client";
+import type { AuditExplainResult } from "@/lib/api-client";
+import { ClaimList } from "@/components/grounded-claims";
 import { formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
 import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
@@ -275,41 +276,6 @@ export default function AuditPage() {
         </div>
       </div>
     </ForensicPage>
-  );
-}
-
-function SourceChips({ sourceIds }: { sourceIds: string[] }) {
-  return (
-    <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, marginLeft: 8 }}>
-      {sourceIds.map((sid) => (
-        <code
-          key={sid}
-          className="fx-mono"
-          style={{
-            background: "var(--panel-2)",
-            border: "1px solid var(--border)",
-            color: "var(--info)",
-            padding: "0 5px",
-            fontSize: 10,
-          }}
-        >
-          {sid}
-        </code>
-      ))}
-    </span>
-  );
-}
-
-function ClaimList({ claims }: { claims: GroundedClaim[] }) {
-  return (
-    <ul style={{ margin: 0, padding: 0, listStyle: "none" }} className="space-y-2">
-      {claims.map((claim) => (
-        <li key={claim.text} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
-          {claim.text}
-          <SourceChips sourceIds={claim.source_ids} />
-        </li>
-      ))}
-    </ul>
   );
 }
 
