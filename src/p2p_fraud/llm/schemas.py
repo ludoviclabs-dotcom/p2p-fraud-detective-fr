@@ -79,6 +79,103 @@ class AuditExplanation(BaseModel):
     )
 
 
+class ReplayStep(BaseModel):
+    """Une étape de la séquence narrative Risk Replay (Phase 6, ADR-0007)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(..., description="Titre court de l'étape (5-8 mots).")
+    business_explanation: str = Field(
+        ..., description="Explication métier de l'étape, 1-3 phrases."
+    )
+    evidence: list[GroundedClaim] = Field(
+        ..., description="Preuves de l'étape, chacune sourcée."
+    )
+    risk_level: Literal["info", "low", "medium", "high", "critical"] = Field(
+        ..., description="Niveau de risque de l'étape (info pour les étapes système)."
+    )
+    reviewer_question: str = Field(
+        ..., description="Question à poser au reviewer à cette étape."
+    )
+
+
+class RiskReplay(BaseModel):
+    """Séquence narrative rejouant un cas comme une enquête (Phase 6).
+
+    Re-skin narratif de données déjà établies (cas + workflow) — aucune
+    nouvelle conclusion : chaque étape est sourcée et la revue humaine reste
+    requise (forcée en code).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    case_summary: str = Field(..., description="Résumé du cas en une phrase.")
+    steps: list[ReplayStep] = Field(
+        ..., description="3 à 10 étapes, ordonnées chronologiquement."
+    )
+    human_review_required: bool = Field(
+        ..., description="Toujours true : le replay illustre, il ne conclut pas."
+    )
+
+
+class ScenarioNarrative(BaseModel):
+    """Habillage narratif d'un scénario synthétique (Phase 6, ADR-0007).
+
+    Le générateur déterministe (`synthetic/`) reste seul responsable des
+    données et des labels ground-truth — le LLM ne produit que le récit
+    pédagogique et les pièges faux-positifs, sourcés sur les métadonnées.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    pitch: str = Field(..., description="Accroche du scénario en 1-2 phrases.")
+    fraud_story: list[GroundedClaim] = Field(
+        ..., description="Récit du mode opératoire, chaque point sourcé."
+    )
+    expected_detectors: list[str] = Field(
+        ..., description="Détecteurs attendus, repris des sources uniquement."
+    )
+    false_positive_traps: list[str] = Field(
+        ...,
+        description="Pièges faux-positifs à montrer en démo (cas légitimes ressemblants).",
+    )
+    human_review_required: bool = Field(
+        ..., description="Toujours true (contenu pédagogique à relire)."
+    )
+
+
+class CopilotAnswer(BaseModel):
+    """Réponse du copilote analyste à une question prédéfinie (Phase 5, ADR-0007).
+
+    Le copilote ne voit que le source pack du cas construit par le code (la
+    « surface d'outils » est donc contrôlée en code, pas par le modèle) et ne
+    déclenche jamais d'action : `human_review_required` est forcé à true.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    answer_short: str = Field(
+        ...,
+        description="Réponse directe en 2-4 phrases, français formel d'audit.",
+    )
+    evidence: list[GroundedClaim] = Field(
+        ...,
+        description="Preuves étayant la réponse, chacune sourcée.",
+    )
+    uncertainties: list[str] = Field(
+        default_factory=list,
+        description="Ce que les sources ne permettent PAS d'affirmer.",
+    )
+    recommended_next_action: str = Field(
+        ...,
+        description="Prochaine action concrète pour l'analyste (jamais un blocage automatique).",
+    )
+    human_review_required: bool = Field(
+        ...,
+        description="Toujours true : le copilote assiste, il ne décide pas.",
+    )
+
+
 class RiskSignal(GroundedClaim):
     """Signal de risque sourcé — un claim enrichi d'un rule_id et d'une sévérité.
 

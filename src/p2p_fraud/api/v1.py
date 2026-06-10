@@ -241,6 +241,45 @@ class Case360Result(BaseModel):
     prompt_version: str
 
 
+class CopilotQuestionOut(BaseModel):
+    question_id: str
+    label_fr: str
+
+
+class CopilotAskBody(BaseModel):
+    question_id: str = Field(..., min_length=1, max_length=64)
+    case_id: str = Field(..., min_length=1, max_length=128)
+    actor: str = Field(default="api", max_length=128)
+
+
+class CopilotResult(BaseModel):
+    """Réponse du copilote (CopilotAnswer, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    question_id: str
+    answer: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
+class ReplayResult(BaseModel):
+    """Séquence Risk Replay (RiskReplay, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    replay: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
+class ScenarioNarrativeResult(BaseModel):
+    """Habillage narratif d'un scénario (ScenarioNarrative) + métadonnées IA."""
+
+    scenario_id: str
+    narrative: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
 class RuleDraftBody(BaseModel):
     """Demande de draft d'une règle de détection depuis le français (Phase 4)."""
 
@@ -1176,6 +1215,122 @@ def case_generate_case360(
     return Case360Result(
         case_id=case.case_id,
         dossier=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+# ─── 4ter. Copilote analyste + Risk Replay + narratif scénarios (P5-P6) ─────
+
+
+@router.get("/copilot/questions", response_model=list[CopilotQuestionOut])
+def copilot_questions(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[CopilotQuestionOut]:
+    """Catalogue des questions prédéfinies du copilote (pas de chat libre)."""
+    from p2p_fraud.llm.copilot import QUESTIONS
+
+    return [
+        CopilotQuestionOut(question_id=q.question_id, label_fr=q.label_fr)
+        for q in QUESTIONS.values()
+    ]
+
+
+@router.post("/copilot/ask", response_model=CopilotResult)
+def copilot_ask(
+    body: CopilotAskBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> CopilotResult:
+    """Répond à une question prédéfinie sur un cas (Phase 5, ADR-0007).
+
+    Le modèle ne voit que le source pack du cas (surface d'outils contrôlée
+    en code) ; provenance validée ; revue humaine toujours requise.
+    """
+    from p2p_fraud.llm.copilot import ask_copilot
+
+    try:
+        case = service.get(body.case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(body.case_id)
+    try:
+        result = ask_copilot(
+            body.question_id,
+            case,
+            events=events,
+            audit_log=service.audit_log,
+            actor=body.actor,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return CopilotResult(
+        case_id=case.case_id,
+        question_id=body.question_id,
+        answer=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.post("/cases/{case_id}/replay", response_model=ReplayResult)
+def case_generate_replay(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> ReplayResult:
+    """Rejoue un cas en séquence narrative d'enquête (Phase 6, ADR-0007)."""
+    from p2p_fraud.llm.replay import generate_replay
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    try:
+        result = generate_replay(
+            case, events=events, audit_log=service.audit_log, actor="api"
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return ReplayResult(
+        case_id=case.case_id,
+        replay=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.post("/scenarios/{scenario_id}/narrative", response_model=ScenarioNarrativeResult)
+def scenario_generate_narrative(
+    scenario_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> ScenarioNarrativeResult:
+    """Habillage narratif d'un scénario synthétique (Phase 6, ADR-0007).
+
+    Les données et labels ground-truth restent générés par le code
+    déterministe — le LLM ne produit que le récit pédagogique sourcé.
+    """
+    from p2p_fraud.llm.scenario_narrative import generate_scenario_narrative
+    from p2p_fraud.synthetic.scenarios import SCENARIOS, get_scenario_meta
+
+    if scenario_id not in SCENARIOS:
+        raise HTTPException(
+            status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}."
+        )
+    meta = get_scenario_meta(scenario_id)
+    try:
+        result = generate_scenario_narrative(
+            meta, audit_log=service.audit_log, actor="api"
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return ScenarioNarrativeResult(
+        scenario_id=scenario_id,
+        narrative=result.output.model_dump(mode="json"),
         model=result.model,
         prompt_version=result.prompt_version,
     )

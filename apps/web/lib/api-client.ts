@@ -236,6 +236,85 @@ export const generateCase360 = (caseId: string) =>
     `/api/v1/cases/${encodeURIComponent(caseId)}/case360`,
   );
 
+// Copilote analyste (Phase 5, ADR-0007) — questions prédéfinies sur un cas.
+export interface CopilotQuestion {
+  question_id: string;
+  label_fr: string;
+}
+
+export interface CopilotAnswer {
+  answer_short: string;
+  evidence: GroundedClaim[];
+  uncertainties: string[];
+  recommended_next_action: string;
+  human_review_required: boolean;
+}
+
+export interface CopilotResult {
+  case_id: string;
+  question_id: string;
+  answer: CopilotAnswer;
+  model: string;
+  prompt_version: string;
+}
+
+export const listCopilotQuestions = () =>
+  api.get<CopilotQuestion[]>("/api/v1/copilot/questions");
+
+export const askCopilot = (body: {
+  question_id: string;
+  case_id: string;
+  actor?: string;
+}) => api.post<CopilotResult>("/api/v1/copilot/ask", body);
+
+// Risk Replay (Phase 6, ADR-0007) — séquence narrative d'un cas.
+export interface ReplayStep {
+  title: string;
+  business_explanation: string;
+  evidence: GroundedClaim[];
+  risk_level: "info" | "low" | "medium" | "high" | "critical";
+  reviewer_question: string;
+}
+
+export interface RiskReplay {
+  case_summary: string;
+  steps: ReplayStep[];
+  human_review_required: boolean;
+}
+
+export interface ReplayResult {
+  case_id: string;
+  replay: RiskReplay;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateReplay = (caseId: string) =>
+  api.post<ReplayResult>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/replay`,
+  );
+
+// Narratif de scénario synthétique (Phase 6, ADR-0007).
+export interface ScenarioNarrative {
+  pitch: string;
+  fraud_story: GroundedClaim[];
+  expected_detectors: string[];
+  false_positive_traps: string[];
+  human_review_required: boolean;
+}
+
+export interface ScenarioNarrativeResult {
+  scenario_id: string;
+  narrative: ScenarioNarrative;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateScenarioNarrative = (scenarioId: string) =>
+  api.post<ScenarioNarrativeResult>(
+    `/api/v1/scenarios/${encodeURIComponent(scenarioId)}/narrative`,
+  );
+
 // Detection Studio — règles versionnées (Phase 4, ADR-0007).
 // Schémas source : src/p2p_fraud/rules/ + src/p2p_fraud/api/v1.py.
 export interface RuleTestResult {
