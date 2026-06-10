@@ -205,6 +205,114 @@ export interface AuditExplainResult {
 export const explainAudit = () =>
   api.post<AuditExplainResult>("/api/v1/audit/explain");
 
+// Dossier d'enquête FraudCase360 (Phase 3, ADR-0007).
+// Schéma source : src/p2p_fraud/llm/schemas.py.
+export interface RiskSignal extends GroundedClaim {
+  rule_id: string;
+  severity: "low" | "medium" | "high" | "critical";
+}
+
+export interface FraudCase360 {
+  executive_summary: string;
+  severity_assessment: "low" | "medium" | "high" | "critical";
+  verified_facts: GroundedClaim[];
+  risk_signals: RiskSignal[];
+  contradictions: string[];
+  missing_evidence: string[];
+  open_questions: string[];
+  human_review_required: boolean;
+  recommended_next_actions: string[];
+}
+
+export interface Case360Result {
+  case_id: string;
+  dossier: FraudCase360;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateCase360 = (caseId: string) =>
+  api.post<Case360Result>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/case360`,
+  );
+
+// Detection Studio — règles versionnées (Phase 4, ADR-0007).
+// Schémas source : src/p2p_fraud/rules/ + src/p2p_fraud/api/v1.py.
+export interface RuleTestResult {
+  name: string;
+  expected: boolean;
+  actual: boolean;
+  passed: boolean;
+}
+
+export interface RuleTestReport {
+  all_passed: boolean;
+  n_total: number;
+  n_passed: number;
+  results: RuleTestResult[];
+}
+
+export interface RuleBacktestSummary {
+  n_records: number;
+  n_flagged: number;
+  alert_rate: number;
+  n_labeled: number;
+  n_true_positive: number;
+  n_false_positive: number;
+  precision: number | null;
+  sample_flagged_ids: string[];
+}
+
+export interface RuleVersionOut {
+  rule_id: string;
+  version: number;
+  status: "draft" | "tested" | "active" | "superseded" | "rejected";
+  yaml: string;
+  author: string;
+  created_at: string;
+  name: string;
+  severity: string;
+  reason_code: string;
+  tests: { name: string; record: Record<string, unknown>; expect_match: boolean }[];
+  test_report: RuleTestReport | null;
+  backtest: RuleBacktestSummary | null;
+  approved_by: string | null;
+  activated_at: string | null;
+}
+
+export const draftRule = (body: { description_fr: string; author: string }) =>
+  api.post<RuleVersionOut>("/api/v1/rules/draft", body);
+
+export const listRules = (ruleId?: string) =>
+  api.get<RuleVersionOut[]>(
+    `/api/v1/rules${ruleId ? `?rule_id=${encodeURIComponent(ruleId)}` : ""}`,
+  );
+
+export const runRuleTests = (ruleId: string, version: number) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/test`,
+  );
+
+export const backtestRule = (
+  ruleId: string,
+  version: number,
+  body: { n_invoices?: number; seed?: number; actor?: string } = {},
+) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/backtest`,
+    body,
+  );
+
+export const activateRule = (
+  ruleId: string,
+  version: number,
+  body: { approver: string },
+) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/activate`,
+    body,
+  );
+
 export const bulkAssignCases = (body: {
   case_ids: string[];
   assignee: string;

@@ -51,6 +51,11 @@ def _get_service() -> CaseService:
     raise NotImplementedError("Override via main.app.dependency_overrides")
 
 
+def _get_rule_store() -> Any:
+    """Stub : l'instance RuleStore réelle est injectée par `main.py`."""
+    raise NotImplementedError("Override via main.app.dependency_overrides")
+
+
 # ─── Modèles Pydantic typés ─────────────────────────────────────────────────
 
 
@@ -225,6 +230,72 @@ class FeedbackRuleStats(BaseModel):
 class FeedbackStats(BaseModel):
     n_cases_closed: int
     rules: list[FeedbackRuleStats] = Field(default_factory=list)
+
+
+class Case360Result(BaseModel):
+    """Dossier d'enquête généré (FraudCase360, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    dossier: dict[str, Any]  # FraudCase360 sérialisé
+    model: str
+    prompt_version: str
+
+
+class RuleDraftBody(BaseModel):
+    """Demande de draft d'une règle de détection depuis le français (Phase 4)."""
+
+    description_fr: str = Field(..., min_length=20, max_length=4000)
+    author: str = Field(..., min_length=1, max_length=128)
+
+
+class RuleBacktestBody(BaseModel):
+    n_invoices: int = Field(default=2000, ge=100, le=20000)
+    seed: int = Field(default=42)
+    actor: str = Field(default="api", max_length=128)
+
+
+class RuleActivateBody(BaseModel):
+    approver: str = Field(..., min_length=1, max_length=128)
+
+
+class RuleVersionOut(BaseModel):
+    """Version de règle sérialisée (rules/store.py)."""
+
+    rule_id: str
+    version: int
+    status: str
+    yaml: str
+    author: str
+    created_at: str
+    name: str
+    severity: str
+    reason_code: str
+    tests: list[dict[str, Any]] = Field(default_factory=list)
+    test_report: dict[str, Any] | None = None
+    backtest: dict[str, Any] | None = None
+    approved_by: str | None = None
+    activated_at: str | None = None
+
+
+def _to_rule_version_out(v: Any) -> RuleVersionOut:
+    report = v.test_report
+    backtest = v.backtest
+    return RuleVersionOut(
+        rule_id=v.rule_id,
+        version=v.version,
+        status=v.status,
+        yaml=v.yaml,
+        author=v.author,
+        created_at=v.created_at,
+        name=v.name,
+        severity=v.severity,
+        reason_code=v.reason_code,
+        tests=[c.model_dump(mode="json") for c in v.test_cases],
+        test_report=report.model_dump(mode="json") if report else None,
+        backtest=backtest.model_dump(mode="json") if backtest else None,
+        approved_by=v.approved_by,
+        activated_at=v.activated_at,
+    )
 
 
 class NarrativeBody(BaseModel):
@@ -1072,6 +1143,170 @@ def cases_feedback_stats(
             )
         )
     return FeedbackStats(n_cases_closed=n_closed, rules=rules)
+
+
+@router.post("/cases/{case_id}/case360", response_model=Case360Result)
+def case_generate_case360(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> Case360Result:
+    """Génère le dossier d'enquête FraudCase360 d'un cas (Phase 3, ADR-0007).
+
+    Le source pack est construit depuis le cas et ses événements de workflow ;
+    la provenance de chaque fait est validée en code ; `human_review_required`
+    est forcé à true ; l'appel est journalisé au ledger ai.generation.
+    """
+    from p2p_fraud.llm.case360 import generate_case360
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    try:
+        result = generate_case360(
+            case,
+            events=events,
+            audit_log=service.audit_log,
+            actor="api",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return Case360Result(
+        case_id=case.case_id,
+        dossier=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+# ─── 4bis. Detection Studio — règles (Phase 4, ADR-0007) ────────────────────
+
+
+@router.post("/rules/draft", response_model=RuleVersionOut)
+def rules_draft(
+    body: RuleDraftBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> RuleVersionOut:
+    """Drafte une règle depuis le français (LLM), la valide et la teste en code.
+
+    Le draft est sauvegardé en version `draft` ; ses tests générés sont
+    immédiatement exécutés par le moteur déterministe (statut `tested` si
+    tout est vert). L'activation reste soumise au backtest + 4-eyes.
+    """
+    from p2p_fraud.llm.rule_studio import draft_rule
+    from p2p_fraud.rules.dsl import RuleParseError
+
+    try:
+        result = draft_rule(
+            body.description_fr,
+            audit_log=service.audit_log,
+            actor=body.author,
+        )
+    except RuleParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    version = store.save_draft(result.spec, author=body.author, tests=result.test_cases)
+    version = store.record_test_report(
+        version.rule_id, version.version, result.test_report, actor=body.author
+    )
+    return _to_rule_version_out(version)
+
+
+@router.get("/rules", response_model=list[RuleVersionOut])
+def rules_list(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+    rule_id: str | None = Query(default=None),
+) -> list[RuleVersionOut]:
+    """Liste les versions de règles (toutes, ou celles d'un rule_id)."""
+    return [_to_rule_version_out(v) for v in store.list_versions(rule_id)]
+
+
+@router.post("/rules/{rule_id}/versions/{version}/test", response_model=RuleVersionOut)
+def rules_run_tests(
+    rule_id: str,
+    version: int,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Ré-exécute les tests embarqués d'une version (moteur déterministe)."""
+    from p2p_fraud.rules.store import PromotionError, RuleNotFoundError
+    from p2p_fraud.rules.testing import run_rule_tests
+
+    try:
+        v = store.get(rule_id, version)
+        report = run_rule_tests(v.spec, v.test_cases)
+        v = store.record_test_report(rule_id, version, report, actor="api")
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
+
+
+@router.post("/rules/{rule_id}/versions/{version}/backtest", response_model=RuleVersionOut)
+def rules_backtest(
+    rule_id: str,
+    version: int,
+    body: RuleBacktestBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Backtest sur dataset synthétique labellisé (ground truth is_fraud)."""
+    from p2p_fraud.rules.backtest import backtest_rule
+    from p2p_fraud.rules.store import PromotionError, RuleNotFoundError
+    from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
+
+    try:
+        v = store.get(rule_id, version)
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    invoices, _vendors = generate_dataset(
+        GeneratorConfig(
+            n_invoices=body.n_invoices,
+            n_vendors=max(50, body.n_invoices // 10),
+            seed=body.seed,
+        )
+    )
+    records = [
+        {k: (None if (isinstance(val, float) and val != val) else val) for k, val in row.items()}
+        for row in invoices.to_dict("records")
+    ]
+    summary = backtest_rule(v.spec, records)
+    try:
+        v = store.record_backtest(rule_id, version, summary, actor=body.actor)
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
+
+
+@router.post("/rules/{rule_id}/versions/{version}/activate", response_model=RuleVersionOut)
+def rules_activate(
+    rule_id: str,
+    version: int,
+    body: RuleActivateBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Active une version — tests verts + backtest + 4-eyes (auteur ≠ approbateur)."""
+    from p2p_fraud.rules.store import FourEyesError, PromotionError, RuleNotFoundError
+
+    try:
+        v = store.activate(rule_id, version, approver=body.approver)
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FourEyesError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
 
 
 # ─── 5. Exports PDF ──────────────────────────────────────────────────────────

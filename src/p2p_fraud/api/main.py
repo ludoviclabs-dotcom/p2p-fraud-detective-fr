@@ -114,6 +114,9 @@ app.include_router(oidc_router)
 
 # Router v1 (Next.js Migration v2 Phase 0) — endpoints typés Pydantic
 from p2p_fraud.api.v1 import (  # noqa: E402
+    _get_rule_store as _v1_get_rule_store_stub,
+)
+from p2p_fraud.api.v1 import (  # noqa: E402
     _get_service as _v1_get_service_stub,
 )
 from p2p_fraud.api.v1 import (  # noqa: E402
@@ -173,6 +176,22 @@ def _case_service() -> CaseService:
     return _CASE_SERVICE
 
 
+_RULE_STORE: Any = None
+
+
+def _rule_store() -> Any:
+    """Singleton RuleStore (Detection Studio) — journalise dans le même audit log."""
+    global _RULE_STORE
+    if _RULE_STORE is None:
+        from p2p_fraud.rules.store import RuleStore
+
+        _RULE_STORE = RuleStore(
+            db_path=get_settings().fraud_cases_db,
+            audit_log=_case_service().audit_log,
+        )
+    return _RULE_STORE
+
+
 _SEPA_ANALYZER: Any = None
 _EVIDENCE_SERVICE: Any = None
 
@@ -216,6 +235,7 @@ def _webhook_idempotency_store() -> Any:
 # les vraies implémentations du main app (auth bearer + CaseService).
 app.dependency_overrides[_require_auth_v1] = _require_auth
 app.dependency_overrides[_v1_get_service_stub] = _case_service
+app.dependency_overrides[_v1_get_rule_store_stub] = _rule_store
 
 # ─── Injection des dépendances SEPA Mandate Guard + Evidence + Webhooks ──────
 app.dependency_overrides[_require_auth_sepa] = _require_auth
