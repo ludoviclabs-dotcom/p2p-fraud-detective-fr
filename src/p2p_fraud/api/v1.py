@@ -51,6 +51,11 @@ def _get_service() -> CaseService:
     raise NotImplementedError("Override via main.app.dependency_overrides")
 
 
+def _get_rule_store() -> Any:
+    """Stub : l'instance RuleStore réelle est injectée par `main.py`."""
+    raise NotImplementedError("Override via main.app.dependency_overrides")
+
+
 # ─── Modèles Pydantic typés ─────────────────────────────────────────────────
 
 
@@ -196,6 +201,140 @@ class AuditVerifyResult(BaseModel):
     n_total: int
     n_signed: int
     public_key_b64: str = ""
+
+
+class AuditExplainResult(BaseModel):
+    """Verdict technique (code) + explication audit (IA structurée, ADR-0007)."""
+
+    chain_status: str  # "intact" | "broken" | "empty"
+    n_total: int
+    n_signed: int
+    invalid_seqs: list[int] = Field(default_factory=list)
+    signatures_checked: bool = False
+    explanation: dict[str, Any]  # AuditExplanation sérialisé (llm/schemas.py)
+    model: str
+    prompt_version: str
+
+
+class FeedbackRuleStats(BaseModel):
+    """Verdicts de clôture agrégés par rule_id — boucle de feedback détection."""
+
+    rule_id: str
+    n_closed: int
+    n_confirmed: int
+    n_false_positive: int
+    n_rejected: int
+    false_positive_rate: float
+
+
+class FeedbackStats(BaseModel):
+    n_cases_closed: int
+    rules: list[FeedbackRuleStats] = Field(default_factory=list)
+
+
+class Case360Result(BaseModel):
+    """Dossier d'enquête généré (FraudCase360, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    dossier: dict[str, Any]  # FraudCase360 sérialisé
+    model: str
+    prompt_version: str
+
+
+class CopilotQuestionOut(BaseModel):
+    question_id: str
+    label_fr: str
+
+
+class CopilotAskBody(BaseModel):
+    question_id: str = Field(..., min_length=1, max_length=64)
+    case_id: str = Field(..., min_length=1, max_length=128)
+    actor: str = Field(default="api", max_length=128)
+
+
+class CopilotResult(BaseModel):
+    """Réponse du copilote (CopilotAnswer, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    question_id: str
+    answer: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
+class ReplayResult(BaseModel):
+    """Séquence Risk Replay (RiskReplay, llm/schemas.py) + métadonnées IA."""
+
+    case_id: str
+    replay: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
+class ScenarioNarrativeResult(BaseModel):
+    """Habillage narratif d'un scénario (ScenarioNarrative) + métadonnées IA."""
+
+    scenario_id: str
+    narrative: dict[str, Any]
+    model: str
+    prompt_version: str
+
+
+class RuleDraftBody(BaseModel):
+    """Demande de draft d'une règle de détection depuis le français (Phase 4)."""
+
+    description_fr: str = Field(..., min_length=20, max_length=4000)
+    author: str = Field(..., min_length=1, max_length=128)
+
+
+class RuleBacktestBody(BaseModel):
+    n_invoices: int = Field(default=2000, ge=100, le=20000)
+    seed: int = Field(default=42)
+    actor: str = Field(default="api", max_length=128)
+
+
+class RuleActivateBody(BaseModel):
+    approver: str = Field(..., min_length=1, max_length=128)
+
+
+class RuleVersionOut(BaseModel):
+    """Version de règle sérialisée (rules/store.py)."""
+
+    rule_id: str
+    version: int
+    status: str
+    yaml: str
+    author: str
+    created_at: str
+    name: str
+    severity: str
+    reason_code: str
+    tests: list[dict[str, Any]] = Field(default_factory=list)
+    test_report: dict[str, Any] | None = None
+    backtest: dict[str, Any] | None = None
+    approved_by: str | None = None
+    activated_at: str | None = None
+
+
+def _to_rule_version_out(v: Any) -> RuleVersionOut:
+    report = v.test_report
+    backtest = v.backtest
+    return RuleVersionOut(
+        rule_id=v.rule_id,
+        version=v.version,
+        status=v.status,
+        yaml=v.yaml,
+        author=v.author,
+        created_at=v.created_at,
+        name=v.name,
+        severity=v.severity,
+        reason_code=v.reason_code,
+        tests=[c.model_dump(mode="json") for c in v.test_cases],
+        test_report=report.model_dump(mode="json") if report else None,
+        backtest=backtest.model_dump(mode="json") if backtest else None,
+        approved_by=v.approved_by,
+        activated_at=v.activated_at,
+    )
 
 
 class NarrativeBody(BaseModel):
@@ -962,6 +1101,361 @@ def audit_verify(
         n_signed=n_signed,
         public_key_b64=signer.public_key_b64,
     )
+
+
+@router.post("/audit/explain", response_model=AuditExplainResult)
+def audit_explain(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    audit_or_service: Annotated[Any, Depends(_get_service)],
+) -> AuditExplainResult:
+    """Vérifie la chaîne (code déterministe) puis traduit le verdict en langage audit.
+
+    Feature pilote du socle IA de confiance (ADR-0007) : le LLM n'effectue
+    aucune vérification — il explique le verdict déjà calculé par
+    `verify_chain()`. Sortie structurée, sourcée (provenance validée en code)
+    et journalisée au ledger `ai.generation` du même audit log.
+    """
+    from p2p_fraud.llm.audit_explainer import compute_verdict, explain_verdict
+    from p2p_fraud.security.signing import make_signer_from_settings
+
+    audit: AuditLog = (
+        audit_or_service.audit_log if hasattr(audit_or_service, "audit_log") else audit_or_service
+    )
+    signer = make_signer_from_settings()
+    verdict = compute_verdict(audit, public_key_b64=signer.public_key_b64)
+    try:
+        result = explain_verdict(verdict, audit_log=audit, actor="api")
+    except ValueError as exc:
+        # Clé API absente ou sortie inexploitable → 503 explicite, pas de 500 opaque.
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return AuditExplainResult(
+        chain_status=verdict.chain_status.value,
+        n_total=verdict.n_total,
+        n_signed=verdict.n_signed,
+        invalid_seqs=verdict.invalid_seqs,
+        signatures_checked=verdict.signatures_checked,
+        explanation=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.get("/cases/feedback-stats", response_model=FeedbackStats)
+def cases_feedback_stats(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> FeedbackStats:
+    """Verdicts de clôture agrégés par rule_id — boucle de feedback détection.
+
+    Les statuts CLOSED_CONFIRMED / CLOSED_FALSE_POSITIVE / CLOSED_REJECTED
+    capturés à la clôture des cas sont agrégés par règle (le rule_id est
+    encodé dans les finding_ids sous la forme "RULE::invoice"). C'est la
+    matière première du backtest de règles du futur Detection Studio.
+    """
+    confirmed: Counter[str] = Counter()
+    false_positive: Counter[str] = Counter()
+    rejected: Counter[str] = Counter()
+    n_closed = 0
+    for case in service.list_cases():
+        if not case.status.is_closed:
+            continue
+        n_closed += 1
+        rule_ids = {fid.split("::", 1)[0] for fid in case.finding_ids if fid}
+        for rule_id in rule_ids or {"unknown"}:
+            if case.status == CaseStatus.CLOSED_CONFIRMED:
+                confirmed[rule_id] += 1
+            elif case.status == CaseStatus.CLOSED_FALSE_POSITIVE:
+                false_positive[rule_id] += 1
+            elif case.status == CaseStatus.CLOSED_REJECTED:
+                rejected[rule_id] += 1
+    rules = []
+    for rule_id in sorted(set(confirmed) | set(false_positive) | set(rejected)):
+        total = confirmed[rule_id] + false_positive[rule_id] + rejected[rule_id]
+        rules.append(
+            FeedbackRuleStats(
+                rule_id=rule_id,
+                n_closed=total,
+                n_confirmed=confirmed[rule_id],
+                n_false_positive=false_positive[rule_id],
+                n_rejected=rejected[rule_id],
+                false_positive_rate=(false_positive[rule_id] / total) if total else 0.0,
+            )
+        )
+    return FeedbackStats(n_cases_closed=n_closed, rules=rules)
+
+
+@router.post("/cases/{case_id}/case360", response_model=Case360Result)
+def case_generate_case360(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> Case360Result:
+    """Génère le dossier d'enquête FraudCase360 d'un cas (Phase 3, ADR-0007).
+
+    Le source pack est construit depuis le cas et ses événements de workflow ;
+    la provenance de chaque fait est validée en code ; `human_review_required`
+    est forcé à true ; l'appel est journalisé au ledger ai.generation.
+    """
+    from p2p_fraud.llm.case360 import generate_case360
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    try:
+        result = generate_case360(
+            case,
+            events=events,
+            audit_log=service.audit_log,
+            actor="api",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return Case360Result(
+        case_id=case.case_id,
+        dossier=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+# ─── 4ter. Copilote analyste + Risk Replay + narratif scénarios (P5-P6) ─────
+
+
+@router.get("/copilot/questions", response_model=list[CopilotQuestionOut])
+def copilot_questions(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[CopilotQuestionOut]:
+    """Catalogue des questions prédéfinies du copilote (pas de chat libre)."""
+    from p2p_fraud.llm.copilot import QUESTIONS
+
+    return [
+        CopilotQuestionOut(question_id=q.question_id, label_fr=q.label_fr)
+        for q in QUESTIONS.values()
+    ]
+
+
+@router.post("/copilot/ask", response_model=CopilotResult)
+def copilot_ask(
+    body: CopilotAskBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> CopilotResult:
+    """Répond à une question prédéfinie sur un cas (Phase 5, ADR-0007).
+
+    Le modèle ne voit que le source pack du cas (surface d'outils contrôlée
+    en code) ; provenance validée ; revue humaine toujours requise.
+    """
+    from p2p_fraud.llm.copilot import ask_copilot
+
+    try:
+        case = service.get(body.case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(body.case_id)
+    try:
+        result = ask_copilot(
+            body.question_id,
+            case,
+            events=events,
+            audit_log=service.audit_log,
+            actor=body.actor,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return CopilotResult(
+        case_id=case.case_id,
+        question_id=body.question_id,
+        answer=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.post("/cases/{case_id}/replay", response_model=ReplayResult)
+def case_generate_replay(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> ReplayResult:
+    """Rejoue un cas en séquence narrative d'enquête (Phase 6, ADR-0007)."""
+    from p2p_fraud.llm.replay import generate_replay
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    try:
+        result = generate_replay(case, events=events, audit_log=service.audit_log, actor="api")
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return ReplayResult(
+        case_id=case.case_id,
+        replay=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+@router.post("/scenarios/{scenario_id}/narrative", response_model=ScenarioNarrativeResult)
+def scenario_generate_narrative(
+    scenario_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> ScenarioNarrativeResult:
+    """Habillage narratif d'un scénario synthétique (Phase 6, ADR-0007).
+
+    Les données et labels ground-truth restent générés par le code
+    déterministe — le LLM ne produit que le récit pédagogique sourcé.
+    """
+    from p2p_fraud.llm.scenario_narrative import generate_scenario_narrative
+    from p2p_fraud.synthetic.scenarios import SCENARIOS, get_scenario_meta
+
+    if scenario_id not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}.")
+    meta = get_scenario_meta(scenario_id)
+    try:
+        result = generate_scenario_narrative(meta, audit_log=service.audit_log, actor="api")
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return ScenarioNarrativeResult(
+        scenario_id=scenario_id,
+        narrative=result.output.model_dump(mode="json"),
+        model=result.model,
+        prompt_version=result.prompt_version,
+    )
+
+
+# ─── 4bis. Detection Studio — règles (Phase 4, ADR-0007) ────────────────────
+
+
+@router.post("/rules/draft", response_model=RuleVersionOut)
+def rules_draft(
+    body: RuleDraftBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> RuleVersionOut:
+    """Drafte une règle depuis le français (LLM), la valide et la teste en code.
+
+    Le draft est sauvegardé en version `draft` ; ses tests générés sont
+    immédiatement exécutés par le moteur déterministe (statut `tested` si
+    tout est vert). L'activation reste soumise au backtest + 4-eyes.
+    """
+    from p2p_fraud.llm.rule_studio import draft_rule
+    from p2p_fraud.rules.dsl import RuleParseError
+
+    try:
+        result = draft_rule(
+            body.description_fr,
+            audit_log=service.audit_log,
+            actor=body.author,
+        )
+    except RuleParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    version = store.save_draft(result.spec, author=body.author, tests=result.test_cases)
+    version = store.record_test_report(
+        version.rule_id, version.version, result.test_report, actor=body.author
+    )
+    return _to_rule_version_out(version)
+
+
+@router.get("/rules", response_model=list[RuleVersionOut])
+def rules_list(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+    rule_id: str | None = Query(default=None),
+) -> list[RuleVersionOut]:
+    """Liste les versions de règles (toutes, ou celles d'un rule_id)."""
+    return [_to_rule_version_out(v) for v in store.list_versions(rule_id)]
+
+
+@router.post("/rules/{rule_id}/versions/{version}/test", response_model=RuleVersionOut)
+def rules_run_tests(
+    rule_id: str,
+    version: int,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Ré-exécute les tests embarqués d'une version (moteur déterministe)."""
+    from p2p_fraud.rules.store import PromotionError, RuleNotFoundError
+    from p2p_fraud.rules.testing import run_rule_tests
+
+    try:
+        v = store.get(rule_id, version)
+        report = run_rule_tests(v.spec, v.test_cases)
+        v = store.record_test_report(rule_id, version, report, actor="api")
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
+
+
+@router.post("/rules/{rule_id}/versions/{version}/backtest", response_model=RuleVersionOut)
+def rules_backtest(
+    rule_id: str,
+    version: int,
+    body: RuleBacktestBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Backtest sur dataset synthétique labellisé (ground truth is_fraud)."""
+    from p2p_fraud.rules.backtest import backtest_rule
+    from p2p_fraud.rules.store import PromotionError, RuleNotFoundError
+    from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
+
+    try:
+        v = store.get(rule_id, version)
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    invoices, _vendors = generate_dataset(
+        GeneratorConfig(
+            n_invoices=body.n_invoices,
+            n_vendors=max(50, body.n_invoices // 10),
+            seed=body.seed,
+        )
+    )
+    records = [
+        {k: (None if (isinstance(val, float) and val != val) else val) for k, val in row.items()}
+        for row in invoices.to_dict("records")
+    ]
+    summary = backtest_rule(v.spec, records)
+    try:
+        v = store.record_backtest(rule_id, version, summary, actor=body.actor)
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
+
+
+@router.post("/rules/{rule_id}/versions/{version}/activate", response_model=RuleVersionOut)
+def rules_activate(
+    rule_id: str,
+    version: int,
+    body: RuleActivateBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+) -> RuleVersionOut:
+    """Active une version — tests verts + backtest + 4-eyes (auteur ≠ approbateur)."""
+    from p2p_fraud.rules.store import FourEyesError, PromotionError, RuleNotFoundError
+
+    try:
+        v = store.activate(rule_id, version, approver=body.approver)
+    except RuleNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FourEyesError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except PromotionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _to_rule_version_out(v)
 
 
 # ─── 5. Exports PDF ──────────────────────────────────────────────────────────

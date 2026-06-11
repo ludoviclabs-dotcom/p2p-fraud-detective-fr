@@ -7,6 +7,7 @@ import { api } from "@/lib/api-client";
 import type { Schemas } from "@p2pfd/shared-types";
 import { SeverityBadge } from "@/components/ui/badge";
 import { ForensicPage } from "@/components/forensic-page";
+import { ScenarioNarrativePanel } from "@/components/scenario-narrative-panel";
 
 type ScenarioMeta = Schemas["ScenarioMeta"];
 
@@ -168,6 +169,8 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
             {scenario.storyline}
           </p>
         </div>
+
+        <ScenarioNarrativePanel key={scenario.name} scenarioId={scenario.name} />
 
         <div>
           <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Contrôles déclenchés</div>

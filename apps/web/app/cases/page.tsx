@@ -14,6 +14,9 @@ import { Input } from "@/components/ui/input";
 import { SeverityBadge } from "@/components/ui/badge";
 import { formatEur, formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
+import { Case360DossierPanel } from "@/components/case360-dossier-panel";
+import { CopilotPanel } from "@/components/copilot-panel";
+import { RiskReplayPanel } from "@/components/risk-replay-panel";
 import { RISK_SCENARIOS } from "@/data/risk-scenarios";
 import { case360Href } from "@/lib/risk/case-links";
 
@@ -309,6 +312,12 @@ export default function CasesPage() {
           />
         )}
       </div>
+
+      <Case360DossierPanel
+        caseId={selected.size === 1 ? Array.from(selected)[0] : null}
+      />
+      <CopilotPanel caseId={selected.size === 1 ? Array.from(selected)[0] : null} />
+      <RiskReplayPanel caseId={selected.size === 1 ? Array.from(selected)[0] : null} />
     </ForensicPage>
   );
 }

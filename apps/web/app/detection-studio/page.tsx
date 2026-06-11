@@ -7,6 +7,7 @@ import { scoreTransaction } from "@/lib/risk/scoreEngine";
 import type { DetectorId, DetectorScore } from "@/types/risk";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { ForensicPage } from "@/components/forensic-page";
+import { RuleStudioPanel } from "@/components/rule-studio-panel";
 
 const MODULES: {
   id: DetectorId;
@@ -89,8 +90,9 @@ export default function DetectionStudioPage() {
             Detection <span className="italic">Studio</span>
           </h1>
           <p className="sub">
-            Modules de détection explicables pour paiements P2P, virements SEPA, QR code,
-            fournisseurs et conformité. Données 100% synthétiques.
+            Authoring de règles de détection : français → YAML déterministe →
+            tests → backtest → activation 4-eyes. Versions journalisées dans la
+            piste d&apos;audit signée.
           </p>
         </div>
         <div className="fx-head-actions">
@@ -98,6 +100,18 @@ export default function DetectionStudioPage() {
             Lancer les scénarios ↗
           </Link>
         </div>
+      </div>
+
+      <RuleStudioPanel />
+
+      <div className="fx-card-accent" style={{ marginBottom: 16 }}>
+        <div className="fx-eyebrow">◇ Section démonstration</div>
+        <p className="fx-mono" style={{ marginTop: 6, fontSize: 11, lineHeight: 1.65, color: "var(--muted)" }}>
+          Les modules ci-dessous illustrent des détecteurs « paiement
+          particulier » avec un scoring 100&nbsp;% client-side, déconnecté du
+          moteur Procure-to-Pay réel (ADR-0007). Ils servent de vitrine — le
+          moteur de production est celui du studio de règles ci-dessus.
+        </p>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[0.72fr_1.28fr]">

@@ -174,6 +174,224 @@ export const listAudit = (cursor = 0, limit = 100) =>
 export const verifyAudit = () =>
   api.get<AuditVerifyResult>("/api/v1/audit/verify");
 
+// Sortie IA structurée de l'Audit Log Explainer (ADR-0007).
+// Schéma source : src/p2p_fraud/llm/schemas.py — régénérer via `pnpm sdk:gen-types`
+// quand le type OpenAPI sera publié.
+export interface GroundedClaim {
+  text: string;
+  source_ids: string[];
+}
+
+export interface AuditExplanation {
+  headline: string;
+  explanation: GroundedClaim[];
+  audit_implications: GroundedClaim[];
+  missing_evidence: string[];
+  human_review_required: boolean;
+  recommended_next_actions: string[];
+}
+
+export interface AuditExplainResult {
+  chain_status: "intact" | "broken" | "empty";
+  n_total: number;
+  n_signed: number;
+  invalid_seqs: number[];
+  signatures_checked: boolean;
+  explanation: AuditExplanation;
+  model: string;
+  prompt_version: string;
+}
+
+export const explainAudit = () =>
+  api.post<AuditExplainResult>("/api/v1/audit/explain");
+
+// Dossier d'enquête FraudCase360 (Phase 3, ADR-0007).
+// Schéma source : src/p2p_fraud/llm/schemas.py.
+export interface RiskSignal extends GroundedClaim {
+  rule_id: string;
+  severity: "low" | "medium" | "high" | "critical";
+}
+
+export interface FraudCase360 {
+  executive_summary: string;
+  severity_assessment: "low" | "medium" | "high" | "critical";
+  verified_facts: GroundedClaim[];
+  risk_signals: RiskSignal[];
+  contradictions: string[];
+  missing_evidence: string[];
+  open_questions: string[];
+  human_review_required: boolean;
+  recommended_next_actions: string[];
+}
+
+export interface Case360Result {
+  case_id: string;
+  dossier: FraudCase360;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateCase360 = (caseId: string) =>
+  api.post<Case360Result>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/case360`,
+  );
+
+// Copilote analyste (Phase 5, ADR-0007) — questions prédéfinies sur un cas.
+export interface CopilotQuestion {
+  question_id: string;
+  label_fr: string;
+}
+
+export interface CopilotAnswer {
+  answer_short: string;
+  evidence: GroundedClaim[];
+  uncertainties: string[];
+  recommended_next_action: string;
+  human_review_required: boolean;
+}
+
+export interface CopilotResult {
+  case_id: string;
+  question_id: string;
+  answer: CopilotAnswer;
+  model: string;
+  prompt_version: string;
+}
+
+export const listCopilotQuestions = () =>
+  api.get<CopilotQuestion[]>("/api/v1/copilot/questions");
+
+export const askCopilot = (body: {
+  question_id: string;
+  case_id: string;
+  actor?: string;
+}) => api.post<CopilotResult>("/api/v1/copilot/ask", body);
+
+// Risk Replay (Phase 6, ADR-0007) — séquence narrative d'un cas.
+export interface ReplayStep {
+  title: string;
+  business_explanation: string;
+  evidence: GroundedClaim[];
+  risk_level: "info" | "low" | "medium" | "high" | "critical";
+  reviewer_question: string;
+}
+
+export interface RiskReplay {
+  case_summary: string;
+  steps: ReplayStep[];
+  human_review_required: boolean;
+}
+
+export interface ReplayResult {
+  case_id: string;
+  replay: RiskReplay;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateReplay = (caseId: string) =>
+  api.post<ReplayResult>(
+    `/api/v1/cases/${encodeURIComponent(caseId)}/replay`,
+  );
+
+// Narratif de scénario synthétique (Phase 6, ADR-0007).
+export interface ScenarioNarrative {
+  pitch: string;
+  fraud_story: GroundedClaim[];
+  expected_detectors: string[];
+  false_positive_traps: string[];
+  human_review_required: boolean;
+}
+
+export interface ScenarioNarrativeResult {
+  scenario_id: string;
+  narrative: ScenarioNarrative;
+  model: string;
+  prompt_version: string;
+}
+
+export const generateScenarioNarrative = (scenarioId: string) =>
+  api.post<ScenarioNarrativeResult>(
+    `/api/v1/scenarios/${encodeURIComponent(scenarioId)}/narrative`,
+  );
+
+// Detection Studio — règles versionnées (Phase 4, ADR-0007).
+// Schémas source : src/p2p_fraud/rules/ + src/p2p_fraud/api/v1.py.
+export interface RuleTestResult {
+  name: string;
+  expected: boolean;
+  actual: boolean;
+  passed: boolean;
+}
+
+export interface RuleTestReport {
+  all_passed: boolean;
+  n_total: number;
+  n_passed: number;
+  results: RuleTestResult[];
+}
+
+export interface RuleBacktestSummary {
+  n_records: number;
+  n_flagged: number;
+  alert_rate: number;
+  n_labeled: number;
+  n_true_positive: number;
+  n_false_positive: number;
+  precision: number | null;
+  sample_flagged_ids: string[];
+}
+
+export interface RuleVersionOut {
+  rule_id: string;
+  version: number;
+  status: "draft" | "tested" | "active" | "superseded" | "rejected";
+  yaml: string;
+  author: string;
+  created_at: string;
+  name: string;
+  severity: string;
+  reason_code: string;
+  tests: { name: string; record: Record<string, unknown>; expect_match: boolean }[];
+  test_report: RuleTestReport | null;
+  backtest: RuleBacktestSummary | null;
+  approved_by: string | null;
+  activated_at: string | null;
+}
+
+export const draftRule = (body: { description_fr: string; author: string }) =>
+  api.post<RuleVersionOut>("/api/v1/rules/draft", body);
+
+export const listRules = (ruleId?: string) =>
+  api.get<RuleVersionOut[]>(
+    `/api/v1/rules${ruleId ? `?rule_id=${encodeURIComponent(ruleId)}` : ""}`,
+  );
+
+export const runRuleTests = (ruleId: string, version: number) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/test`,
+  );
+
+export const backtestRule = (
+  ruleId: string,
+  version: number,
+  body: { n_invoices?: number; seed?: number; actor?: string } = {},
+) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/backtest`,
+    body,
+  );
+
+export const activateRule = (
+  ruleId: string,
+  version: number,
+  body: { approver: string },
+) =>
+  api.post<RuleVersionOut>(
+    `/api/v1/rules/${encodeURIComponent(ruleId)}/versions/${version}/activate`,
+    body,
+  );
+
 export const bulkAssignCases = (body: {
   case_ids: string[];
   assignee: string;
