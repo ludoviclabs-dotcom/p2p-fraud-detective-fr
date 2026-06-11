@@ -47,9 +47,39 @@
 | Master data rules | Règles déterministes | — | Non |
 | Reason codes | Templates FR statiques | — | — |
 
-> **Aucun LLM** n'est intégré dans le pipeline de scoring. L'éventuelle
-> assistance GenAI (rédaction de commentaires, résumé) prévue en V3 fera
-> l'objet d'une mise à jour de ce registre.
+> **Aucun LLM n'intervient dans le pipeline de scoring ni dans la
+> vérification cryptographique** : les scores, findings et verdicts de
+> chaîne restent 100 % déterministes. Les composants GenAI ci-dessous sont
+> des **assistances rédactionnelles et pédagogiques** bâties sur le socle de
+> confiance ADR-0007.
+
+### 3 bis. Composants GenAI (Claude API, ADR-0007)
+
+Garde-fous communs, appliqués **en code** (jamais délégués au prompt) :
+sortie structurée garantie (schéma Pydantic via structured outputs) ;
+provenance validée (chaque affirmation cite des `source_ids` vérifiés
+contre le source pack construit par le code, rejet sinon) ; redaction PII
+fail-closed avant tout envoi (`ai/redact.py`) ; `human_review_required`
+forcé à true ; chaque appel journalisé dans l'audit log signé Ed25519
+(kind `ai.generation` : feature, version de prompt, modèle, tokens,
+sources). Système inactif sans `ANTHROPIC_API_KEY` (clé backend
+uniquement) : les endpoints répondent 503 et l'UI bascule en fallback.
+
+| Feature | Finalité | Modèle | Entrées (source pack) | Décision auto ? |
+|---|---|---|---|---|
+| Audit Log Explainer | Traduire en langage audit le verdict (déjà calculé par code) de vérification de la chaîne hash/Ed25519 | claude-opus-4-8 | Verdict technique `verify_chain()` uniquement | Non — rupture ⇒ revue humaine forcée |
+| Fraud Case 360 AI | Dossier d'enquête structuré d'un cas (faits, signaux, manques, diligences) | claude-opus-4-8 | Cas + événements de workflow | Non — revue humaine toujours requise |
+| Detection Studio (draft) | Convertir une règle métier FR en règle YAML déterministe + tests | claude-opus-4-8 | Description métier saisie | Non — activation par code : tests verts + backtest + 4-eyes (auteur ≠ approbateur) |
+| Copilote analyste | Répondre à 4 questions prédéfinies sur un cas (pas de chat libre) | claude-sonnet-4-6 | Source pack du cas | Non — propose, ne bloque jamais un paiement |
+| Risk Replay | Rejouer la timeline d'un cas en séquence narrative sourcée | claude-sonnet-4-6 | Cas + événements | Non — illustre, ne conclut pas |
+| Narratif de scénarios | Habillage pédagogique des scénarios synthétiques | claude-sonnet-4-6 | Métadonnées du scénario | Non — les données/labels restent générés par code |
+
+- **Suivi de coût** : agrégation des entrées `ai.generation`
+  (`GET /api/v1/ai/usage`), valorisation par table de prix publique.
+- **Évaluation** : golden sets versionnés (`tests/eval/`) — conformité de
+  schéma, provenance 100 %, invariants métier (rupture ⇒ revue humaine,
+  limites statistiques déclarées) — exécutés comme gate à chaque évolution
+  de prompt.
 
 ## 4. Mesures de transparence (art. 50)
 

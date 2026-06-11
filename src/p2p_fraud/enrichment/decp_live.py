@@ -82,6 +82,9 @@ class DECPLiveClient:
         except (requests.RequestException, ValueError) as exc:
             log.warning("DECP live lookup failed for SIREN %s: %s", siren, exc)
             raise DECPLiveError(str(exc)) from exc
+        from p2p_fraud.enrichment.freshness import record_sync
+
+        record_sync("decp", detail=f"lookup SIREN {siren}")
         return [_to_contract(rec) for rec in payload.get("results", [])]
 
     def lookup_by_name(self, name: str, *, limit: int = DEFAULT_LIMIT) -> list[DECPContract]:
@@ -102,6 +105,9 @@ class DECPLiveClient:
         except (requests.RequestException, ValueError) as exc:
             log.warning("DECP live name search failed for %r: %s", name, exc)
             raise DECPLiveError(str(exc)) from exc
+        from p2p_fraud.enrichment.freshness import record_sync
+
+        record_sync("decp", detail=f"recherche nom {name!r}")
         return [_to_contract(rec) for rec in payload.get("results", [])]
 
 

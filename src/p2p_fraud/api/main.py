@@ -264,8 +264,11 @@ class InvoiceRow(BaseModel):
 class DetectRequest(BaseModel):
     invoices: list[InvoiceRow]
     detectors: list[str] = Field(
-        default_factory=lambda: ["duplicates", "thresholds", "sanctions"],
-        description="Détecteurs à activer parmi : duplicates, thresholds, sanctions, decp_rbe",
+        default_factory=lambda: ["duplicates", "thresholds", "sanctions", "rule_studio"],
+        description=(
+            "Détecteurs à activer parmi : duplicates, thresholds, sanctions, "
+            "decp_rbe, rule_studio (règles actives du Detection Studio)"
+        ),
     )
 
 
@@ -352,6 +355,11 @@ def _run_detectors(df: pd.DataFrame, detectors: list[str]) -> list[Finding]:
         from p2p_fraud.detectors.decp import detect_decp_rbe
 
         findings.extend(detect_decp_rbe(df))
+    if "rule_studio" in detectors:
+        # Règles du Detection Studio passées par tests verts + backtest + 4-eyes.
+        from p2p_fraud.rules.runtime import dataframe_to_records, run_active_rules
+
+        findings.extend(run_active_rules(dataframe_to_records(df), _rule_store()))
     return findings
 
 
