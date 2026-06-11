@@ -29,7 +29,7 @@ Via l'UI GitHub :
 2. **Choose a tag** → taper `v0.6.0` → « Create new tag: v0.6.0 on publish »
 3. **Target** : `main`
 4. **Release title** : `v0.6.0 — Migration v2 Next.js livrée (8 phases)`
-5. **Description** : copier la section `[0.6.0]` du [`CHANGELOG.md`](../CHANGELOG.md)
+5. **Description** : copier la section `[0.6.0]` du [`CHANGELOG.md`](https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/CHANGELOG.md)
 6. **Publish release**
 
 Suivi du build : https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/actions
@@ -49,7 +49,7 @@ HF Spaces offre un vrai free tier Docker (16 GB RAM, pas de sleep), seule option
 
 ### Configuration — déploiement automatisé (recommandé)
 
-Le workflow [`.github/workflows/hf-sync.yml`](../.github/workflows/hf-sync.yml)
+Le workflow [`.github/workflows/hf-sync.yml`](https://github.com/ludoviclabs-dotcom/p2p-fraud-detective-fr/blob/main/.github/workflows/hf-sync.yml)
 synchronise automatiquement le backend vers le Space HF. **Aucune manipulation
 git côté HF** — il suffit d'ajouter 2 secrets GitHub :
 

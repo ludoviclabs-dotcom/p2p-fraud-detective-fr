@@ -79,6 +79,9 @@ class PappersLiveClient:
         except (requests.RequestException, ValueError) as exc:
             log.warning("Pappers live lookup failed for SIREN %s: %s", siren, exc)
             raise PappersLiveError(str(exc)) from exc
+        from p2p_fraud.enrichment.freshness import record_sync
+
+        record_sync("pappers", detail=f"lookup SIREN {siren}")
         return _extract_owners(payload, siren=siren)
 
 

@@ -175,8 +175,10 @@ export const verifyAudit = () =>
   api.get<AuditVerifyResult>("/api/v1/audit/verify");
 
 // Sortie IA structurée de l'Audit Log Explainer (ADR-0007).
-// Schéma source : src/p2p_fraud/llm/schemas.py — régénérer via `pnpm sdk:gen-types`
-// quand le type OpenAPI sera publié.
+// Schéma source : src/p2p_fraud/llm/schemas.py.
+// Note : les endpoints existent dans @p2pfd/shared-types (régénéré via
+// `pnpm sdk:gen-types`), mais les payloads IA y sont typés dict côté OpenAPI ;
+// les interfaces locales ci-dessous sont volontairement plus précises.
 export interface GroundedClaim {
   text: string;
   source_ids: string[];
@@ -314,6 +316,55 @@ export const generateScenarioNarrative = (scenarioId: string) =>
   api.post<ScenarioNarrativeResult>(
     `/api/v1/scenarios/${encodeURIComponent(scenarioId)}/narrative`,
   );
+
+// Gouvernance : coût IA, fraîcheur des sources, couverture ISA 240.
+export interface AIUsageBucket {
+  n_calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cached_tokens: number;
+  cost_usd: number;
+  n_calls_unpriced: number;
+  models: string[];
+}
+
+export interface AIUsage {
+  total: AIUsageBucket;
+  by_feature: Record<string, AIUsageBucket>;
+}
+
+export const getAIUsage = () => api.get<AIUsage>("/api/v1/ai/usage");
+
+export interface SourceFreshness {
+  source: string;
+  label: string;
+  configured: boolean;
+  last_sync: string | null;
+  detail: string;
+}
+
+export const getSourcesFreshness = () =>
+  api.get<SourceFreshness[]>("/api/v1/sources/freshness");
+
+export interface CoverageItem {
+  detector: string;
+  executed: boolean;
+  n_findings: number;
+  n_invoices_flagged: number;
+  clean_rate: number | null;
+  reason: string;
+}
+
+export interface Coverage {
+  scenario: string;
+  n_invoices: number;
+  n_detectors_executed: number;
+  overall_clean_rate: number;
+  items: CoverageItem[];
+}
+
+export const getCoverage = (scenario = "bec_iban_swap") =>
+  api.get<Coverage>(`/api/v1/coverage?scenario=${encodeURIComponent(scenario)}`);
 
 // Detection Studio — règles versionnées (Phase 4, ADR-0007).
 // Schémas source : src/p2p_fraud/rules/ + src/p2p_fraud/api/v1.py.

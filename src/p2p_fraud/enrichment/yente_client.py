@@ -102,6 +102,9 @@ class YenteClient:
         except (requests.RequestException, ValueError) as exc:
             log.warning("Yente match failed for %r: %s", name, exc)
             raise YenteError(str(exc)) from exc
+        from p2p_fraud.enrichment.freshness import record_sync
+
+        record_sync("sanctions", detail="match OpenSanctions")
         return _extract_matches(payload)
 
 

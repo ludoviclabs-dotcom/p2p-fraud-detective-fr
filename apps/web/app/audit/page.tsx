@@ -6,11 +6,13 @@ import { useState } from "react";
 import { explainAudit, listAudit, verifyAudit } from "@/lib/api-client";
 import type { AuditExplainResult } from "@/lib/api-client";
 import { ClaimList } from "@/components/grounded-claims";
+import { useLocale } from "@/components/locale-provider";
 import { formatDate } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
 import { case360Href, getPrimaryCase360Scenario } from "@/lib/risk/case-links";
 
 export default function AuditPage() {
+  const { t } = useLocale();
   const [cursor, setCursor] = useState(0);
   const [verifyRun, setVerifyRun] = useState(false);
   const [explainRun, setExplainRun] = useState(false);
@@ -140,11 +142,8 @@ export default function AuditPage() {
       <div className="fx-panel" style={{ marginBottom: 16 }}>
         <div className="fx-panel-head">
           <div>
-            <h2>Explication audit</h2>
-            <div className="sub">
-              Verdict calculé par le code · traduit pour CAC / DAF par IA (sortie
-              structurée, sources validées)
-            </div>
+            <h2>{t("audit_ai.title")}</h2>
+            <div className="sub">{t("audit_ai.subtitle")}</div>
           </div>
           <span className="glyph">¶</span>
         </div>
@@ -156,20 +155,14 @@ export default function AuditPage() {
             disabled={explainQuery.isFetching}
             type="button"
           >
-            {explainQuery.isFetching
-              ? "◷ Génération…"
-              : "¶ Expliquer le verdict pour l'audit"}
+            {explainQuery.isFetching ? t("ai.generating") : t("audit_ai.explain")}
           </button>
           {explainQuery.error ? (
             <div className="fx-notice" style={{ marginTop: 14 }}>
               <span className="glyph">⚠</span>
               <div>
-                <div className="nt">Explication indisponible</div>
-                <p className="nb">
-                  Le backend FastAPI (et sa clé ANTHROPIC_API_KEY) doit être
-                  configuré pour générer l&apos;explication. La vérification
-                  cryptographique ci-dessus reste 100&nbsp;% fonctionnelle sans IA.
-                </p>
+                <div className="nt">{t("ai.unavailable_title")}</div>
+                <p className="nb">{t("audit_ai.unavailable_body")}</p>
               </div>
             </div>
           ) : null}
@@ -280,6 +273,7 @@ export default function AuditPage() {
 }
 
 function ExplanationView({ result }: { result: AuditExplainResult }) {
+  const { t } = useLocale();
   const broken = result.chain_status === "broken";
   const statusColor = broken ? "var(--risk)" : "var(--verified)";
   return (
@@ -293,7 +287,11 @@ function ExplanationView({ result }: { result: AuditExplainResult }) {
         }}
       >
         <div className="fx-eyebrow" style={{ color: statusColor }}>
-          {broken ? "⚠ Rupture détectée" : result.chain_status === "empty" ? "Journal vide" : "✓ Chaîne intacte"}
+          {broken
+            ? t("audit_ai.broken")
+            : result.chain_status === "empty"
+              ? t("audit_ai.empty")
+              : t("audit_ai.intact")}
         </div>
         <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--fg)" }}>
           {result.explanation.headline}
@@ -304,30 +302,27 @@ function ExplanationView({ result }: { result: AuditExplainResult }) {
         <div className="fx-notice">
           <span className="glyph">★</span>
           <div>
-            <div className="nt">Revue humaine requise</div>
-            <p className="nb">
-              L&apos;IA ne prend aucune décision : un reviewer doit valider les
-              conclusions et conduire les diligences recommandées.
-            </p>
+            <div className="nt">{t("ai.human_review_title")}</div>
+            <p className="nb">{t("audit_ai.review_body")}</p>
           </div>
         </div>
       ) : null}
 
       <div>
-        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Explication</div>
+        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>{t("audit_ai.explanation")}</div>
         <ClaimList claims={result.explanation.explanation} />
       </div>
 
       {result.explanation.audit_implications.length ? (
         <div>
-          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Implications pour l&apos;audit</div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>{t("audit_ai.implications")}</div>
           <ClaimList claims={result.explanation.audit_implications} />
         </div>
       ) : null}
 
       {result.explanation.recommended_next_actions.length ? (
         <div>
-          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Diligences recommandées</div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>{t("ai.recommended_actions")}</div>
           <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
             {result.explanation.recommended_next_actions.map((action) => (
               <li key={action} style={{ fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
@@ -341,7 +336,7 @@ function ExplanationView({ result }: { result: AuditExplainResult }) {
       {result.explanation.missing_evidence.length ? (
         <div>
           <div className="fx-eyebrow" style={{ marginBottom: 8, color: "var(--warn)" }}>
-            Preuves manquantes
+            {t("ai.missing_evidence")}
           </div>
           <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
             {result.explanation.missing_evidence.map((item) => (
@@ -354,8 +349,12 @@ function ExplanationView({ result }: { result: AuditExplainResult }) {
       ) : null}
 
       <div className="fx-mono" style={{ fontSize: 10, color: "var(--dim)" }}>
-        Généré par {result.model} · prompt {result.prompt_version} · journalisé au
-        ledger ai.generation · {result.n_total} entrées · {result.n_signed} signées
+        {t("audit_ai.footer", {
+          model: result.model,
+          promptVersion: result.prompt_version,
+          nTotal: result.n_total,
+          nSigned: result.n_signed,
+        })}
       </div>
     </div>
   );

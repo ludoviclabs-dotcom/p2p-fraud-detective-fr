@@ -408,6 +408,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alerts/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Alerts Stream
+         * @description Stream SSE des événements d'audit récents pour la page Alertes.
+         *
+         *     Le flux émet les entrées `audit_log` sous forme d'événements `audit`.
+         *     `once=true` sert aux tests et aux clients qui veulent une réponse finie.
+         */
+        get: operations["alerts_stream_api_v1_alerts_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit/verify": {
         parameters: {
             query?: never;
@@ -422,6 +445,345 @@ export interface paths {
         get: operations["audit_verify_api_v1_audit_verify_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Audit Explain
+         * @description Vérifie la chaîne (code déterministe) puis traduit le verdict en langage audit.
+         *
+         *     Feature pilote du socle IA de confiance (ADR-0007) : le LLM n'effectue
+         *     aucune vérification — il explique le verdict déjà calculé par
+         *     `verify_chain()`. Sortie structurée, sourcée (provenance validée en code)
+         *     et journalisée au ledger `ai.generation` du même audit log.
+         */
+        post: operations["audit_explain_api_v1_audit_explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/feedback-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cases Feedback Stats
+         * @description Verdicts de clôture agrégés par rule_id — boucle de feedback détection.
+         *
+         *     Les statuts CLOSED_CONFIRMED / CLOSED_FALSE_POSITIVE / CLOSED_REJECTED
+         *     capturés à la clôture des cas sont agrégés par règle (le rule_id est
+         *     encodé dans les finding_ids sous la forme "RULE::invoice"). C'est la
+         *     matière première du backtest de règles du futur Detection Studio.
+         */
+        get: operations["cases_feedback_stats_api_v1_cases_feedback_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/case360": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Case Generate Case360
+         * @description Génère le dossier d'enquête FraudCase360 d'un cas (Phase 3, ADR-0007).
+         *
+         *     Le source pack est construit depuis le cas et ses événements de workflow ;
+         *     la provenance de chaque fait est validée en code ; `human_review_required`
+         *     est forcé à true ; l'appel est journalisé au ledger ai.generation.
+         */
+        post: operations["case_generate_case360_api_v1_cases__case_id__case360_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Usage
+         * @description Dashboard de coût IA — agrégation des entrées `ai.generation` du ledger.
+         *
+         *     Chaque appel IA est déjà journalisé (modèle, tokens in/out/cachés) dans
+         *     l'audit log signé ; on additionne et on valorise via la table de prix
+         *     publique (ADR-0007 décision C). Modèle hors table → compté non valorisé.
+         */
+        get: operations["ai_usage_api_v1_ai_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources/freshness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sources Freshness
+         * @description Fraîcheur des sources externes (Sirene, DECP, sanctions, Pappers).
+         *
+         *     `last_sync` = dernier appel réussi enregistré par le client de la source.
+         *     Une source jamais synchronisée ou périmée est un risque d'audit à
+         *     surfacer, pas à masquer.
+         */
+        get: operations["sources_freshness_api_v1_sources_freshness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Coverage
+         * @description Vue de couverture ISA 240 — ce qui a été contrôlé, pas seulement alerté.
+         *
+         *     Exécute les détecteurs purs sur le dataset déterministe du scénario et
+         *     rapporte, par détecteur : population contrôlée, factures signalées et
+         *     part « propre ». Les détecteurs dépendant d'API externes sont déclarés
+         *     non exécutés avec leur motif (la complétude se prouve, elle ne se
+         *     suppose pas).
+         */
+        get: operations["coverage_api_v1_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/copilot/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Copilot Questions
+         * @description Catalogue des questions prédéfinies du copilote (pas de chat libre).
+         */
+        get: operations["copilot_questions_api_v1_copilot_questions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/copilot/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copilot Ask
+         * @description Répond à une question prédéfinie sur un cas (Phase 5, ADR-0007).
+         *
+         *     Le modèle ne voit que le source pack du cas (surface d'outils contrôlée
+         *     en code) ; provenance validée ; revue humaine toujours requise.
+         */
+        post: operations["copilot_ask_api_v1_copilot_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Case Generate Replay
+         * @description Rejoue un cas en séquence narrative d'enquête (Phase 6, ADR-0007).
+         */
+        post: operations["case_generate_replay_api_v1_cases__case_id__replay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scenarios/{scenario_id}/narrative": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scenario Generate Narrative
+         * @description Habillage narratif d'un scénario synthétique (Phase 6, ADR-0007).
+         *
+         *     Les données et labels ground-truth restent générés par le code
+         *     déterministe — le LLM ne produit que le récit pédagogique sourcé.
+         */
+        post: operations["scenario_generate_narrative_api_v1_scenarios__scenario_id__narrative_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rules/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rules Draft
+         * @description Drafte une règle depuis le français (LLM), la valide et la teste en code.
+         *
+         *     Le draft est sauvegardé en version `draft` ; ses tests générés sont
+         *     immédiatement exécutés par le moteur déterministe (statut `tested` si
+         *     tout est vert). L'activation reste soumise au backtest + 4-eyes.
+         */
+        post: operations["rules_draft_api_v1_rules_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rules List
+         * @description Liste les versions de règles (toutes, ou celles d'un rule_id).
+         */
+        get: operations["rules_list_api_v1_rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rules/{rule_id}/versions/{version}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rules Run Tests
+         * @description Ré-exécute les tests embarqués d'une version (moteur déterministe).
+         */
+        post: operations["rules_run_tests_api_v1_rules__rule_id__versions__version__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rules/{rule_id}/versions/{version}/backtest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rules Backtest
+         * @description Backtest sur données labellisées — réelles si `records` est fourni,
+         *     sinon dataset synthétique (ground truth is_fraud).
+         */
+        post: operations["rules_backtest_api_v1_rules__rule_id__versions__version__backtest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rules/{rule_id}/versions/{version}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rules Activate
+         * @description Active une version — tests verts + backtest + 4-eyes (auteur ≠ approbateur).
+         */
+        post: operations["rules_activate_api_v1_rules__rule_id__versions__version__activate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -468,6 +830,249 @@ export interface paths {
          *     Le front Next.js consomme via `EventSource` ou fetch streaming.
          */
         post: operations["llm_narrative_stream_api_v1_llm_narrative_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mandates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Mandates
+         * @description Liste les mandats du tenant (paginé simple).
+         */
+        get: operations["list_mandates_api_v1_mandates_get"];
+        put?: never;
+        /**
+         * Create Mandate
+         * @description Crée un mandat SEPA en état DRAFT.
+         */
+        post: operations["create_mandate_api_v1_mandates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mandates/{mandate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Mandate */
+        get: operations["get_mandate_api_v1_mandates__mandate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mandates/{mandate_id}/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign Mandate
+         * @description Passe le mandat DRAFT → ACTIVE.
+         */
+        post: operations["sign_mandate_api_v1_mandates__mandate_id__sign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mandates/{mandate_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Mandate
+         * @description Révoque définitivement un mandat (état terminal).
+         */
+        post: operations["revoke_mandate_api_v1_mandates__mandate_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debits/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Debit
+         * @description Ingestion idempotente d'un prélèvement (sans analyse).
+         */
+        post: operations["import_debit_api_v1_debits_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debits/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze Debit
+         * @description Pipeline complet ingest → match → assess SEPA + audit DEBIT_ANALYZED.
+         */
+        post: operations["analyze_debit_api_v1_debits_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Risk Assess
+         * @description Endpoint Risk Lab — un seul appel pour analyser un événement synthétique.
+         */
+        post: operations["risk_assess_api_v1_risk_assess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Evidence Pack
+         * @description Crée un Evidence Pack pour un sujet (DEBIT_EVENT en v0).
+         */
+        post: operations["create_evidence_pack_api_v1_evidence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence/{evidence_pack_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Evidence Pack */
+        get: operations["get_evidence_pack_api_v1_evidence__evidence_pack_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence/{evidence_pack_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evidence Report Html
+         * @description Renvoie le rapport HTML rendu (sans déchiffrement d'IBAN).
+         */
+        get: operations["get_evidence_report_html_api_v1_evidence__evidence_pack_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence/{evidence_pack_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Evidence Pack */
+        post: operations["verify_evidence_pack_api_v1_evidence__evidence_pack_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/debit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook Inbound Debit
+         * @description Reçoit un prélèvement signé HMAC d'un partenaire (PSP, banque).
+         *
+         *     Headers requis :
+         *     - X-MG-Timestamp     : ISO 8601 UTC, fenêtre +/- 5 min
+         *     - X-MG-Signature     : sha256=<hex> sur le body brut
+         *     - X-MG-Idempotency-Key : (recommandé) anti-replay applicatif
+         *
+         *     Corps : `DebitEventInput` JSON. L'analyzer est invoqué et le verdict
+         *     retourné de manière synchrone (le caller peut décider de bloquer).
+         */
+        post: operations["webhook_inbound_debit_api_v1_webhooks_debit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -661,6 +1266,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AIUsageBucketOut
+         * @description Agrégat d'usage IA (llm/ai_ledger.py) — dashboard de coût.
+         */
+        AIUsageBucketOut: {
+            /** N Calls */
+            n_calls: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cached Tokens */
+            cached_tokens: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /** N Calls Unpriced */
+            n_calls_unpriced: number;
+            /** Models */
+            models?: string[];
+        };
+        /** AIUsageOut */
+        AIUsageOut: {
+            total: components["schemas"]["AIUsageBucketOut"];
+            /** By Feature */
+            by_feature?: {
+                [key: string]: components["schemas"]["AIUsageBucketOut"];
+            };
+        };
         /** AuditEntryOut */
         AuditEntryOut: {
             /** Seq */
@@ -684,6 +1317,33 @@ export interface components {
              * @default
              */
             signature: string;
+        };
+        /**
+         * AuditExplainResult
+         * @description Verdict technique (code) + explication audit (IA structurée, ADR-0007).
+         */
+        AuditExplainResult: {
+            /** Chain Status */
+            chain_status: string;
+            /** N Total */
+            n_total: number;
+            /** N Signed */
+            n_signed: number;
+            /** Invalid Seqs */
+            invalid_seqs?: number[];
+            /**
+             * Signatures Checked
+             * @default false
+             */
+            signatures_checked: boolean;
+            /** Explanation */
+            explanation: {
+                [key: string]: unknown;
+            };
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
         };
         /** AuditPage */
         AuditPage: {
@@ -746,6 +1406,22 @@ export interface components {
             n_errors: number;
             /** Error Case Ids */
             error_case_ids?: string[];
+        };
+        /**
+         * Case360Result
+         * @description Dossier d'enquête généré (FraudCase360, llm/schemas.py) + métadonnées IA.
+         */
+        Case360Result: {
+            /** Case Id */
+            case_id: string;
+            /** Dossier */
+            dossier: {
+                [key: string]: unknown;
+            };
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
         };
         /** CaseBootstrapBody */
         CaseBootstrapBody: {
@@ -873,12 +1549,141 @@ export interface components {
             /** Actor */
             actor: string;
         };
+        /** CopilotAskBody */
+        CopilotAskBody: {
+            /** Question Id */
+            question_id: string;
+            /** Case Id */
+            case_id: string;
+            /**
+             * Actor
+             * @default api
+             */
+            actor: string;
+        };
+        /** CopilotQuestionOut */
+        CopilotQuestionOut: {
+            /** Question Id */
+            question_id: string;
+            /** Label Fr */
+            label_fr: string;
+        };
+        /**
+         * CopilotResult
+         * @description Réponse du copilote (CopilotAnswer, llm/schemas.py) + métadonnées IA.
+         */
+        CopilotResult: {
+            /** Case Id */
+            case_id: string;
+            /** Question Id */
+            question_id: string;
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            };
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+        };
+        /**
+         * CoverageItem
+         * @description Couverture d'un détecteur sur le dataset contrôlé (ISA 240).
+         */
+        CoverageItem: {
+            /** Detector */
+            detector: string;
+            /** Executed */
+            executed: boolean;
+            /**
+             * N Findings
+             * @default 0
+             */
+            n_findings: number;
+            /**
+             * N Invoices Flagged
+             * @default 0
+             */
+            n_invoices_flagged: number;
+            /** Clean Rate */
+            clean_rate?: number | null;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** CoverageOut */
+        CoverageOut: {
+            /** Scenario */
+            scenario: string;
+            /** N Invoices */
+            n_invoices: number;
+            /** N Detectors Executed */
+            n_detectors_executed: number;
+            /** Overall Clean Rate */
+            overall_clean_rate: number;
+            /** Items */
+            items?: components["schemas"]["CoverageItem"][];
+        };
         /** DailyPoint */
         DailyPoint: {
             /** Date */
             date: string;
             /** Value */
             value: number;
+        };
+        /** DebitAnalysisOut */
+        DebitAnalysisOut: {
+            /** Event Id */
+            event_id: string;
+            /** Domain */
+            domain: string;
+            /** Score */
+            score: number;
+            /** Level */
+            level: string;
+            /** Decision */
+            decision: string;
+            /** Engine Version */
+            engine_version: string;
+            /** Signals */
+            signals: components["schemas"]["SignalOut"][];
+            match: components["schemas"]["MatchOut"];
+        };
+        /**
+         * DebitEventInput
+         * @description Payload d'ingestion d'un prélèvement observé.
+         */
+        DebitEventInput: {
+            /**
+             * Source
+             * @description csv | manual | api | sandbox
+             */
+            source: string;
+            /** Idempotency Key */
+            idempotency_key: string;
+            /** Creditor Ics */
+            creditor_ics?: string | null;
+            /** Creditor Name Raw */
+            creditor_name_raw?: string | null;
+            /** Rum */
+            rum?: string | null;
+            /** Amount Cents */
+            amount_cents: number;
+            /**
+             * Currency
+             * @default EUR
+             */
+            currency: string;
+            /** Booking Date */
+            booking_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Debtor Iban */
+            debtor_iban?: string | null;
+            /** Raw Key */
+            raw_key?: string | null;
         };
         /** DecisionBody */
         DecisionBody: {
@@ -893,7 +1698,7 @@ export interface components {
             invoices: components["schemas"]["InvoiceRow"][];
             /**
              * Detectors
-             * @description Détecteurs à activer parmi : duplicates, thresholds, sanctions, decp_rbe
+             * @description Détecteurs à activer parmi : duplicates, thresholds, sanctions, decp_rbe, rule_studio (règles actives du Detection Studio)
              */
             detectors?: string[];
         };
@@ -907,6 +1712,102 @@ export interface components {
             findings: components["schemas"]["p2p_fraud__api__main__FindingOut"][];
             /** Run At */
             run_at: string;
+        };
+        /**
+         * EvidencePackInput
+         * @description Payload de création d'un Evidence Pack.
+         *
+         *     Le caller choisit le sujet (debit_event_id, case_id, mandate_id…) — le
+         *     service charge les données associées et construit le pack canonical.
+         */
+        EvidencePackInput: {
+            /**
+             * Subject Type
+             * @description DEBIT_EVENT | MANDATE | CASE
+             */
+            subject_type: string;
+            /** Subject Id */
+            subject_id: string;
+            /**
+             * Include Audit Timeline
+             * @default true
+             */
+            include_audit_timeline: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** EvidencePackOut */
+        EvidencePackOut: {
+            /** Evidence Pack Id */
+            evidence_pack_id: string;
+            /** Tenant Id */
+            tenant_id: string | null;
+            /** Subject Type */
+            subject_type: string;
+            /** Subject Id */
+            subject_id: string;
+            /** Domain */
+            domain: string;
+            /** Engine Version */
+            engine_version: string;
+            /** Pack Hash */
+            pack_hash: string;
+            /** Audit Anchor Hash */
+            audit_anchor_hash: string | null;
+            /** Audit Anchor Seq */
+            audit_anchor_seq: number | null;
+            /** Has Report */
+            has_report: boolean;
+            /** Actor */
+            actor: string | null;
+            /** Created At */
+            created_at: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
+        /** EvidenceVerifyOut */
+        EvidenceVerifyOut: {
+            /** Evidence Pack Id */
+            evidence_pack_id: string;
+            /** Valid */
+            valid: boolean;
+            /** Hash Matches */
+            hash_matches: boolean;
+            /** Audit Chain Valid */
+            audit_chain_valid: boolean;
+            /** Audit Anchor Present */
+            audit_anchor_present: boolean;
+            /** Checked At */
+            checked_at: string;
+            /** Errors */
+            errors: string[];
+        };
+        /**
+         * FeedbackRuleStats
+         * @description Verdicts de clôture agrégés par rule_id — boucle de feedback détection.
+         */
+        FeedbackRuleStats: {
+            /** Rule Id */
+            rule_id: string;
+            /** N Closed */
+            n_closed: number;
+            /** N Confirmed */
+            n_confirmed: number;
+            /** N False Positive */
+            n_false_positive: number;
+            /** N Rejected */
+            n_rejected: number;
+            /** False Positive Rate */
+            false_positive_rate: number;
+        };
+        /** FeedbackStats */
+        FeedbackStats: {
+            /** N Cases Closed */
+            n_cases_closed: number;
+            /** Rules */
+            rules?: components["schemas"]["FeedbackRuleStats"][];
         };
         /** GraphEdge */
         GraphEdge: {
@@ -956,6 +1857,125 @@ export interface components {
              * @default EUR
              */
             currency: string;
+        };
+        /** MandateActionRequest */
+        MandateActionRequest: {
+            /**
+             * Actor
+             * @default api
+             */
+            actor: string;
+            /** Reason */
+            reason?: string | null;
+            /** Signature Provider */
+            signature_provider?: string | null;
+            /** Signature Evidence Key */
+            signature_evidence_key?: string | null;
+        };
+        /**
+         * MandateInput
+         * @description Payload de création d'un mandat — l'IBAN est ici en clair (sera chiffré).
+         */
+        MandateInput: {
+            /** Creditor Ics */
+            creditor_ics: string;
+            /** Creditor Name */
+            creditor_name: string;
+            /** Creditor Country */
+            creditor_country?: string | null;
+            /** Debtor Iban */
+            debtor_iban: string;
+            /** Debtor Label */
+            debtor_label?: string | null;
+            /** Rum */
+            rum: string;
+            /** @default SDD_CORE */
+            scheme: components["schemas"]["MandateScheme"];
+            /** @default RCUR */
+            sequence_type: components["schemas"]["SequenceType"];
+            /** Max Amount Cents */
+            max_amount_cents?: number | null;
+            /**
+             * Currency
+             * @default EUR
+             */
+            currency: string;
+            /** Frequency */
+            frequency?: string | null;
+            /** Valid From */
+            valid_from?: string | null;
+            /** Valid To */
+            valid_to?: string | null;
+        };
+        /**
+         * MandateOut
+         * @description Vue publique d'un mandat — pas d'IBAN clair.
+         */
+        MandateOut: {
+            /** Mandate Id */
+            mandate_id: string;
+            /** Tenant Id */
+            tenant_id: string | null;
+            /** Creditor Id */
+            creditor_id: string;
+            /** Creditor Ics */
+            creditor_ics: string;
+            /** Creditor Name */
+            creditor_name: string | null;
+            /** Debtor Account Id */
+            debtor_account_id: string;
+            /** Debtor Iban Fingerprint */
+            debtor_iban_fingerprint: string;
+            /** Rum */
+            rum: string;
+            /** Scheme */
+            scheme: string;
+            /** Sequence Type */
+            sequence_type: string;
+            /** Status */
+            status: string;
+            /** Max Amount Cents */
+            max_amount_cents: number | null;
+            /** Currency */
+            currency: string;
+            /** Frequency */
+            frequency: string | null;
+            /** Valid From */
+            valid_from: string | null;
+            /** Valid To */
+            valid_to: string | null;
+            /** Signed At */
+            signed_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Commitment Hash */
+            commitment_hash: string | null;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /**
+         * MandateScheme
+         * @description Schéma SEPA Direct Debit (EPC SDD Rulebooks).
+         *
+         *     SDD_CORE : B2C, fenêtre R-transaction 8 semaines (13 mois pour mandat invalide)
+         *     SDD_B2B  : B2B, fenêtre R-transaction 2 jours ouvrés, contestations très limitées
+         * @enum {string}
+         */
+        MandateScheme: "SDD_CORE" | "SDD_B2B";
+        /** MatchOut */
+        MatchOut: {
+            /** Matched */
+            matched: boolean;
+            /** Mandate Id */
+            mandate_id: string | null;
+            /** Candidates Active */
+            candidates_active: number;
+            /** Candidates Inactive */
+            candidates_inactive: number;
+            /** Warnings */
+            warnings: string[];
         };
         /** NarrativeBody */
         NarrativeBody: {
@@ -1110,6 +2130,32 @@ export interface components {
             /** Findingids */
             findingIds?: string[];
         };
+        /**
+         * ReplayResult
+         * @description Séquence Risk Replay (RiskReplay, llm/schemas.py) + métadonnées IA.
+         */
+        ReplayResult: {
+            /** Case Id */
+            case_id: string;
+            /** Replay */
+            replay: {
+                [key: string]: unknown;
+            };
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+        };
+        /** RevokeRequest */
+        RevokeRequest: {
+            /**
+             * Actor
+             * @default api
+             */
+            actor: string;
+            /** Reason */
+            reason?: string | null;
+        };
         /** RingsGraph */
         RingsGraph: {
             /** Nodes */
@@ -1124,6 +2170,107 @@ export interface components {
             largest_cluster_size: number;
             /** Scenario */
             scenario: string;
+        };
+        /**
+         * RiskAssessRequest
+         * @description Payload générique d'évaluation — pour l'instant SEPA uniquement.
+         *
+         *     Sprint 4+ : ajouter `risk_domain` discriminé pour SUPPLIER_PAYMENT.
+         */
+        RiskAssessRequest: {
+            /**
+             * Risk Domain
+             * @description SEPA_DIRECT_DEBIT en v0
+             */
+            risk_domain: string;
+            event: components["schemas"]["DebitEventInput"];
+        };
+        /** RuleActivateBody */
+        RuleActivateBody: {
+            /** Approver */
+            approver: string;
+        };
+        /**
+         * RuleBacktestBody
+         * @description Backtest synthétique par défaut ; passer `records` pour des données réelles.
+         *
+         *     `records` : factures labellisées fournies par le client (boucle de
+         *     feedback : verdicts de clôture exportés, ou extraction comptable
+         *     annotée). Champ `is_fraud` optionnel par record pour la précision.
+         */
+        RuleBacktestBody: {
+            /**
+             * N Invoices
+             * @default 2000
+             */
+            n_invoices: number;
+            /**
+             * Seed
+             * @default 42
+             */
+            seed: number;
+            /**
+             * Actor
+             * @default api
+             */
+            actor: string;
+            /**
+             * Records
+             * @description Records labellisés réels ; si fourni, remplace le dataset synthétique.
+             */
+            records?: {
+                [key: string]: unknown;
+            }[] | null;
+        };
+        /**
+         * RuleDraftBody
+         * @description Demande de draft d'une règle de détection depuis le français (Phase 4).
+         */
+        RuleDraftBody: {
+            /** Description Fr */
+            description_fr: string;
+            /** Author */
+            author: string;
+        };
+        /**
+         * RuleVersionOut
+         * @description Version de règle sérialisée (rules/store.py).
+         */
+        RuleVersionOut: {
+            /** Rule Id */
+            rule_id: string;
+            /** Version */
+            version: number;
+            /** Status */
+            status: string;
+            /** Yaml */
+            yaml: string;
+            /** Author */
+            author: string;
+            /** Created At */
+            created_at: string;
+            /** Name */
+            name: string;
+            /** Severity */
+            severity: string;
+            /** Reason Code */
+            reason_code: string;
+            /** Tests */
+            tests?: {
+                [key: string]: unknown;
+            }[];
+            /** Test Report */
+            test_report?: {
+                [key: string]: unknown;
+            } | null;
+            /** Backtest */
+            backtest?: {
+                [key: string]: unknown;
+            } | null;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Activated At */
+            activated_at?: string | null;
         };
         /** ScenarioMeta */
         ScenarioMeta: {
@@ -1143,6 +2290,22 @@ export interface components {
             target_vendor?: string | null;
             /** Storyline */
             storyline: string;
+        };
+        /**
+         * ScenarioNarrativeResult
+         * @description Habillage narratif d'un scénario (ScenarioNarrative) + métadonnées IA.
+         */
+        ScenarioNarrativeResult: {
+            /** Scenario Id */
+            scenario_id: string;
+            /** Narrative */
+            narrative: {
+                [key: string]: unknown;
+            };
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
         };
         /** ScoreRequest */
         ScoreRequest: {
@@ -1172,6 +2335,53 @@ export interface components {
             findings_count: number;
             /** Reason Codes Fr */
             reason_codes_fr: string[];
+        };
+        /**
+         * SequenceType
+         * @description Type de séquence d'un prélèvement (en-tête pacs.003 / mandat).
+         *
+         *     FRST : First (premier d'une série récurrente)
+         *     RCUR : Recurrent (récurrent standard)
+         *     OOFF : One-Off (unique ponctuel)
+         *     FNAL : Final (dernier d'une série, clôt le mandat)
+         * @enum {string}
+         */
+        SequenceType: "FRST" | "RCUR" | "OOFF" | "FNAL";
+        /** SignalOut */
+        SignalOut: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /** Severity */
+            severity: string;
+            /** Score */
+            score: number;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SourceFreshnessOut
+         * @description Fraîcheur d'une source externe (enrichment/freshness.py).
+         */
+        SourceFreshnessOut: {
+            /** Source */
+            source: string;
+            /** Label */
+            label: string;
+            /** Configured */
+            configured: boolean;
+            /** Last Sync */
+            last_sync?: string | null;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
         };
         /** StatusBody */
         StatusBody: {
@@ -1914,6 +3124,41 @@ export interface operations {
             };
         };
     };
+    alerts_stream_api_v1_alerts_stream_get: {
+        parameters: {
+            query?: {
+                cursor?: number;
+                limit?: number;
+                poll_seconds?: number;
+                once?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     audit_verify_api_v1_audit_verify_get: {
         parameters: {
             query?: never;
@@ -1930,6 +3175,431 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditVerifyResult"];
+                };
+            };
+        };
+    };
+    audit_explain_api_v1_audit_explain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditExplainResult"];
+                };
+            };
+        };
+    };
+    cases_feedback_stats_api_v1_cases_feedback_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackStats"];
+                };
+            };
+        };
+    };
+    case_generate_case360_api_v1_cases__case_id__case360_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Case360Result"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_usage_api_v1_ai_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIUsageOut"];
+                };
+            };
+        };
+    };
+    sources_freshness_api_v1_sources_freshness_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceFreshnessOut"][];
+                };
+            };
+        };
+    };
+    coverage_api_v1_coverage_get: {
+        parameters: {
+            query?: {
+                scenario?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoverageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copilot_questions_api_v1_copilot_questions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotQuestionOut"][];
+                };
+            };
+        };
+    };
+    copilot_ask_api_v1_copilot_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotAskBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_generate_replay_api_v1_cases__case_id__replay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplayResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scenario_generate_narrative_api_v1_scenarios__scenario_id__narrative_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioNarrativeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_draft_api_v1_rules_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleDraftBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_list_api_v1_rules_get: {
+        parameters: {
+            query?: {
+                rule_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_run_tests_api_v1_rules__rule_id__versions__version__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_backtest_api_v1_rules__rule_id__versions__version__backtest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleBacktestBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_activate_api_v1_rules__rule_id__versions__version__activate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleActivateBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1987,6 +3657,456 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_mandates_api_v1_mandates_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MandateOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_mandate_api_v1_mandates_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MandateInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MandateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_mandate_api_v1_mandates__mandate_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                mandate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MandateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_mandate_api_v1_mandates__mandate_id__sign_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                mandate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MandateActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MandateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_mandate_api_v1_mandates__mandate_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                mandate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MandateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_debit_api_v1_debits_import_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebitEventInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_debit_api_v1_debits_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebitEventInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebitAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    risk_assess_api_v1_risk_assess_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskAssessRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebitAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_evidence_pack_api_v1_evidence_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidencePackInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidencePackOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_pack_api_v1_evidence__evidence_pack_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                evidence_pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidencePackOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_report_html_api_v1_evidence__evidence_pack_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                evidence_pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_evidence_pack_api_v1_evidence__evidence_pack_id__verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                evidence_pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceVerifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_inbound_debit_api_v1_webhooks_debit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

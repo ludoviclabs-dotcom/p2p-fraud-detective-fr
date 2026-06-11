@@ -241,6 +241,52 @@ class Case360Result(BaseModel):
     prompt_version: str
 
 
+class AIUsageBucketOut(BaseModel):
+    """Agrégat d'usage IA (llm/ai_ledger.py) — dashboard de coût."""
+
+    n_calls: int
+    input_tokens: int
+    output_tokens: int
+    cached_tokens: int
+    cost_usd: float
+    n_calls_unpriced: int
+    models: list[str] = Field(default_factory=list)
+
+
+class AIUsageOut(BaseModel):
+    total: AIUsageBucketOut
+    by_feature: dict[str, AIUsageBucketOut] = Field(default_factory=dict)
+
+
+class SourceFreshnessOut(BaseModel):
+    """Fraîcheur d'une source externe (enrichment/freshness.py)."""
+
+    source: str
+    label: str
+    configured: bool
+    last_sync: str | None = None
+    detail: str = ""
+
+
+class CoverageItem(BaseModel):
+    """Couverture d'un détecteur sur le dataset contrôlé (ISA 240)."""
+
+    detector: str
+    executed: bool
+    n_findings: int = 0
+    n_invoices_flagged: int = 0
+    clean_rate: float | None = None  # part des factures sans alerte de ce détecteur
+    reason: str = ""  # motif si non exécuté
+
+
+class CoverageOut(BaseModel):
+    scenario: str
+    n_invoices: int
+    n_detectors_executed: int
+    overall_clean_rate: float  # part des factures sans aucune alerte
+    items: list[CoverageItem] = Field(default_factory=list)
+
+
 class CopilotQuestionOut(BaseModel):
     question_id: str
     label_fr: str
@@ -288,9 +334,21 @@ class RuleDraftBody(BaseModel):
 
 
 class RuleBacktestBody(BaseModel):
+    """Backtest synthétique par défaut ; passer `records` pour des données réelles.
+
+    `records` : factures labellisées fournies par le client (boucle de
+    feedback : verdicts de clôture exportés, ou extraction comptable
+    annotée). Champ `is_fraud` optionnel par record pour la précision.
+    """
+
     n_invoices: int = Field(default=2000, ge=100, le=20000)
     seed: int = Field(default=42)
     actor: str = Field(default="api", max_length=128)
+    records: list[dict[str, Any]] | None = Field(
+        default=None,
+        max_length=20000,
+        description="Records labellisés réels ; si fourni, remplace le dataset synthétique.",
+    )
 
 
 class RuleActivateBody(BaseModel):
@@ -1220,6 +1278,120 @@ def case_generate_case360(
     )
 
 
+# ─── 4qua. Gouvernance : coût IA, fraîcheur des sources, couverture ─────────
+
+
+@router.get("/ai/usage", response_model=AIUsageOut)
+def ai_usage(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> AIUsageOut:
+    """Dashboard de coût IA — agrégation des entrées `ai.generation` du ledger.
+
+    Chaque appel IA est déjà journalisé (modèle, tokens in/out/cachés) dans
+    l'audit log signé ; on additionne et on valorise via la table de prix
+    publique (ADR-0007 décision C). Modèle hors table → compté non valorisé.
+    """
+    from p2p_fraud.llm.ai_ledger import aggregate_ai_usage
+
+    total, by_feature = aggregate_ai_usage(service.audit_log)
+
+    def _out(bucket: Any) -> AIUsageBucketOut:
+        return AIUsageBucketOut(
+            n_calls=bucket.n_calls,
+            input_tokens=bucket.input_tokens,
+            output_tokens=bucket.output_tokens,
+            cached_tokens=bucket.cached_tokens,
+            cost_usd=round(bucket.cost_usd, 6),
+            n_calls_unpriced=bucket.n_calls_unpriced,
+            models=sorted(bucket.models),
+        )
+
+    return AIUsageOut(
+        total=_out(total),
+        by_feature={k: _out(v) for k, v in sorted(by_feature.items())},
+    )
+
+
+@router.get("/sources/freshness", response_model=list[SourceFreshnessOut])
+def sources_freshness(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[SourceFreshnessOut]:
+    """Fraîcheur des sources externes (Sirene, DECP, sanctions, Pappers).
+
+    `last_sync` = dernier appel réussi enregistré par le client de la source.
+    Une source jamais synchronisée ou périmée est un risque d'audit à
+    surfacer, pas à masquer.
+    """
+    from p2p_fraud.enrichment.freshness import get_freshness
+
+    return [SourceFreshnessOut(**row) for row in get_freshness()]
+
+
+@router.get("/coverage", response_model=CoverageOut)
+def coverage(
+    _: Annotated[str, Depends(_require_auth_v1)],
+    store: Annotated[Any, Depends(_get_rule_store)],
+    scenario: str = Query(default="bec_iban_swap"),
+) -> CoverageOut:
+    """Vue de couverture ISA 240 — ce qui a été contrôlé, pas seulement alerté.
+
+    Exécute les détecteurs purs sur le dataset déterministe du scénario et
+    rapporte, par détecteur : population contrôlée, factures signalées et
+    part « propre ». Les détecteurs dépendant d'API externes sont déclarés
+    non exécutés avec leur motif (la complétude se prouve, elle ne se
+    suppose pas).
+    """
+    from p2p_fraud.detectors.duplicates import detect_duplicates
+    from p2p_fraud.detectors.sanctions import detect_sanctioned_vendors
+    from p2p_fraud.detectors.thresholds import detect_under_threshold
+    from p2p_fraud.rules.runtime import dataframe_to_records, run_active_rules
+    from p2p_fraud.synthetic.scenarios import SCENARIOS, load_scenario
+
+    if scenario not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}.")
+    invoices, _vendors, _events = load_scenario(scenario)
+    n_invoices = len(invoices)
+    records = dataframe_to_records(invoices)
+
+    executed: list[tuple[str, list]] = [
+        ("duplicates", detect_duplicates(invoices)),
+        ("thresholds", detect_under_threshold(invoices)),
+        ("sanctions", detect_sanctioned_vendors(invoices)),
+        ("rule_studio", run_active_rules(records, store)),
+    ]
+    items: list[CoverageItem] = []
+    flagged_any: set[str] = set()
+    for name, findings in executed:
+        flagged = {f.invoice_id for f in findings}
+        flagged_any |= flagged
+        items.append(
+            CoverageItem(
+                detector=name,
+                executed=True,
+                n_findings=len(findings),
+                n_invoices_flagged=len(flagged),
+                clean_rate=round(1 - len(flagged) / n_invoices, 4) if n_invoices else None,
+            )
+        )
+    for name, reason in (
+        ("sirene", "API INSEE externe — exécuté à la demande (page Sirene)"),
+        ("decp_rbe", "API DECP/RBE externe — exécuté à la demande"),
+        ("master_data", "nécessite l'historique master data de la session"),
+        ("isolation_forest", "modèle ML — exécuté depuis la page Anomalies"),
+        ("benford", "outil de scoping — hors périmètre alerte (ADR-0002)"),
+    ):
+        items.append(CoverageItem(detector=name, executed=False, reason=reason))
+
+    return CoverageOut(
+        scenario=scenario,
+        n_invoices=n_invoices,
+        n_detectors_executed=len(executed),
+        overall_clean_rate=round(1 - len(flagged_any) / n_invoices, 4) if n_invoices else 0.0,
+        items=items,
+    )
+
+
 # ─── 4ter. Copilote analyste + Risk Replay + narratif scénarios (P5-P6) ─────
 
 
@@ -1407,15 +1579,27 @@ def rules_backtest(
     _: Annotated[str, Depends(_require_auth_v1)],
     store: Annotated[Any, Depends(_get_rule_store)],
 ) -> RuleVersionOut:
-    """Backtest sur dataset synthétique labellisé (ground truth is_fraud)."""
+    """Backtest sur données labellisées — réelles si `records` est fourni,
+    sinon dataset synthétique (ground truth is_fraud)."""
     from p2p_fraud.rules.backtest import backtest_rule
     from p2p_fraud.rules.store import PromotionError, RuleNotFoundError
-    from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
 
     try:
         v = store.get(rule_id, version)
     except RuleNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    if body.records is not None:
+        if not body.records:
+            raise HTTPException(status_code=422, detail="`records` fourni mais vide.")
+        summary = backtest_rule(v.spec, body.records)
+        try:
+            v = store.record_backtest(rule_id, version, summary, actor=body.actor)
+        except PromotionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return _to_rule_version_out(v)
+
+    from p2p_fraud.synthetic.generator import GeneratorConfig, generate_dataset
 
     invoices, _vendors = generate_dataset(
         GeneratorConfig(
@@ -1456,6 +1640,43 @@ def rules_activate(
     except PromotionError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _to_rule_version_out(v)
+
+
+@router.get(
+    "/cases/{case_id}/case-pack",
+    responses={200: {"content": {"application/zip": {}}}},
+)
+def case_pack_download(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> StreamingResponse:
+    """Case Pack ZIP vérifiable hors-ligne (proof-manifest/v1).
+
+    Manifeste hashé SHA-256 + signature Ed25519 + chaîne d'audit complète +
+    README de vérification. 100 % déterministe — aucune dépendance IA,
+    fonctionne sans ANTHROPIC_API_KEY. Spec : docs/proof-manifest-v1.md.
+    """
+    from p2p_fraud.export.case_pack import build_case_pack
+    from p2p_fraud.security.signing import make_signer_from_settings
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    pack = build_case_pack(
+        case,
+        events,
+        service.audit_log,
+        signer=make_signer_from_settings(),
+        actor="api",
+    )
+    return StreamingResponse(
+        iter([pack]),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="case-pack-p2p-{case.case_id}.zip"'},
+    )
 
 
 # ─── 5. Exports PDF ──────────────────────────────────────────────────────────

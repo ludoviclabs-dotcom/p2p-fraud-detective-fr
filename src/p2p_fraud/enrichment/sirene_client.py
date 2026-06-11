@@ -131,6 +131,9 @@ class SireneClient:
             log.warning("Sirene HTTP %s pour %s", resp.status_code, normalized)
             return None
 
+        from p2p_fraud.enrichment.freshness import record_sync
+
+        record_sync("sirene", detail=f"lookup SIREN {normalized}")
         return self._parse_payload(normalized, resp.json())
 
     @staticmethod

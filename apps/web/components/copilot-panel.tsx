@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { askCopilot, listCopilotQuestions } from "@/lib/api-client";
 import type { CopilotResult } from "@/lib/api-client";
 import { ClaimList } from "@/components/grounded-claims";
+import { useLocale } from "@/components/locale-provider";
 
 /**
  * Copilote analyste (Phase 5, ADR-0007) — questions prédéfinies sur un cas.
@@ -14,6 +15,7 @@ import { ClaimList } from "@/components/grounded-claims";
  * requise » est permanent.
  */
 export function CopilotPanel({ caseId }: { caseId: string | null }) {
+  const { t } = useLocale();
   const [questionId, setQuestionId] = useState("");
 
   const questionsQuery = useQuery({
@@ -33,11 +35,8 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
     <div className="fx-panel" style={{ marginTop: 16 }} data-testid="copilot-panel">
       <div className="fx-panel-head">
         <div>
-          <h2>Copilote analyste</h2>
-          <div className="sub">
-            Questions prédéfinies · réponses sourcées sur le cas · aucune
-            décision automatique
-          </div>
+          <h2>{t("copilot.title")}</h2>
+          <div className="sub">{t("copilot.subtitle")}</div>
         </div>
         <span className="glyph">¿</span>
       </div>
@@ -45,11 +44,8 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
         <div className="fx-notice">
           <span className="glyph">★</span>
           <div>
-            <div className="nt">Validation humaine requise</div>
-            <p className="nb">
-              Le copilote assiste l&apos;instruction — il ne bloque aucun
-              paiement et ne clôt aucun cas.
-            </p>
+            <div className="nt">{t("ai.human_review_title")}</div>
+            <p className="nb">{t("copilot.review_body")}</p>
           </div>
         </div>
 
@@ -71,7 +67,7 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
               outline: "none",
             }}
           >
-            <option value="">— Choisir une question —</option>
+            <option value="">{t("copilot.pick_question")}</option>
             {questions.map((q) => (
               <option key={q.question_id} value={q.question_id}>
                 {q.label_fr}
@@ -85,10 +81,10 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
             disabled={!caseId || !questionId || askMutation.isPending}
             onClick={() => askMutation.mutate()}
           >
-            {askMutation.isPending ? "◷ Analyse…" : "¿ Poser la question"}
+            {askMutation.isPending ? t("copilot.analyzing") : t("copilot.ask")}
           </button>
           <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-            {caseId ? `Cas : ${caseId}` : "Sélectionnez exactement un cas."}
+            {caseId ? t("ai.case_selected", { caseId }) : t("ai.select_one_case")}
           </span>
         </div>
 
@@ -96,11 +92,8 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
           <div className="fx-notice">
             <span className="glyph">⚠</span>
             <div>
-              <div className="nt">Copilote indisponible</div>
-              <p className="nb">
-                Le backend FastAPI (et sa clé ANTHROPIC_API_KEY) doit être
-                configuré pour activer le copilote.
-              </p>
+              <div className="nt">{t("ai.unavailable_title")}</div>
+              <p className="nb">{t("ai.unavailable_body")}</p>
             </div>
           </div>
         ) : null}
@@ -112,6 +105,7 @@ export function CopilotPanel({ caseId }: { caseId: string | null }) {
 }
 
 function AnswerView({ result }: { result: CopilotResult }) {
+  const { t } = useLocale();
   const answer = result.answer;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -129,14 +123,14 @@ function AnswerView({ result }: { result: CopilotResult }) {
       </div>
 
       <div>
-        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Preuves</div>
+        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>{t("ai.evidence")}</div>
         <ClaimList claims={answer.evidence} />
       </div>
 
       {answer.uncertainties.length ? (
         <div>
           <div className="fx-eyebrow" style={{ marginBottom: 8, color: "var(--warn)" }}>
-            Incertitudes
+            {t("ai.uncertainties")}
           </div>
           <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
             {answer.uncertainties.map((item) => (
@@ -149,15 +143,14 @@ function AnswerView({ result }: { result: CopilotResult }) {
       ) : null}
 
       <div>
-        <div className="fx-eyebrow" style={{ marginBottom: 6 }}>Prochaine action proposée</div>
+        <div className="fx-eyebrow" style={{ marginBottom: 6 }}>{t("copilot.next_action")}</div>
         <p className="fx-mono" style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--fg-2)" }}>
           → {answer.recommended_next_action}
         </p>
       </div>
 
       <div className="fx-mono" style={{ fontSize: 10, color: "var(--dim)" }}>
-        Généré par {result.model} · prompt {result.prompt_version} · journalisé au
-        ledger ai.generation
+        {t("ai.generated_by", { model: result.model, promptVersion: result.prompt_version })}
       </div>
     </div>
   );

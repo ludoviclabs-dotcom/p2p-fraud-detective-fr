@@ -11,6 +11,7 @@ import {
 } from "@/lib/api-client";
 import type { RuleVersionOut } from "@/lib/api-client";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
+import { useLocale } from "@/components/locale-provider";
 
 /**
  * Studio de règles (Phase 4, ADR-0007) — authoring réel branché au backend.
@@ -20,6 +21,7 @@ import { Badge, SeverityBadge } from "@/components/ui/badge";
  * (approbateur ≠ auteur). Le LLM drafte ; le code engage.
  */
 export function RuleStudioPanel() {
+  const { t } = useLocale();
   const qc = useQueryClient();
   const [descriptionFr, setDescriptionFr] = useState("");
   const [author, setAuthor] = useState("analyste@p2pfd.local");
@@ -41,11 +43,8 @@ export function RuleStudioPanel() {
     <div className="fx-panel" style={{ marginBottom: 16 }} data-testid="rule-studio-panel">
       <div className="fx-panel-head">
         <div>
-          <h2>Studio de règles — FR → YAML → tests → 4-eyes</h2>
-          <div className="sub">
-            Le LLM drafte la règle et ses tests ; la compilation, l&apos;exécution
-            des tests, le backtest et l&apos;activation sont 100&nbsp;% déterministes.
-          </div>
+          <h2>{t("rules.title")}</h2>
+          <div className="sub">{t("rules.subtitle")}</div>
         </div>
         <span className="glyph">⌬</span>
       </div>
@@ -56,7 +55,7 @@ export function RuleStudioPanel() {
             className="fx-eyebrow"
             style={{ display: "block", marginBottom: 6 }}
           >
-            Règle métier en français
+            {t("rules.description_label")}
           </label>
           <textarea
             id="rule-studio-description"
@@ -101,7 +100,7 @@ export function RuleStudioPanel() {
               disabled={descriptionFr.trim().length < 20 || draftMutation.isPending}
               onClick={() => draftMutation.mutate()}
             >
-              {draftMutation.isPending ? "◷ Draft en cours…" : "⌬ Générer la règle"}
+              {draftMutation.isPending ? t("rules.drafting") : t("rules.draft")}
             </button>
           </div>
         </div>
@@ -110,19 +109,17 @@ export function RuleStudioPanel() {
           <div className="fx-notice">
             <span className="glyph">⚠</span>
             <div>
-              <div className="nt">Studio indisponible</div>
-              <p className="nb">
-                Le backend FastAPI (et sa clé ANTHROPIC_API_KEY pour le draft)
-                doit être configuré. Les modules de démonstration ci-dessous
-                restent consultables.
-              </p>
+              <div className="nt">{t("ai.unavailable_title")}</div>
+              <p className="nb">{t("rules.unavailable_body")}</p>
             </div>
           </div>
         ) : null}
 
         {rulesQuery.data?.length ? (
           <div className="space-y-3">
-            <div className="fx-eyebrow">Versions de règles ({rulesQuery.data.length})</div>
+            <div className="fx-eyebrow">
+              {t("rules.versions", { count: rulesQuery.data.length })}
+            </div>
             {rulesQuery.data.map((version) => (
               <RuleVersionCard
                 key={`${version.rule_id}-${version.version}`}
@@ -132,7 +129,7 @@ export function RuleStudioPanel() {
           </div>
         ) : !backendDown && !rulesQuery.isLoading ? (
           <p className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
-            Aucune règle draftée pour l&apos;instant.
+            {t("rules.none")}
           </p>
         ) : null}
       </div>
@@ -149,6 +146,7 @@ const STATUS_TONE: Record<string, "critical" | "high" | "medium" | "low"> = {
 };
 
 function RuleVersionCard({ version }: { version: RuleVersionOut }) {
+  const { t } = useLocale();
   const qc = useQueryClient();
   const [approver, setApprover] = useState("");
   const [showYaml, setShowYaml] = useState(false);
@@ -203,12 +201,12 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
         <span className="fx-mono" style={{ fontSize: 11, color: report?.all_passed ? "var(--verified)" : "var(--warn)" }}>
           {report
             ? `Tests : ${report.n_passed}/${report.n_total} ${report.all_passed ? "✓" : "✗"}`
-            : "Tests : non exécutés"}
+            : t("rules.tests_not_run")}
         </span>
         <span className="fx-mono" style={{ fontSize: 11, color: backtest ? "var(--verified)" : "var(--muted)" }}>
           {backtest
             ? `Backtest : ${backtest.n_flagged} alertes / ${backtest.n_records} · ${backtest.n_false_positive} FP${backtest.precision !== null ? ` · précision ${(backtest.precision * 100).toFixed(0)} %` : ""}`
-            : "Backtest : non exécuté"}
+            : t("rules.backtest_not_run")}
         </span>
       </div>
 
@@ -230,7 +228,7 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
           type="button"
           onClick={() => setShowYaml((s) => !s)}
         >
-          {showYaml ? "Masquer YAML" : "Voir YAML"}
+          {showYaml ? t("rules.hide_yaml") : t("rules.show_yaml")}
         </button>
         {!frozen ? (
           <>
@@ -240,7 +238,7 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
               disabled={testMutation.isPending}
               onClick={() => testMutation.mutate()}
             >
-              ↻ Rejouer les tests
+              {t("rules.rerun_tests")}
             </button>
             <button
               className="fx-btn-ghost sm"
@@ -248,7 +246,7 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
               disabled={backtestMutation.isPending}
               onClick={() => backtestMutation.mutate()}
             >
-              {backtestMutation.isPending ? "◷ Backtest…" : "∿ Backtest synthétique"}
+              {backtestMutation.isPending ? t("rules.backtesting") : t("rules.backtest")}
             </button>
           </>
         ) : null}
@@ -256,7 +254,7 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
           <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
             <input
               aria-label={`Approbateur 4-eyes pour ${version.rule_id} v${version.version}`}
-              placeholder="Approbateur (≠ auteur)"
+              placeholder={t("rules.approver_placeholder")}
               value={approver}
               onChange={(e) => setApprover(e.target.value)}
               style={{
@@ -277,7 +275,7 @@ function RuleVersionCard({ version }: { version: RuleVersionOut }) {
               disabled={!canActivate || !approver.trim() || activateMutation.isPending}
               onClick={() => activateMutation.mutate()}
             >
-              ✓ Activer (4-eyes)
+              {t("rules.activate")}
             </button>
           </span>
         ) : null}

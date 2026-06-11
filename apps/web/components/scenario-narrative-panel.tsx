@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { generateScenarioNarrative } from "@/lib/api-client";
 import type { ScenarioNarrativeResult } from "@/lib/api-client";
 import { ClaimList } from "@/components/grounded-claims";
+import { useLocale } from "@/components/locale-provider";
 
 /**
  * Narratif IA d'un scénario synthétique (Phase 6, ADR-0007).
@@ -12,6 +13,7 @@ import { ClaimList } from "@/components/grounded-claims";
  * le LLM ne produit que l'habillage pédagogique, sourcé sur les métadonnées.
  */
 export function ScenarioNarrativePanel({ scenarioId }: { scenarioId: string }) {
+  const { t } = useLocale();
   const mutation = useMutation({
     mutationFn: () => generateScenarioNarrative(scenarioId),
   });
@@ -25,13 +27,12 @@ export function ScenarioNarrativePanel({ scenarioId }: { scenarioId: string }) {
         disabled={mutation.isPending}
         onClick={() => mutation.mutate()}
       >
-        {mutation.isPending ? "◷ Génération…" : "¶ Narratif IA du scénario"}
+        {mutation.isPending ? t("ai.generating") : t("scenario_ai.generate")}
       </button>
 
       {mutation.error ? (
         <p className="fx-mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-          Narratif indisponible — backend FastAPI + clé ANTHROPIC_API_KEY requis.
-          Le scénario reste jouable sans IA.
+          {t("scenario_ai.unavailable")}
         </p>
       ) : null}
 
@@ -41,6 +42,7 @@ export function ScenarioNarrativePanel({ scenarioId }: { scenarioId: string }) {
 }
 
 function NarrativeView({ result }: { result: ScenarioNarrativeResult }) {
+  const { t } = useLocale();
   const narrative = result.narrative;
   return (
     <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -58,14 +60,14 @@ function NarrativeView({ result }: { result: ScenarioNarrativeResult }) {
       </div>
 
       <div>
-        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Mode opératoire</div>
+        <div className="fx-eyebrow" style={{ marginBottom: 8 }}>{t("scenario_ai.modus")}</div>
         <ClaimList claims={narrative.fraud_story} />
       </div>
 
       {narrative.false_positive_traps.length ? (
         <div>
           <div className="fx-eyebrow" style={{ marginBottom: 8, color: "var(--warn)" }}>
-            Pièges faux-positifs (à montrer en démo)
+            {t("scenario_ai.fp_traps")}
           </div>
           <ul style={{ margin: 0, paddingLeft: 18 }} className="space-y-1">
             {narrative.false_positive_traps.map((trap) => (
@@ -78,8 +80,7 @@ function NarrativeView({ result }: { result: ScenarioNarrativeResult }) {
       ) : null}
 
       <div className="fx-mono" style={{ fontSize: 10, color: "var(--dim)" }}>
-        Généré par {result.model} · prompt {result.prompt_version} · les données et
-        labels du scénario restent 100&nbsp;% déterministes
+        {t("scenario_ai.footer", { model: result.model, promptVersion: result.prompt_version })}
       </div>
     </div>
   );
