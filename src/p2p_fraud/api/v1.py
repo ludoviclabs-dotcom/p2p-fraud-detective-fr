@@ -1642,6 +1642,43 @@ def rules_activate(
     return _to_rule_version_out(v)
 
 
+@router.get(
+    "/cases/{case_id}/case-pack",
+    responses={200: {"content": {"application/zip": {}}}},
+)
+def case_pack_download(
+    case_id: str,
+    _: Annotated[str, Depends(_require_auth_v1)],
+    service: Annotated[CaseService, Depends(_get_service)],
+) -> StreamingResponse:
+    """Case Pack ZIP vérifiable hors-ligne (proof-manifest/v1).
+
+    Manifeste hashé SHA-256 + signature Ed25519 + chaîne d'audit complète +
+    README de vérification. 100 % déterministe — aucune dépendance IA,
+    fonctionne sans ANTHROPIC_API_KEY. Spec : docs/proof-manifest-v1.md.
+    """
+    from p2p_fraud.export.case_pack import build_case_pack
+    from p2p_fraud.security.signing import make_signer_from_settings
+
+    try:
+        case = service.get(case_id)
+    except CaseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    events = service.list_events(case_id)
+    pack = build_case_pack(
+        case,
+        events,
+        service.audit_log,
+        signer=make_signer_from_settings(),
+        actor="api",
+    )
+    return StreamingResponse(
+        iter([pack]),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="case-pack-p2p-{case.case_id}.zip"'},
+    )
+
+
 # ─── 5. Exports PDF ──────────────────────────────────────────────────────────
 
 

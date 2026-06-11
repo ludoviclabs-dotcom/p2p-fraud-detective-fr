@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { generateCase360 } from "@/lib/api-client";
 import type { Case360Result } from "@/lib/api-client";
@@ -40,6 +41,7 @@ export function Case360DossierPanel({ caseId }: { caseId: string | null }) {
           >
             {mutation.isPending ? t("ai.generating") : t("case360.generate")}
           </button>
+          <CasePackButton caseId={caseId} />
           <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
             {caseId ? t("ai.case_selected", { caseId }) : t("ai.select_one_case")}
           </span>
@@ -58,6 +60,54 @@ export function Case360DossierPanel({ caseId }: { caseId: string | null }) {
         {mutation.data ? <DossierView result={mutation.data} /> : null}
       </div>
     </div>
+  );
+}
+
+/** Export Case Pack ZIP vérifiable hors-ligne (proof-manifest/v1) —
+ * 100 % déterministe, fonctionne sans clé IA. */
+function CasePackButton({ caseId }: { caseId: string | null }) {
+  const { t } = useLocale();
+  const [state, setState] = useState<"idle" | "busy" | "error">("idle");
+
+  async function download() {
+    if (!caseId) return;
+    setState("busy");
+    try {
+      const resp = await fetch(
+        `/api/v1/cases/${encodeURIComponent(caseId)}/case-pack`,
+      );
+      if (!resp.ok) throw new Error(String(resp.status));
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `case-pack-p2p-${caseId}.zip`;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      setState("idle");
+    } catch {
+      setState("error");
+    }
+  }
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <button
+        className="fx-btn-ghost"
+        data-testid="case-pack-download-button"
+        type="button"
+        title={t("pack.hint")}
+        disabled={!caseId || state === "busy"}
+        onClick={download}
+      >
+        {state === "busy" ? t("pack.downloading") : t("pack.download")}
+      </button>
+      {state === "error" ? (
+        <span className="fx-mono" style={{ fontSize: 11, color: "var(--risk)" }}>
+          {t("pack.error")}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

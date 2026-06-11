@@ -495,6 +495,17 @@ export const TRANSLATIONS: Translations = {
     fr: "Le backend FastAPI doit être configuré (fonctionne sans clé IA).",
     en: "The FastAPI backend must be configured (works without an AI key).",
   },
+  // ─── Case Pack vérifiable (proof-manifest/v1) ───
+  "pack.download": { fr: "⬇ Case Pack vérifiable", en: "⬇ Verifiable case pack" },
+  "pack.downloading": { fr: "◷ Export…", en: "◷ Exporting…" },
+  "pack.hint": {
+    fr: "ZIP signé Ed25519, vérifiable hors-ligne sans accès au produit (proof-manifest/v1). Fonctionne sans clé IA.",
+    en: "Ed25519-signed ZIP, verifiable offline without product access (proof-manifest/v1). Works without an AI key.",
+  },
+  "pack.error": {
+    fr: "Export impossible — le backend FastAPI doit être configuré.",
+    en: "Export failed — the FastAPI backend must be configured.",
+  },
 };
 
 export function translate(
