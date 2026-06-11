@@ -52,9 +52,7 @@ def test_golden_iban_swap_case():
     case = service.get(case.case_id)
     events = service.list_events(case.case_id)
 
-    result = generate_case360(
-        case, events=events, audit_log=service.audit_log, actor="eval"
-    )
+    result = generate_case360(case, events=events, audit_log=service.audit_log, actor="eval")
 
     dossier = result.output
     assert dossier.human_review_required is True

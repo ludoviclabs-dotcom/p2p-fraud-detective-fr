@@ -76,12 +76,8 @@ class RuleTestDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(..., description="Intitulé court du cas de test.")
-    record: list[RuleFieldValue] = Field(
-        ..., description="Champs du record synthétique testé."
-    )
-    expect_match: bool = Field(
-        ..., description="True si la règle DOIT matcher ce record."
-    )
+    record: list[RuleFieldValue] = Field(..., description="Champs du record synthétique testé.")
+    expect_match: bool = Field(..., description="True si la règle DOIT matcher ce record.")
 
 
 class RuleConditionDraft(BaseModel):
@@ -183,8 +179,7 @@ def draft_rule(
         system_prompt=_SYSTEM_PROMPT,
         prompt_version=PROMPT_VERSION,
         user_content=(
-            "Convertis cette règle métier en règle de détection déterministe :\n\n"
-            f"{description_fr}"
+            f"Convertis cette règle métier en règle de détection déterministe :\n\n{description_fr}"
         ),
         model=model,
         max_tokens=8192,
@@ -192,9 +187,7 @@ def draft_rule(
     )
     draft = result.output
     if not draft.positive_tests or not draft.negative_tests:
-        raise ValueError(
-            "Draft refusé : au moins un test positif ET un test négatif sont requis."
-        )
+        raise ValueError("Draft refusé : au moins un test positif ET un test négatif sont requis.")
 
     spec = _to_spec(draft)
     yaml_text = rule_to_yaml(spec)

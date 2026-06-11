@@ -71,9 +71,7 @@ def test_golden_copilot_missing_to_conclude_declares_uncertainty():
 
 def test_golden_replay_chronological_steps():
     service, case, events = _case_with_history()
-    result = generate_replay(
-        case, events=events, audit_log=service.audit_log, actor="eval"
-    )
+    result = generate_replay(case, events=events, audit_log=service.audit_log, actor="eval")
     replay = result.output
     assert replay.human_review_required is True
     assert 3 <= len(replay.steps) <= 10

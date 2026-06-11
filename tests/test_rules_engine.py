@@ -250,6 +250,26 @@ def test_new_activation_supersedes_previous():
     assert statuses == {1: "superseded", 2: "active"}
 
 
+def test_superseded_version_cannot_be_reactivated():
+    """Régression (review Codex) : réactiver une version superseded serait un
+    rollback silencieux vers une règle obsolète — refus, même avec tests verts,
+    backtest présent et approbateur distinct."""
+    store = _store()
+    report = run_rule_tests(SOUS_SEUIL, _test_cases())
+    summary = backtest_rule(SOUS_SEUIL, [{"invoice_id": "A", "amount": 9100}])
+    for _ in range(2):
+        v = store.save_draft(SOUS_SEUIL, author="auteur@test", tests=_test_cases())
+        store.record_test_report(v.rule_id, v.version, report, actor="auteur@test")
+        store.record_backtest(v.rule_id, v.version, summary, actor="auteur@test")
+        store.activate(v.rule_id, v.version, approver="reviewer@test")
+
+    with pytest.raises(PromotionError, match="superseded"):
+        store.activate("THR_JUST_UNDER_10K", 1, approver="reviewer@test")
+    # La version active n'a pas bougé.
+    statuses = {v.version: v.status for v in store.list_versions("THR_JUST_UNDER_10K")}
+    assert statuses == {1: "superseded", 2: "active"}
+
+
 def test_active_version_is_frozen():
     store = _store()
     v = store.save_draft(SOUS_SEUIL, author="auteur@test", tests=_test_cases())

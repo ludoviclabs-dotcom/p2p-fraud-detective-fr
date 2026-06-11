@@ -153,9 +153,7 @@ class RuleStore:
                     "name": spec.name,
                     "sev": spec.severity,
                     "rc": spec.reason_code,
-                    "tests": json.dumps(
-                        [c.model_dump(mode="json") for c in tests], sort_keys=True
-                    ),
+                    "tests": json.dumps([c.model_dump(mode="json") for c in tests], sort_keys=True),
                 },
             )
         self._log("rule.drafted", author, {"rule_id": spec.rule_id, "version": version})
@@ -228,6 +226,13 @@ class RuleStore:
         current = self.get(rule_id, version)
         if current.status == "active":
             raise PromotionError(f"Version {version} déjà active.")
+        if current.status == "superseded":
+            # Une version remplacée est figée : la réactiver serait un rollback
+            # silencieux vers une règle obsolète. Repartir d'une nouvelle version.
+            raise PromotionError(
+                f"Version {version} superseded — réactivation interdite ; "
+                "créer une nouvelle version (re-draft) pour revenir à cette règle."
+            )
         report = current.test_report
         if report is None or not report.all_passed:
             raise PromotionError(
@@ -269,10 +274,7 @@ class RuleStore:
     def get(self, rule_id: str, version: int) -> RuleVersion:
         with self._engine.connect() as conn:
             row = conn.execute(
-                text(
-                    f"SELECT {_COLUMNS} FROM rule_versions "
-                    "WHERE rule_id = :rid AND version = :v"
-                ),
+                text(f"SELECT {_COLUMNS} FROM rule_versions WHERE rule_id = :rid AND version = :v"),
                 {"rid": rule_id, "v": version},
             ).first()
         if row is None:

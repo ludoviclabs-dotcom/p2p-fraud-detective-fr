@@ -117,9 +117,7 @@ def ask_copilot(
         ProvenanceError: la réponse cite des sources hors pack.
     """
     if question_id not in QUESTIONS:
-        raise KeyError(
-            f"Question inconnue : {question_id}. Catalogue : {sorted(QUESTIONS)}."
-        )
+        raise KeyError(f"Question inconnue : {question_id}. Catalogue : {sorted(QUESTIONS)}.")
     question = QUESTIONS[question_id]
     source_pack = build_case_source_pack(case, events, findings)
     result = generate_structured(

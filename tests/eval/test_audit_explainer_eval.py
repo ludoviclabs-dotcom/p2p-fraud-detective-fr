@@ -50,7 +50,9 @@ def _assert_common_invariants(explanation: AuditExplanation) -> None:
     assert explanation.headline.strip()
     assert explanation.explanation, "explication vide"
     for marker in _SELF_VERIFICATION_MARKERS:
-        assert marker not in _all_text(explanation), f"le modèle s'attribue la vérification : {marker!r}"
+        assert marker not in _all_text(explanation), (
+            f"le modèle s'attribue la vérification : {marker!r}"
+        )
 
 
 def test_golden_intact_chain():

@@ -162,7 +162,7 @@ def test_compute_verdict_broken_after_tamper():
     log.append(actor="t", kind="case.closed", payload={"case_id": "C1"})
     # Altération a posteriori d'une entrée → la chaîne doit casser.
     with log._engine.begin() as conn:
-        conn.execute(text("UPDATE audit_log SET payload = '{\"case_id\":\"C2\"}' WHERE seq = 1"))
+        conn.execute(text('UPDATE audit_log SET payload = \'{"case_id":"C2"}\' WHERE seq = 1'))
     verdict = compute_verdict(log)
     assert verdict.chain_status is AuditChainStatus.BROKEN
     assert 1 in verdict.invalid_seqs

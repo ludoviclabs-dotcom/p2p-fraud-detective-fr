@@ -42,9 +42,7 @@ class RuleCondition(BaseModel):
     field: str = Field(..., min_length=1, max_length=64)
     op: ConditionOp
     value: str | int | float | bool | None = None
-    values: list[str] | None = Field(
-        default=None, description="Liste de valeurs pour in / not_in."
-    )
+    values: list[str] | None = Field(default=None, description="Liste de valeurs pour in / not_in.")
 
 
 class RuleSpec(BaseModel):

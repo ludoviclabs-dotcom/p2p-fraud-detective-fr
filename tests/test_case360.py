@@ -21,7 +21,9 @@ def _make_case_with_events():
         evidence={"vendor_id": "V-ALPHACOM", "exposure_eur": 125000},
     )
     case = service.create_case_from_finding(finding, actor="analyste@test")
-    service.comment(case.case_id, actor="analyste@test", text="RIB à confirmer auprès du fournisseur")
+    service.comment(
+        case.case_id, actor="analyste@test", text="RIB à confirmer auprès du fournisseur"
+    )
     case = service.get(case.case_id)
     events = service.list_events(case.case_id)
     return case, events

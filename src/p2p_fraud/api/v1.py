@@ -1290,9 +1290,7 @@ def case_generate_replay(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     events = service.list_events(case_id)
     try:
-        result = generate_replay(
-            case, events=events, audit_log=service.audit_log, actor="api"
-        )
+        result = generate_replay(case, events=events, audit_log=service.audit_log, actor="api")
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return ReplayResult(
@@ -1318,14 +1316,10 @@ def scenario_generate_narrative(
     from p2p_fraud.synthetic.scenarios import SCENARIOS, get_scenario_meta
 
     if scenario_id not in SCENARIOS:
-        raise HTTPException(
-            status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}."
-        )
+        raise HTTPException(status_code=404, detail=f"Scénario inconnu. Choix : {list(SCENARIOS)}.")
     meta = get_scenario_meta(scenario_id)
     try:
-        result = generate_scenario_narrative(
-            meta, audit_log=service.audit_log, actor="api"
-        )
+        result = generate_scenario_narrative(meta, audit_log=service.audit_log, actor="api")
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return ScenarioNarrativeResult(

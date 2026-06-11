@@ -88,15 +88,11 @@ class ReplayStep(BaseModel):
     business_explanation: str = Field(
         ..., description="Explication métier de l'étape, 1-3 phrases."
     )
-    evidence: list[GroundedClaim] = Field(
-        ..., description="Preuves de l'étape, chacune sourcée."
-    )
+    evidence: list[GroundedClaim] = Field(..., description="Preuves de l'étape, chacune sourcée.")
     risk_level: Literal["info", "low", "medium", "high", "critical"] = Field(
         ..., description="Niveau de risque de l'étape (info pour les étapes système)."
     )
-    reviewer_question: str = Field(
-        ..., description="Question à poser au reviewer à cette étape."
-    )
+    reviewer_question: str = Field(..., description="Question à poser au reviewer à cette étape.")
 
 
 class RiskReplay(BaseModel):
@@ -110,9 +106,7 @@ class RiskReplay(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     case_summary: str = Field(..., description="Résumé du cas en une phrase.")
-    steps: list[ReplayStep] = Field(
-        ..., description="3 à 10 étapes, ordonnées chronologiquement."
-    )
+    steps: list[ReplayStep] = Field(..., description="3 à 10 étapes, ordonnées chronologiquement.")
     human_review_required: bool = Field(
         ..., description="Toujours true : le replay illustre, il ne conclut pas."
     )
