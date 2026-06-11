@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ForensicPage } from "@/components/forensic-page";
+import { GovernanceLivePanels } from "@/components/governance-live-panels";
 
 export const metadata: Metadata = {
   title: "Gouvernance — P2P Fraud Detective FR",
@@ -21,6 +22,8 @@ export default function GovernancePage() {
           </p>
         </div>
       </div>
+
+      <GovernanceLivePanels />
 
       {/* Workbench — full width */}
       <div className="fx-card-accent" style={{ marginBottom: 16 }}>

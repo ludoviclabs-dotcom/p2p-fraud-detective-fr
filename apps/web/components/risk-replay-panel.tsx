@@ -6,6 +6,7 @@ import { generateReplay } from "@/lib/api-client";
 import type { ReplayResult } from "@/lib/api-client";
 import { ClaimList } from "@/components/grounded-claims";
 import { SeverityBadge } from "@/components/ui/badge";
+import { useLocale } from "@/components/locale-provider";
 
 /**
  * Risk Replay (Phase 6, ADR-0007) — rejoue un cas en séquence d'enquête.
@@ -14,6 +15,7 @@ import { SeverityBadge } from "@/components/ui/badge";
  * sur la timeline réelle du cas — aucune conclusion nouvelle).
  */
 export function RiskReplayPanel({ caseId }: { caseId: string | null }) {
+  const { t } = useLocale();
   const [stepIndex, setStepIndex] = useState(0);
 
   const mutation = useMutation({
@@ -27,11 +29,8 @@ export function RiskReplayPanel({ caseId }: { caseId: string | null }) {
     <div className="fx-panel" style={{ marginTop: 16 }} data-testid="risk-replay-panel">
       <div className="fx-panel-head">
         <div>
-          <h2>Risk Replay</h2>
-          <div className="sub">
-            La fraude rejouée comme une séquence d&apos;enquête — étapes
-            sourcées sur la timeline du cas
-          </div>
+          <h2>{t("replay.title")}</h2>
+          <div className="sub">{t("replay.subtitle")}</div>
         </div>
         <span className="glyph">▸</span>
       </div>
@@ -44,10 +43,10 @@ export function RiskReplayPanel({ caseId }: { caseId: string | null }) {
             disabled={!caseId || mutation.isPending}
             onClick={() => caseId && mutation.mutate(caseId)}
           >
-            {mutation.isPending ? "◷ Génération…" : "▸ Rejouer le cas"}
+            {mutation.isPending ? t("ai.generating") : t("replay.generate")}
           </button>
           <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-            {caseId ? `Cas : ${caseId}` : "Sélectionnez exactement un cas."}
+            {caseId ? t("ai.case_selected", { caseId }) : t("ai.select_one_case")}
           </span>
         </div>
 
@@ -55,11 +54,8 @@ export function RiskReplayPanel({ caseId }: { caseId: string | null }) {
           <div className="fx-notice">
             <span className="glyph">⚠</span>
             <div>
-              <div className="nt">Replay indisponible</div>
-              <p className="nb">
-                Le backend FastAPI (et sa clé ANTHROPIC_API_KEY) doit être
-                configuré pour générer la séquence.
-              </p>
+              <div className="nt">{t("ai.unavailable_title")}</div>
+              <p className="nb">{t("ai.unavailable_body")}</p>
             </div>
           </div>
         ) : null}
@@ -85,6 +81,7 @@ function ReplayView({
   stepIndex: number;
   setStepIndex: (i: number) => void;
 }) {
+  const { t } = useLocale();
   const replay = result.replay;
   const step = replay.steps[stepIndex];
   if (!step) return null;
@@ -130,7 +127,11 @@ function ReplayView({
       >
         <div className="flex items-center justify-between gap-3" style={{ flexWrap: "wrap" }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>
-            Étape {stepIndex + 1}/{replay.steps.length} — {step.title}
+            {t("replay.step", {
+              current: stepIndex + 1,
+              total: replay.steps.length,
+              title: step.title,
+            })}
           </div>
           {step.risk_level !== "info" ? <SeverityBadge value={step.risk_level} /> : null}
         </div>
@@ -138,7 +139,7 @@ function ReplayView({
           {step.business_explanation}
         </p>
         <div style={{ marginTop: 12 }}>
-          <div className="fx-eyebrow" style={{ marginBottom: 6 }}>Preuves</div>
+          <div className="fx-eyebrow" style={{ marginBottom: 6 }}>{t("ai.evidence")}</div>
           <ClaimList claims={step.evidence} />
         </div>
         <div
@@ -153,7 +154,7 @@ function ReplayView({
             color: "var(--fg)",
           }}
         >
-          ¿ Question au reviewer : {step.reviewer_question}
+          {t("replay.reviewer_question", { question: step.reviewer_question })}
         </div>
       </div>
 
@@ -164,7 +165,7 @@ function ReplayView({
           disabled={stepIndex === 0}
           onClick={() => setStepIndex(stepIndex - 1)}
         >
-          ← Précédente
+          {t("replay.prev")}
         </button>
         <button
           className="fx-btn-ghost sm"
@@ -172,10 +173,10 @@ function ReplayView({
           disabled={stepIndex >= replay.steps.length - 1}
           onClick={() => setStepIndex(stepIndex + 1)}
         >
-          Suivante →
+          {t("replay.next")}
         </button>
         <span className="fx-mono" style={{ marginLeft: "auto", fontSize: 10, color: "var(--dim)" }}>
-          Généré par {result.model} · prompt {result.prompt_version}
+          {t("ai.generated_by", { model: result.model, promptVersion: result.prompt_version })}
         </span>
       </div>
     </div>

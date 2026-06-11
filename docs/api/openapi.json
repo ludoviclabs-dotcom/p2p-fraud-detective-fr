@@ -1178,6 +1178,611 @@
         }
       }
     },
+    "/api/v1/audit/explain": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Audit Explain",
+        "description": "V\u00e9rifie la cha\u00eene (code d\u00e9terministe) puis traduit le verdict en langage audit.\n\nFeature pilote du socle IA de confiance (ADR-0007) : le LLM n'effectue\naucune v\u00e9rification \u2014 il explique le verdict d\u00e9j\u00e0 calcul\u00e9 par\n`verify_chain()`. Sortie structur\u00e9e, sourc\u00e9e (provenance valid\u00e9e en code)\net journalis\u00e9e au ledger `ai.generation` du m\u00eame audit log.",
+        "operationId": "audit_explain_api_v1_audit_explain_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExplainResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/feedback-stats": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Cases Feedback Stats",
+        "description": "Verdicts de cl\u00f4ture agr\u00e9g\u00e9s par rule_id \u2014 boucle de feedback d\u00e9tection.\n\nLes statuts CLOSED_CONFIRMED / CLOSED_FALSE_POSITIVE / CLOSED_REJECTED\ncaptur\u00e9s \u00e0 la cl\u00f4ture des cas sont agr\u00e9g\u00e9s par r\u00e8gle (le rule_id est\nencod\u00e9 dans les finding_ids sous la forme \"RULE::invoice\"). C'est la\nmati\u00e8re premi\u00e8re du backtest de r\u00e8gles du futur Detection Studio.",
+        "operationId": "cases_feedback_stats_api_v1_cases_feedback_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/case360": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Case Generate Case360",
+        "description": "G\u00e9n\u00e8re le dossier d'enqu\u00eate FraudCase360 d'un cas (Phase 3, ADR-0007).\n\nLe source pack est construit depuis le cas et ses \u00e9v\u00e9nements de workflow ;\nla provenance de chaque fait est valid\u00e9e en code ; `human_review_required`\nest forc\u00e9 \u00e0 true ; l'appel est journalis\u00e9 au ledger ai.generation.",
+        "operationId": "case_generate_case360_api_v1_cases__case_id__case360_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Case360Result"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/usage": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Ai Usage",
+        "description": "Dashboard de co\u00fbt IA \u2014 agr\u00e9gation des entr\u00e9es `ai.generation` du ledger.\n\nChaque appel IA est d\u00e9j\u00e0 journalis\u00e9 (mod\u00e8le, tokens in/out/cach\u00e9s) dans\nl'audit log sign\u00e9 ; on additionne et on valorise via la table de prix\npublique (ADR-0007 d\u00e9cision C). Mod\u00e8le hors table \u2192 compt\u00e9 non valoris\u00e9.",
+        "operationId": "ai_usage_api_v1_ai_usage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIUsageOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/freshness": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Sources Freshness",
+        "description": "Fra\u00eecheur des sources externes (Sirene, DECP, sanctions, Pappers).\n\n`last_sync` = dernier appel r\u00e9ussi enregistr\u00e9 par le client de la source.\nUne source jamais synchronis\u00e9e ou p\u00e9rim\u00e9e est un risque d'audit \u00e0\nsurfacer, pas \u00e0 masquer.",
+        "operationId": "sources_freshness_api_v1_sources_freshness_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceFreshnessOut"
+                  },
+                  "type": "array",
+                  "title": "Response Sources Freshness Api V1 Sources Freshness Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coverage": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Coverage",
+        "description": "Vue de couverture ISA 240 \u2014 ce qui a \u00e9t\u00e9 contr\u00f4l\u00e9, pas seulement alert\u00e9.\n\nEx\u00e9cute les d\u00e9tecteurs purs sur le dataset d\u00e9terministe du sc\u00e9nario et\nrapporte, par d\u00e9tecteur : population contr\u00f4l\u00e9e, factures signal\u00e9es et\npart \u00ab propre \u00bb. Les d\u00e9tecteurs d\u00e9pendant d'API externes sont d\u00e9clar\u00e9s\nnon ex\u00e9cut\u00e9s avec leur motif (la compl\u00e9tude se prouve, elle ne se\nsuppose pas).",
+        "operationId": "coverage_api_v1_coverage_get",
+        "parameters": [
+          {
+            "name": "scenario",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "bec_iban_swap",
+              "title": "Scenario"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/copilot/questions": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Copilot Questions",
+        "description": "Catalogue des questions pr\u00e9d\u00e9finies du copilote (pas de chat libre).",
+        "operationId": "copilot_questions_api_v1_copilot_questions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CopilotQuestionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Copilot Questions Api V1 Copilot Questions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/copilot/ask": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Copilot Ask",
+        "description": "R\u00e9pond \u00e0 une question pr\u00e9d\u00e9finie sur un cas (Phase 5, ADR-0007).\n\nLe mod\u00e8le ne voit que le source pack du cas (surface d'outils contr\u00f4l\u00e9e\nen code) ; provenance valid\u00e9e ; revue humaine toujours requise.",
+        "operationId": "copilot_ask_api_v1_copilot_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotAskBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopilotResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/replay": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Case Generate Replay",
+        "description": "Rejoue un cas en s\u00e9quence narrative d'enqu\u00eate (Phase 6, ADR-0007).",
+        "operationId": "case_generate_replay_api_v1_cases__case_id__replay_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}/narrative": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Scenario Generate Narrative",
+        "description": "Habillage narratif d'un sc\u00e9nario synth\u00e9tique (Phase 6, ADR-0007).\n\nLes donn\u00e9es et labels ground-truth restent g\u00e9n\u00e9r\u00e9s par le code\nd\u00e9terministe \u2014 le LLM ne produit que le r\u00e9cit p\u00e9dagogique sourc\u00e9.",
+        "operationId": "scenario_generate_narrative_api_v1_scenarios__scenario_id__narrative_post",
+        "parameters": [
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scenario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioNarrativeResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/draft": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rules Draft",
+        "description": "Drafte une r\u00e8gle depuis le fran\u00e7ais (LLM), la valide et la teste en code.\n\nLe draft est sauvegard\u00e9 en version `draft` ; ses tests g\u00e9n\u00e9r\u00e9s sont\nimm\u00e9diatement ex\u00e9cut\u00e9s par le moteur d\u00e9terministe (statut `tested` si\ntout est vert). L'activation reste soumise au backtest + 4-eyes.",
+        "operationId": "rules_draft_api_v1_rules_draft_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleDraftBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules": {
+      "get": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rules List",
+        "description": "Liste les versions de r\u00e8gles (toutes, ou celles d'un rule_id).",
+        "operationId": "rules_list_api_v1_rules_get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RuleVersionOut"
+                  },
+                  "title": "Response Rules List Api V1 Rules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}/versions/{version}/test": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rules Run Tests",
+        "description": "R\u00e9-ex\u00e9cute les tests embarqu\u00e9s d'une version (moteur d\u00e9terministe).",
+        "operationId": "rules_run_tests_api_v1_rules__rule_id__versions__version__test_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}/versions/{version}/backtest": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rules Backtest",
+        "description": "Backtest sur donn\u00e9es labellis\u00e9es \u2014 r\u00e9elles si `records` est fourni,\nsinon dataset synth\u00e9tique (ground truth is_fraud).",
+        "operationId": "rules_backtest_api_v1_rules__rule_id__versions__version__backtest_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleBacktestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{rule_id}/versions/{version}/activate": {
+      "post": {
+        "tags": [
+          "v1 (Next.js)"
+        ],
+        "summary": "Rules Activate",
+        "description": "Active une version \u2014 tests verts + backtest + 4-eyes (auteur \u2260 approbateur).",
+        "operationId": "rules_activate_api_v1_rules__rule_id__versions__version__activate_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleActivateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/exports/dossier.pdf": {
       "get": {
         "tags": [
@@ -1246,6 +1851,807 @@
                 "schema": {}
               },
               "text/event-stream": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mandates": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Create Mandate",
+        "description": "Cr\u00e9e un mandat SEPA en \u00e9tat DRAFT.",
+        "operationId": "create_mandate_api_v1_mandates_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "List Mandates",
+        "description": "Liste les mandats du tenant (pagin\u00e9 simple).",
+        "operationId": "list_mandates_api_v1_mandates_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MandateOut"
+                  },
+                  "title": "Response List Mandates Api V1 Mandates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mandates/{mandate_id}": {
+      "get": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Get Mandate",
+        "operationId": "get_mandate_api_v1_mandates__mandate_id__get",
+        "parameters": [
+          {
+            "name": "mandate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mandate Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mandates/{mandate_id}/sign": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Sign Mandate",
+        "description": "Passe le mandat DRAFT \u2192 ACTIVE.",
+        "operationId": "sign_mandate_api_v1_mandates__mandate_id__sign_post",
+        "parameters": [
+          {
+            "name": "mandate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mandate Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandateActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mandates/{mandate_id}/revoke": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Revoke Mandate",
+        "description": "R\u00e9voque d\u00e9finitivement un mandat (\u00e9tat terminal).",
+        "operationId": "revoke_mandate_api_v1_mandates__mandate_id__revoke_post",
+        "parameters": [
+          {
+            "name": "mandate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mandate Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/debits/import": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Import Debit",
+        "description": "Ingestion idempotente d'un pr\u00e9l\u00e8vement (sans analyse).",
+        "operationId": "import_debit_api_v1_debits_import_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebitEventInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Import Debit Api V1 Debits Import Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/debits/analyze": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Analyze Debit",
+        "description": "Pipeline complet ingest \u2192 match \u2192 assess SEPA + audit DEBIT_ANALYZED.",
+        "operationId": "analyze_debit_api_v1_debits_analyze_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebitEventInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebitAnalysisOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/assess": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Risk Assess",
+        "description": "Endpoint Risk Lab \u2014 un seul appel pour analyser un \u00e9v\u00e9nement synth\u00e9tique.",
+        "operationId": "risk_assess_api_v1_risk_assess_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskAssessRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebitAnalysisOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Create Evidence Pack",
+        "description": "Cr\u00e9e un Evidence Pack pour un sujet (DEBIT_EVENT en v0).",
+        "operationId": "create_evidence_pack_api_v1_evidence_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidencePackInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePackOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/{evidence_pack_id}": {
+      "get": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Get Evidence Pack",
+        "operationId": "get_evidence_pack_api_v1_evidence__evidence_pack_id__get",
+        "parameters": [
+          {
+            "name": "evidence_pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evidence Pack Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePackOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/{evidence_pack_id}/report": {
+      "get": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Get Evidence Report Html",
+        "description": "Renvoie le rapport HTML rendu (sans d\u00e9chiffrement d'IBAN).",
+        "operationId": "get_evidence_report_html_api_v1_evidence__evidence_pack_id__report_get",
+        "parameters": [
+          {
+            "name": "evidence_pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evidence Pack Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/{evidence_pack_id}/verify": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Verify Evidence Pack",
+        "operationId": "verify_evidence_pack_api_v1_evidence__evidence_pack_id__verify_post",
+        "parameters": [
+          {
+            "name": "evidence_pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evidence Pack Id"
+            }
+          },
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceVerifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/debit": {
+      "post": {
+        "tags": [
+          "SEPA (MandateGuard)"
+        ],
+        "summary": "Webhook Inbound Debit",
+        "description": "Re\u00e7oit un pr\u00e9l\u00e8vement sign\u00e9 HMAC d'un partenaire (PSP, banque).\n\nHeaders requis :\n- X-MG-Timestamp     : ISO 8601 UTC, fen\u00eatre +/- 5 min\n- X-MG-Signature     : sha256=<hex> sur le body brut\n- X-MG-Idempotency-Key : (recommand\u00e9) anti-replay applicatif\n\nCorps : `DebitEventInput` JSON. L'analyzer est invoqu\u00e9 et le verdict\nretourn\u00e9 de mani\u00e8re synchrone (le caller peut d\u00e9cider de bloquer).",
+        "operationId": "webhook_inbound_debit_api_v1_webhooks_debit_post",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Webhook Inbound Debit Api V1 Webhooks Debit Post"
+                }
+              }
             }
           },
           "422": {
@@ -1633,6 +3039,71 @@
   },
   "components": {
     "schemas": {
+      "AIUsageBucketOut": {
+        "properties": {
+          "n_calls": {
+            "type": "integer",
+            "title": "N Calls"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cached_tokens": {
+            "type": "integer",
+            "title": "Cached Tokens"
+          },
+          "cost_usd": {
+            "type": "number",
+            "title": "Cost Usd"
+          },
+          "n_calls_unpriced": {
+            "type": "integer",
+            "title": "N Calls Unpriced"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_calls",
+          "input_tokens",
+          "output_tokens",
+          "cached_tokens",
+          "cost_usd",
+          "n_calls_unpriced"
+        ],
+        "title": "AIUsageBucketOut",
+        "description": "Agr\u00e9gat d'usage IA (llm/ai_ledger.py) \u2014 dashboard de co\u00fbt."
+      },
+      "AIUsageOut": {
+        "properties": {
+          "total": {
+            "$ref": "#/components/schemas/AIUsageBucketOut"
+          },
+          "by_feature": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AIUsageBucketOut"
+            },
+            "type": "object",
+            "title": "By Feature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "AIUsageOut"
+      },
       "AuditEntryOut": {
         "properties": {
           "seq": {
@@ -1681,6 +3152,58 @@
           "hash"
         ],
         "title": "AuditEntryOut"
+      },
+      "AuditExplainResult": {
+        "properties": {
+          "chain_status": {
+            "type": "string",
+            "title": "Chain Status"
+          },
+          "n_total": {
+            "type": "integer",
+            "title": "N Total"
+          },
+          "n_signed": {
+            "type": "integer",
+            "title": "N Signed"
+          },
+          "invalid_seqs": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Invalid Seqs"
+          },
+          "signatures_checked": {
+            "type": "boolean",
+            "title": "Signatures Checked",
+            "default": false
+          },
+          "explanation": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chain_status",
+          "n_total",
+          "n_signed",
+          "explanation",
+          "model",
+          "prompt_version"
+        ],
+        "title": "AuditExplainResult",
+        "description": "Verdict technique (code) + explication audit (IA structur\u00e9e, ADR-0007)."
       },
       "AuditPage": {
         "properties": {
@@ -1857,6 +3380,36 @@
           "n_errors"
         ],
         "title": "BulkResult"
+      },
+      "Case360Result": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "dossier": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Dossier"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "dossier",
+          "model",
+          "prompt_version"
+        ],
+        "title": "Case360Result",
+        "description": "Dossier d'enqu\u00eate g\u00e9n\u00e9r\u00e9 (FraudCase360, llm/schemas.py) + m\u00e9tadonn\u00e9es IA."
       },
       "CaseBootstrapBody": {
         "properties": {
@@ -2241,6 +3794,167 @@
         ],
         "title": "CommentBody"
       },
+      "CopilotAskBody": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Question Id"
+          },
+          "case_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Case Id"
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Actor",
+            "default": "api"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "case_id"
+        ],
+        "title": "CopilotAskBody"
+      },
+      "CopilotQuestionOut": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "label_fr": {
+            "type": "string",
+            "title": "Label Fr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "label_fr"
+        ],
+        "title": "CopilotQuestionOut"
+      },
+      "CopilotResult": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "answer": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Answer"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "question_id",
+          "answer",
+          "model",
+          "prompt_version"
+        ],
+        "title": "CopilotResult",
+        "description": "R\u00e9ponse du copilote (CopilotAnswer, llm/schemas.py) + m\u00e9tadonn\u00e9es IA."
+      },
+      "CoverageItem": {
+        "properties": {
+          "detector": {
+            "type": "string",
+            "title": "Detector"
+          },
+          "executed": {
+            "type": "boolean",
+            "title": "Executed"
+          },
+          "n_findings": {
+            "type": "integer",
+            "title": "N Findings",
+            "default": 0
+          },
+          "n_invoices_flagged": {
+            "type": "integer",
+            "title": "N Invoices Flagged",
+            "default": 0
+          },
+          "clean_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clean Rate"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "detector",
+          "executed"
+        ],
+        "title": "CoverageItem",
+        "description": "Couverture d'un d\u00e9tecteur sur le dataset contr\u00f4l\u00e9 (ISA 240)."
+      },
+      "CoverageOut": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario"
+          },
+          "n_invoices": {
+            "type": "integer",
+            "title": "N Invoices"
+          },
+          "n_detectors_executed": {
+            "type": "integer",
+            "title": "N Detectors Executed"
+          },
+          "overall_clean_rate": {
+            "type": "number",
+            "title": "Overall Clean Rate"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario",
+          "n_invoices",
+          "n_detectors_executed",
+          "overall_clean_rate"
+        ],
+        "title": "CoverageOut"
+      },
       "DailyPoint": {
         "properties": {
           "date": {
@@ -2258,6 +3972,172 @@
           "value"
         ],
         "title": "DailyPoint"
+      },
+      "DebitAnalysisOut": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalOut"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "match": {
+            "$ref": "#/components/schemas/MatchOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "domain",
+          "score",
+          "level",
+          "decision",
+          "engine_version",
+          "signals",
+          "match"
+        ],
+        "title": "DebitAnalysisOut"
+      },
+      "DebitEventInput": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "csv | manual | api | sandbox"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key"
+          },
+          "creditor_ics": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creditor Ics"
+          },
+          "creditor_name_raw": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 70
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creditor Name Raw"
+          },
+          "rum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rum"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Cents"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "EUR"
+          },
+          "booking_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "debtor_iban": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debtor Iban"
+          },
+          "raw_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Key"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "idempotency_key",
+          "amount_cents"
+        ],
+        "title": "DebitEventInput",
+        "description": "Payload d'ingestion d'un pr\u00e9l\u00e8vement observ\u00e9."
       },
       "DecisionBody": {
         "properties": {
@@ -2296,7 +4176,7 @@
             },
             "type": "array",
             "title": "Detectors",
-            "description": "D\u00e9tecteurs \u00e0 activer parmi : duplicates, thresholds, sanctions, decp_rbe"
+            "description": "D\u00e9tecteurs \u00e0 activer parmi : duplicates, thresholds, sanctions, decp_rbe, rule_studio (r\u00e8gles actives du Detection Studio)"
           }
         },
         "type": "object",
@@ -2335,6 +4215,253 @@
           "run_at"
         ],
         "title": "DetectResponse"
+      },
+      "EvidencePackInput": {
+        "properties": {
+          "subject_type": {
+            "type": "string",
+            "title": "Subject Type",
+            "description": "DEBIT_EVENT | MANDATE | CASE"
+          },
+          "subject_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Subject Id"
+          },
+          "include_audit_timeline": {
+            "type": "boolean",
+            "title": "Include Audit Timeline",
+            "default": true
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "subject_type",
+          "subject_id"
+        ],
+        "title": "EvidencePackInput",
+        "description": "Payload de cr\u00e9ation d'un Evidence Pack.\n\nLe caller choisit le sujet (debit_event_id, case_id, mandate_id\u2026) \u2014 le\nservice charge les donn\u00e9es associ\u00e9es et construit le pack canonical."
+      },
+      "EvidencePackOut": {
+        "properties": {
+          "evidence_pack_id": {
+            "type": "string",
+            "title": "Evidence Pack Id"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          },
+          "subject_type": {
+            "type": "string",
+            "title": "Subject Type"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "pack_hash": {
+            "type": "string",
+            "title": "Pack Hash"
+          },
+          "audit_anchor_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Anchor Hash"
+          },
+          "audit_anchor_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Anchor Seq"
+          },
+          "has_report": {
+            "type": "boolean",
+            "title": "Has Report"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_pack_id",
+          "tenant_id",
+          "subject_type",
+          "subject_id",
+          "domain",
+          "engine_version",
+          "pack_hash",
+          "audit_anchor_hash",
+          "audit_anchor_seq",
+          "has_report",
+          "actor",
+          "created_at",
+          "payload"
+        ],
+        "title": "EvidencePackOut"
+      },
+      "EvidenceVerifyOut": {
+        "properties": {
+          "evidence_pack_id": {
+            "type": "string",
+            "title": "Evidence Pack Id"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "audit_chain_valid": {
+            "type": "boolean",
+            "title": "Audit Chain Valid"
+          },
+          "audit_anchor_present": {
+            "type": "boolean",
+            "title": "Audit Anchor Present"
+          },
+          "checked_at": {
+            "type": "string",
+            "title": "Checked At"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_pack_id",
+          "valid",
+          "hash_matches",
+          "audit_chain_valid",
+          "audit_anchor_present",
+          "checked_at",
+          "errors"
+        ],
+        "title": "EvidenceVerifyOut"
+      },
+      "FeedbackRuleStats": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "n_closed": {
+            "type": "integer",
+            "title": "N Closed"
+          },
+          "n_confirmed": {
+            "type": "integer",
+            "title": "N Confirmed"
+          },
+          "n_false_positive": {
+            "type": "integer",
+            "title": "N False Positive"
+          },
+          "n_rejected": {
+            "type": "integer",
+            "title": "N Rejected"
+          },
+          "false_positive_rate": {
+            "type": "number",
+            "title": "False Positive Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_id",
+          "n_closed",
+          "n_confirmed",
+          "n_false_positive",
+          "n_rejected",
+          "false_positive_rate"
+        ],
+        "title": "FeedbackRuleStats",
+        "description": "Verdicts de cl\u00f4ture agr\u00e9g\u00e9s par rule_id \u2014 boucle de feedback d\u00e9tection."
+      },
+      "FeedbackStats": {
+        "properties": {
+          "n_cases_closed": {
+            "type": "integer",
+            "title": "N Cases Closed"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackRuleStats"
+            },
+            "type": "array",
+            "title": "Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_cases_closed"
+        ],
+        "title": "FeedbackStats"
       },
       "GraphEdge": {
         "properties": {
@@ -2489,6 +4616,396 @@
           "invoice_date"
         ],
         "title": "InvoiceRow"
+      },
+      "MandateActionRequest": {
+        "properties": {
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "api"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "signature_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Provider"
+          },
+          "signature_evidence_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Evidence Key"
+          }
+        },
+        "type": "object",
+        "title": "MandateActionRequest"
+      },
+      "MandateInput": {
+        "properties": {
+          "creditor_ics": {
+            "type": "string",
+            "maxLength": 35,
+            "title": "Creditor Ics"
+          },
+          "creditor_name": {
+            "type": "string",
+            "maxLength": 70,
+            "title": "Creditor Name"
+          },
+          "creditor_country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creditor Country"
+          },
+          "debtor_iban": {
+            "type": "string",
+            "title": "Debtor Iban"
+          },
+          "debtor_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debtor Label"
+          },
+          "rum": {
+            "type": "string",
+            "maxLength": 35,
+            "title": "Rum"
+          },
+          "scheme": {
+            "$ref": "#/components/schemas/MandateScheme",
+            "default": "SDD_CORE"
+          },
+          "sequence_type": {
+            "$ref": "#/components/schemas/SequenceType",
+            "default": "RCUR"
+          },
+          "max_amount_cents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Amount Cents"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "EUR"
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "creditor_ics",
+          "creditor_name",
+          "debtor_iban",
+          "rum"
+        ],
+        "title": "MandateInput",
+        "description": "Payload de cr\u00e9ation d'un mandat \u2014 l'IBAN est ici en clair (sera chiffr\u00e9)."
+      },
+      "MandateOut": {
+        "properties": {
+          "mandate_id": {
+            "type": "string",
+            "title": "Mandate Id"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          },
+          "creditor_id": {
+            "type": "string",
+            "title": "Creditor Id"
+          },
+          "creditor_ics": {
+            "type": "string",
+            "title": "Creditor Ics"
+          },
+          "creditor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creditor Name"
+          },
+          "debtor_account_id": {
+            "type": "string",
+            "title": "Debtor Account Id"
+          },
+          "debtor_iban_fingerprint": {
+            "type": "string",
+            "title": "Debtor Iban Fingerprint"
+          },
+          "rum": {
+            "type": "string",
+            "title": "Rum"
+          },
+          "scheme": {
+            "type": "string",
+            "title": "Scheme"
+          },
+          "sequence_type": {
+            "type": "string",
+            "title": "Sequence Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "max_amount_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Amount Cents"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "commitment_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commitment Hash"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mandate_id",
+          "tenant_id",
+          "creditor_id",
+          "creditor_ics",
+          "creditor_name",
+          "debtor_account_id",
+          "debtor_iban_fingerprint",
+          "rum",
+          "scheme",
+          "sequence_type",
+          "status",
+          "max_amount_cents",
+          "currency",
+          "frequency",
+          "valid_from",
+          "valid_to",
+          "signed_at",
+          "revoked_at",
+          "commitment_hash",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MandateOut",
+        "description": "Vue publique d'un mandat \u2014 pas d'IBAN clair."
+      },
+      "MandateScheme": {
+        "type": "string",
+        "enum": [
+          "SDD_CORE",
+          "SDD_B2B"
+        ],
+        "title": "MandateScheme",
+        "description": "Sch\u00e9ma SEPA Direct Debit (EPC SDD Rulebooks).\n\nSDD_CORE : B2C, fen\u00eatre R-transaction 8 semaines (13 mois pour mandat invalide)\nSDD_B2B  : B2B, fen\u00eatre R-transaction 2 jours ouvr\u00e9s, contestations tr\u00e8s limit\u00e9es"
+      },
+      "MatchOut": {
+        "properties": {
+          "matched": {
+            "type": "boolean",
+            "title": "Matched"
+          },
+          "mandate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mandate Id"
+          },
+          "candidates_active": {
+            "type": "integer",
+            "title": "Candidates Active"
+          },
+          "candidates_inactive": {
+            "type": "integer",
+            "title": "Candidates Inactive"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matched",
+          "mandate_id",
+          "candidates_active",
+          "candidates_inactive",
+          "warnings"
+        ],
+        "title": "MatchOut"
       },
       "NarrativeBody": {
         "properties": {
@@ -2903,6 +5420,58 @@
         ],
         "title": "P2PVendorSummary"
       },
+      "ReplayResult": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "replay": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Replay"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "replay",
+          "model",
+          "prompt_version"
+        ],
+        "title": "ReplayResult",
+        "description": "S\u00e9quence Risk Replay (RiskReplay, llm/schemas.py) + m\u00e9tadonn\u00e9es IA."
+      },
+      "RevokeRequest": {
+        "properties": {
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "api"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "RevokeRequest"
+      },
       "RingsGraph": {
         "properties": {
           "nodes": {
@@ -2946,6 +5515,213 @@
           "scenario"
         ],
         "title": "RingsGraph"
+      },
+      "RiskAssessRequest": {
+        "properties": {
+          "risk_domain": {
+            "type": "string",
+            "title": "Risk Domain",
+            "description": "SEPA_DIRECT_DEBIT en v0"
+          },
+          "event": {
+            "$ref": "#/components/schemas/DebitEventInput"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_domain",
+          "event"
+        ],
+        "title": "RiskAssessRequest",
+        "description": "Payload g\u00e9n\u00e9rique d'\u00e9valuation \u2014 pour l'instant SEPA uniquement.\n\nSprint 4+ : ajouter `risk_domain` discrimin\u00e9 pour SUPPLIER_PAYMENT."
+      },
+      "RuleActivateBody": {
+        "properties": {
+          "approver": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Approver"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approver"
+        ],
+        "title": "RuleActivateBody"
+      },
+      "RuleBacktestBody": {
+        "properties": {
+          "n_invoices": {
+            "type": "integer",
+            "maximum": 20000.0,
+            "minimum": 100.0,
+            "title": "N Invoices",
+            "default": 2000
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "default": 42
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Actor",
+            "default": "api"
+          },
+          "records": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array",
+                "maxItems": 20000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Records",
+            "description": "Records labellis\u00e9s r\u00e9els ; si fourni, remplace le dataset synth\u00e9tique."
+          }
+        },
+        "type": "object",
+        "title": "RuleBacktestBody",
+        "description": "Backtest synth\u00e9tique par d\u00e9faut ; passer `records` pour des donn\u00e9es r\u00e9elles.\n\n`records` : factures labellis\u00e9es fournies par le client (boucle de\nfeedback : verdicts de cl\u00f4ture export\u00e9s, ou extraction comptable\nannot\u00e9e). Champ `is_fraud` optionnel par record pour la pr\u00e9cision."
+      },
+      "RuleDraftBody": {
+        "properties": {
+          "description_fr": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 20,
+            "title": "Description Fr"
+          },
+          "author": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Author"
+          }
+        },
+        "type": "object",
+        "required": [
+          "description_fr",
+          "author"
+        ],
+        "title": "RuleDraftBody",
+        "description": "Demande de draft d'une r\u00e8gle de d\u00e9tection depuis le fran\u00e7ais (Phase 4)."
+      },
+      "RuleVersionOut": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "yaml": {
+            "type": "string",
+            "title": "Yaml"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "reason_code": {
+            "type": "string",
+            "title": "Reason Code"
+          },
+          "tests": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Tests"
+          },
+          "test_report": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Report"
+          },
+          "backtest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backtest"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "activated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_id",
+          "version",
+          "status",
+          "yaml",
+          "author",
+          "created_at",
+          "name",
+          "severity",
+          "reason_code"
+        ],
+        "title": "RuleVersionOut",
+        "description": "Version de r\u00e8gle s\u00e9rialis\u00e9e (rules/store.py)."
       },
       "ScenarioMeta": {
         "properties": {
@@ -3003,6 +5779,36 @@
           "storyline"
         ],
         "title": "ScenarioMeta"
+      },
+      "ScenarioNarrativeResult": {
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id"
+          },
+          "narrative": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Narrative"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "narrative",
+          "model",
+          "prompt_version"
+        ],
+        "title": "ScenarioNarrativeResult",
+        "description": "Habillage narratif d'un sc\u00e9nario (ScenarioNarrative) + m\u00e9tadonn\u00e9es IA."
       },
       "ScoreRequest": {
         "properties": {
@@ -3090,6 +5896,96 @@
           "reason_codes_fr"
         ],
         "title": "ScoreRow"
+      },
+      "SequenceType": {
+        "type": "string",
+        "enum": [
+          "FRST",
+          "RCUR",
+          "OOFF",
+          "FNAL"
+        ],
+        "title": "SequenceType",
+        "description": "Type de s\u00e9quence d'un pr\u00e9l\u00e8vement (en-t\u00eate pacs.003 / mandat).\n\nFRST : First (premier d'une s\u00e9rie r\u00e9currente)\nRCUR : Recurrent (r\u00e9current standard)\nOOFF : One-Off (unique ponctuel)\nFNAL : Final (dernier d'une s\u00e9rie, cl\u00f4t le mandat)"
+      },
+      "SignalOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "title",
+          "message",
+          "severity",
+          "score",
+          "evidence"
+        ],
+        "title": "SignalOut"
+      },
+      "SourceFreshnessOut": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "last_sync": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "label",
+          "configured"
+        ],
+        "title": "SourceFreshnessOut",
+        "description": "Fra\u00eecheur d'une source externe (enrichment/freshness.py)."
       },
       "StatusBody": {
         "properties": {
