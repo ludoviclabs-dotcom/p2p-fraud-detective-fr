@@ -8,6 +8,10 @@ import type { Schemas } from "@p2pfd/shared-types";
 import { SeverityBadge } from "@/components/ui/badge";
 import { ForensicPage } from "@/components/forensic-page";
 import { ScenarioNarrativePanel } from "@/components/scenario-narrative-panel";
+import {
+  getSandboxNarrative,
+  mergeSandboxScenarios,
+} from "@/data/sandbox-scenarios";
 
 type ScenarioMeta = Schemas["ScenarioMeta"];
 
@@ -26,13 +30,15 @@ const DETECTOR_TO_PAGE: Record<string, string> = {
 export default function SandboxPage() {
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Catalogue local pré-chargé (offline) fusionné avec d'éventuels scénarios
+  // backend. Le local est toujours présent → la sandbox fonctionne sans backend.
   const query = useQuery({
     queryKey: ["scenarios"],
     queryFn: () => api.get<ScenarioMeta[]>("/api/v1/scenarios"),
     retry: false,
   });
 
-  const scenarios = query.data ?? [];
+  const scenarios = mergeSandboxScenarios(query.data);
   const current = scenarios.find((s) => s.name === selected) ?? scenarios[0];
 
   return (
@@ -75,62 +81,56 @@ export default function SandboxPage() {
             <span className="glyph">▣</span>
           </div>
           <div className="fx-panel-body">
-            {query.isLoading ? (
-              <ScenarioSkeleton />
-            ) : query.error ? (
-              <ScenarioError />
-            ) : (
-              <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
-                <div className="space-y-2">
-                  {scenarios.map((s) => {
-                    const isActive = current?.name === s.name;
-                    return (
-                      <button
-                        key={s.name}
-                        type="button"
-                        onClick={() => setSelected(s.name)}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          background: isActive ? "var(--panel-2)" : "var(--panel)",
-                          border: `1px solid ${isActive ? "var(--risk)" : "var(--border)"}`,
-                          borderLeft: isActive ? "2px solid var(--risk)" : "2px solid transparent",
-                          padding: "12px 14px",
-                          cursor: "pointer",
-                          transition: "all .15s",
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500 }}>
-                              {s.title}
-                            </div>
-                            <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 3, lineHeight: 1.5 }}>
-                              {s.short}
-                            </div>
+            <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+              <div className="space-y-2">
+                {scenarios.map((s) => {
+                  const isActive = current?.name === s.name;
+                  return (
+                    <button
+                      key={s.name}
+                      type="button"
+                      onClick={() => setSelected(s.name)}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "left",
+                        background: isActive ? "var(--panel-2)" : "var(--panel)",
+                        border: `1px solid ${isActive ? "var(--risk)" : "var(--border)"}`,
+                        borderLeft: isActive ? "2px solid var(--risk)" : "2px solid transparent",
+                        padding: "12px 14px",
+                        cursor: "pointer",
+                        transition: "all .15s",
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500 }}>
+                            {s.title}
                           </div>
-                          <SeverityBadge value={s.severity} />
+                          <div className="fx-mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 3, lineHeight: 1.5 }}>
+                            {s.short}
+                          </div>
                         </div>
-                        <div className="fx-eyebrow" style={{ marginTop: 8 }}>
-                          {s.pillar}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {current ? (
-                  <ScenarioDetail scenario={current} />
-                ) : (
-                  <div className="fx-card">
-                    <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
-                      Sélectionnez un scénario à gauche.
-                    </span>
-                  </div>
-                )}
+                        <SeverityBadge value={s.severity} />
+                      </div>
+                      <div className="fx-eyebrow" style={{ marginTop: 8 }}>
+                        {s.pillar}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+
+              {current ? (
+                <ScenarioDetail scenario={current} />
+              ) : (
+                <div className="fx-card">
+                  <span className="fx-mono" style={{ fontSize: 12, color: "var(--muted)" }}>
+                    Sélectionnez un scénario à gauche.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +146,16 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
         .filter((p): p is string => Boolean(p)),
     ),
   );
+
+  const vendorHref = scenario.target_vendor
+    ? `/vendors/${encodeURIComponent(scenario.target_vendor)}`
+    : "/vendors";
+
+  const conversionSteps = [
+    { label: "Voir le cockpit", href: "/dashboard" },
+    { label: "Ouvrir le vendor 360", href: vendorHref },
+    { label: "Exporter la preuve", href: "/exports" },
+  ];
 
   return (
     <div className="fx-panel">
@@ -170,7 +180,11 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
           </p>
         </div>
 
-        <ScenarioNarrativePanel key={scenario.name} scenarioId={scenario.name} />
+        <ScenarioNarrativePanel
+          key={scenario.name}
+          scenarioId={scenario.name}
+          staticNarrative={getSandboxNarrative(scenario.name)}
+        />
 
         <div>
           <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Contrôles déclenchés</div>
@@ -196,14 +210,23 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
         <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "14px 16px" }}>
           <div className="fx-eyebrow" style={{ marginBottom: 10 }}>◷ Parcours de conversion</div>
           <div className="grid gap-2 sm:grid-cols-3">
-            {["Voir le cockpit", "Ouvrir le vendor 360", "Exporter la preuve"].map((item) => (
-              <div
-                key={item}
+            {conversionSteps.map((step) => (
+              <Link
+                key={step.label}
+                href={step.href}
                 className="fx-mono"
-                style={{ fontSize: 11, padding: "8px 10px", background: "var(--panel)", border: "1px solid var(--border)", color: "var(--fg-2)" }}
+                style={{
+                  fontSize: 11,
+                  padding: "8px 10px",
+                  background: "var(--panel)",
+                  border: "1px solid var(--border)",
+                  color: "var(--fg-2)",
+                  textDecoration: "none",
+                  display: "block",
+                }}
               >
-                {item}
-              </div>
+                {step.label} →
+              </Link>
             ))}
           </div>
         </div>
@@ -214,17 +237,6 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
               Explorer {p} →
             </Link>
           ))}
-          <Link href="/dashboard" className="fx-btn sm">
-            Cockpit ↗
-          </Link>
-          {scenario.target_vendor ? (
-            <Link
-              href={`/vendors/${encodeURIComponent(scenario.target_vendor)}`}
-              className="fx-btn-ghost sm"
-            >
-              Fiche fournisseur 360
-            </Link>
-          ) : null}
         </div>
       </div>
     </div>
@@ -237,42 +249,6 @@ function FactBox({ label, value }: { label: string; value: string }) {
       <div className="fx-eyebrow">{label}</div>
       <div className="fx-mono" style={{ fontSize: 13, color: "var(--fg)", marginTop: 4, fontWeight: 500 }}>
         {value}
-      </div>
-    </div>
-  );
-}
-
-function ScenarioSkeleton() {
-  return (
-    <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="fx-skel" style={{ height: 90 }} />
-        ))}
-      </div>
-      <div className="fx-skel" style={{ height: 320 }} />
-    </div>
-  );
-}
-
-function ScenarioError() {
-  return (
-    <div className="fx-notice">
-      <span className="glyph">⚠</span>
-      <div>
-        <div className="nt">Scénarios indisponibles</div>
-        <p className="nb">
-          L&apos;API ne répond pas encore. Vérifiez le backend FastAPI puis rechargez la page.
-        </p>
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="fx-btn sm"
-          >
-            ↻ Réessayer
-          </button>
-        </div>
       </div>
     </div>
   );
