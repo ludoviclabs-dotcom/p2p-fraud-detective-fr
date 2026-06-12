@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { EvidencePack, RiskScenario, RiskScoreResult } from "@/types/risk";
 import { Button } from "@/components/ui/button";
 import { Badge, SeverityBadge } from "@/components/ui/badge";
-import { formatEur } from "@/lib/utils";
+import { formatEur, formatDateTime } from "@/lib/utils";
 import { ForensicPage } from "@/components/forensic-page";
 import { maskSensitiveValue } from "@/lib/risk/evidence-redaction";
 
@@ -320,7 +320,7 @@ export function FraudCase360Client({
                   className="fx-mono"
                   style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}
                 >
-                  ◷ {new Date(item.at).toLocaleString("fr-FR")} · {item.actor}
+                  ◷ {formatDateTime(item.at)} · {item.actor}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
                   {item.event}
@@ -622,7 +622,7 @@ function AuditChainPanel({
                 {entry.action}
               </div>
               <div className="fx-mono" style={{ marginTop: 4, fontSize: 10, color: "var(--muted)" }}>
-                {entry.actor} · {new Date(entry.at).toLocaleString("fr-FR")}
+                {entry.actor} · {formatDateTime(entry.at)}
               </div>
             </div>
           ))}

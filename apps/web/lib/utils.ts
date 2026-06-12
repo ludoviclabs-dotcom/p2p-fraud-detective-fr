@@ -31,3 +31,30 @@ export function formatDate(iso: string | null | undefined): string {
     return iso;
   }
 }
+
+/**
+ * Locale FR — date + heure horodatée, fuseau Europe/Paris épinglé.
+ *
+ * Le fuseau explicite est requis pour le rendu SSR : sans lui, le serveur
+ * (UTC) et le client (navigateur) produisent un texte différent, ce qui
+ * déclenche une erreur d'hydratation React #418. Ne jamais revenir à un
+ * `.toLocaleString()` nu sur une valeur rendue côté serveur.
+ */
+const _DATE_TIME = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  timeZone: "Europe/Paris",
+});
+
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  try {
+    return _DATE_TIME.format(new Date(iso));
+  } catch {
+    return iso ?? "—";
+  }
+}

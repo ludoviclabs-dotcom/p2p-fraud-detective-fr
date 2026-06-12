@@ -2687,3 +2687,27 @@
   .fx-input:focus-visible { border-color: var(--risk); }
   .fx-input:disabled { opacity: 0.5; cursor: not-allowed; }
 }
+
+/* =========================================================
+   Accessibilité — prefers-reduced-motion
+   N'affecte QUE les utilisateurs ayant demandé « réduire les
+   animations » au niveau de leur OS. L'expérience par défaut est
+   inchangée. Les animations décoratives infinies (ticker, pulses,
+   scan, blink, stamp) sont neutralisées ; les marquees sont figés
+   à leur position de départ pour rester lisibles plutôt que de
+   sauter hors écran.
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .forensic *,
+  .forensic *::before,
+  .forensic *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .forensic .ticker-track {
+    animation: none !important;
+    transform: none !important;
+  }
+}
