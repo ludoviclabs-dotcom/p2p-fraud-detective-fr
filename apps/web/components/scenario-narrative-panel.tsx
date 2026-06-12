@@ -1,21 +1,53 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { generateScenarioNarrative } from "@/lib/api-client";
-import type { ScenarioNarrativeResult } from "@/lib/api-client";
+import type { ScenarioNarrative } from "@/lib/api-client";
 import { ClaimList } from "@/components/grounded-claims";
+import { Badge } from "@/components/ui/badge";
 
 /**
- * Narratif IA d'un scénario synthétique (Phase 6, ADR-0007).
+ * Narratif d'un scénario synthétique (Phase 6, ADR-0007).
  *
- * Le générateur déterministe reste seul responsable des données et labels —
- * le LLM ne produit que l'habillage pédagogique, sourcé sur les métadonnées.
+ * Deux sources possibles, transparentes via un badge :
+ * - `staticNarrative` fourni (catalogue sandbox pré-chargé) → affichage 100 %
+ *   déterministe, OFFLINE, aucun appel API (badge « DONNÉES PRÉ-CHARGÉES »).
+ * - sinon → génération IA live via le backend (badge « IA LIVE »), Claude ne
+ *   restant qu'un fallback. Le générateur déterministe reste seul responsable
+ *   des données et labels ; le LLM ne produit que l'habillage pédagogique.
  */
-export function ScenarioNarrativePanel({ scenarioId }: { scenarioId: string }) {
+export function ScenarioNarrativePanel({
+  scenarioId,
+  staticNarrative,
+}: {
+  scenarioId: string;
+  staticNarrative?: ScenarioNarrative;
+}) {
+  const [revealed, setRevealed] = useState(false);
   const mutation = useMutation({
     mutationFn: () => generateScenarioNarrative(scenarioId),
   });
 
+  // Source pré-chargée : narratif statique, aucun appel réseau.
+  if (staticNarrative) {
+    return (
+      <div data-testid="scenario-narrative-panel">
+        <button
+          className="fx-btn-ghost sm"
+          data-testid="scenario-narrative-button"
+          type="button"
+          onClick={() => setRevealed((v) => !v)}
+        >
+          {revealed ? "× Masquer le narratif" : "¶ Narratif du scénario"}
+        </button>
+
+        {revealed ? <NarrativeBody narrative={staticNarrative} source="static" /> : null}
+      </div>
+    );
+  }
+
+  // Sinon : génération IA live (fallback), comportement historique.
   return (
     <div data-testid="scenario-narrative-panel">
       <button
@@ -30,20 +62,42 @@ export function ScenarioNarrativePanel({ scenarioId }: { scenarioId: string }) {
 
       {mutation.error ? (
         <p className="fx-mono" style={{ marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
-          Narratif indisponible — backend FastAPI + clé ANTHROPIC_API_KEY requis.
-          Le scénario reste jouable sans IA.
+          Narratif indisponible — backend FastAPI + clé ANTHROPIC_API_KEY requis. Le scénario reste
+          jouable sans IA.
         </p>
       ) : null}
 
-      {mutation.data ? <NarrativeView result={mutation.data} /> : null}
+      {mutation.data ? (
+        <NarrativeBody
+          narrative={mutation.data.narrative}
+          source="ia"
+          model={mutation.data.model}
+          promptVersion={mutation.data.prompt_version}
+        />
+      ) : null}
     </div>
   );
 }
 
-function NarrativeView({ result }: { result: ScenarioNarrativeResult }) {
-  const narrative = result.narrative;
+function NarrativeBody({
+  narrative,
+  source,
+  model,
+  promptVersion,
+}: {
+  narrative: ScenarioNarrative;
+  source: "static" | "ia";
+  model?: string;
+  promptVersion?: string;
+}) {
   return (
     <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Badge severity={source === "static" ? "low" : "medium"}>
+          {source === "static" ? "Données pré-chargées" : "IA live"}
+        </Badge>
+      </div>
+
       <div
         style={{
           background: "var(--bg-2)",
@@ -78,8 +132,9 @@ function NarrativeView({ result }: { result: ScenarioNarrativeResult }) {
       ) : null}
 
       <div className="fx-mono" style={{ fontSize: 10, color: "var(--dim)" }}>
-        Généré par {result.model} · prompt {result.prompt_version} · les données et
-        labels du scénario restent 100&nbsp;% déterministes
+        {source === "static"
+          ? "Données pré-chargées · scénario déterministe (offline, sans appel IA)"
+          : `Généré par ${model} · prompt ${promptVersion} · les données et labels du scénario restent 100 % déterministes`}
       </div>
     </div>
   );
