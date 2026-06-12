@@ -70,3 +70,10 @@ site/
 # Benchmark artifacts (régénérés par make bench-f1)
 docs/benchmark_results.json
 alerts.db
+
+# Runtime DB FastAPI (créée au boot, jamais versionnée)
+cases.db
+
+# Artefacts d'audit (régénérables : sweep Playwright, snapshots MCP)
+.playwright-mcp/
+audit-artifacts*/
