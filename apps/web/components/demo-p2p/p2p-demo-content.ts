@@ -1,11 +1,32 @@
-// Contenu bilingue (FR/EN) de la démo guidée P2P.
+// Contenu bilingue de la demo guidee P2P.
 //
-// Récit forensic fictif. Vocabulaire volontairement prudent : « signal »,
-// « indice », « anomalie », « à qualifier », « à instruire » — jamais « fraude
-// confirmée » ni notification réglementaire automatique. Fusionné avec les
-// données structurelles de `p2p-demo-data.ts` par `code`/`id`.
+// Recit forensic fictif. Le vocabulaire reste prudent : signal, indice,
+// anomalie, a qualifier, a instruire, revue humaine.
 
 import type { Locale } from "@/components/locale-provider";
+import type { P2PCalloutId, P2PConsoleEventId, P2PDemoScene } from "./p2p-demo-data";
+
+type SceneCopy = {
+  label: string;
+  title: string;
+  body: string;
+};
+
+type CalloutCopy = {
+  title: string;
+  body: string;
+};
+
+type AlertCopy = {
+  title: string;
+  text: string;
+  observation: string;
+  why: string;
+  proof: string;
+  action: string;
+  badges: string[];
+  cta: string;
+};
 
 export interface DemoContent {
   launch: { topbar: string; sidebar: string; home: string };
@@ -49,6 +70,8 @@ export interface DemoContent {
     priorityEyebrow: string;
     priorityTitle: string;
     priorityBody: string;
+    suggestionsTitle: string;
+    suggestions: string[];
   };
   case360: {
     eyebrow: string;
@@ -71,7 +94,7 @@ export interface DemoContent {
       { title: string; type: string; status: string; detail: string }
     >;
   };
-  alerts: Record<string, { title: string; text: string; badges: string[]; cta: string }>;
+  alerts: Record<string, AlertCopy>;
   recommendations: {
     eyebrow: string;
     title: string;
@@ -86,6 +109,63 @@ export interface DemoContent {
     disclaimer: string;
   };
   rail: Record<string, string>;
+  sceneLabels: Record<P2PDemoScene, string>;
+  sceneCaptions: Record<P2PDemoScene, SceneCopy>;
+  consoleEvents: Record<P2PConsoleEventId, string>;
+  callouts: Record<P2PCalloutId, CalloutCopy>;
+  labels: {
+    scene: string;
+    sources: string;
+    findings: string;
+    observation: string;
+    why: string;
+    proof: string;
+    action: string;
+    console: string;
+  };
+  dataLineage: {
+    title: string;
+    subtitle: string;
+    sources: string[];
+    output: string;
+  };
+  scoreBreakdown: {
+    title: string;
+    subtitle: string;
+    illustrative: string;
+  };
+  microVisuals: {
+    ibanTitle: string;
+    ibanLabel: string;
+    thresholdTitle: string;
+    thresholdLabel: string;
+    rbeTitle: string;
+    rbeInternal: string;
+    rbeOfficial: string;
+    rbeMismatch: string;
+    fourEyesTitle: string;
+    fourEyesSteps: string[];
+    fourEyesLabel: string;
+  };
+  investigationMap: {
+    title: string;
+    steps: string[];
+  };
+  casePacket: {
+    title: string;
+    subtitle: string;
+    idLabel: string;
+    supplierLabel: string;
+    scoreLabel: string;
+    exposureLabel: string;
+    signalsLabel: string;
+    evidenceLabel: string;
+    statusLabel: string;
+    statusValue: string;
+    fingerprintLabel: string;
+    sealPrimary: string;
+    sealSecondary: string;
+  };
 }
 
 const FR: DemoContent = {
@@ -97,32 +177,32 @@ const FR: DemoContent = {
   controls: {
     skip: "Passer",
     skipAria: "Passer la démonstration",
-    replay: "↺ Rejouer la démo",
-    exploreCockpit: "Explorer le cockpit →",
-    viewScenarios: "Voir les scénarios P2P →",
+    replay: "Rejouer la démo",
+    exploreCockpit: "Explorer le cockpit",
+    viewScenarios: "Voir les scénarios P2P",
     demoBadge: "Données de démonstration fictives",
   },
   demoNotice: "Données de démonstration fictives",
   brief: {
-    kicker: "Mission démo · 60 secondes",
+    kicker: "Mission démo - 60 secondes",
     objectiveLabel: "Objectif",
     objective:
-      "Identifier pourquoi ALPHACOM SERVICES déclenche un risque prioritaire 92/100.",
+      "Identifier pourquoi ALPHACOM SERVICES declenche un risque prioritaire 92/100.",
     signalsLabel: "Signaux attendus",
     signals:
-      "IBAN partagé · fractionnement sous seuil · rupture 4-eyes · incohérence RBE.",
+      "IBAN partage - fractionnement sous seuil - rupture 4-eyes - incoherence RBE.",
     outputLabel: "Sortie attendue",
-    output: "Dossier fournisseur 360 + piste d'audit + parcours recommandé.",
+    output: "Dossier fournisseur 360 + piste d'audit + parcours recommande.",
   },
   cockpit: {
-    eyebrow: "Cockpit P2P · vue consolidée",
+    eyebrow: "Cockpit P2P - vue consolidee",
     title: "Cockpit risque P2P",
     subtitle:
-      "Vue consolidée des risques fournisseurs, triée par exposition financière et prête pour la décision audit.",
-    searchPlaceholder: "Rechercher un SIREN, fournisseur, IBAN, case ou alerte…",
-    searchHint: "Recherche fournisseur · référentiel P2P · signaux audit",
+      "Vue consolidee des risques fournisseurs, triee par exposition financiere et prete pour la decision audit.",
+    searchPlaceholder: "Rechercher un SIREN, fournisseur, IBAN, case ou alerte...",
+    searchHint: "Recherche fournisseur - referentiel P2P - signaux audit",
     loadingStatus:
-      "Interrogation référentiel fournisseur · écritures P2P · audit log · RBE · signaux internes…",
+      "Interrogation referentiel fournisseur - ecritures P2P - audit log - RBE - signaux internes...",
     kpiTotal: "Exposition totale",
     kpiCritical: "Exposition critique",
     kpiOpen: "Cases ouverts",
@@ -132,127 +212,163 @@ const FR: DemoContent = {
     colVendor: "Fournisseur",
     colExposure: "Exposition",
     colFindings: "Findings",
-    colSeverity: "Sévérité",
+    colSeverity: "Severite",
     colAction: "Action",
     open360: "Ouvrir 360",
-    priorityEyebrow: "Priorité du jour",
-    priorityTitle: "Réduire l'exposition critique",
+    priorityEyebrow: "Priorite du jour",
+    priorityTitle: "Reduire l'exposition critique",
     priorityBody:
-      "Traiter d'abord les fournisseurs à criticité maximale avec retard SLA ou absence d'assignation. Chaque case doit produire une preuve exploitable.",
+      "Traiter d'abord les fournisseurs a criticite maximale avec retard SLA ou absence d'assignation. Chaque case doit produire une preuve exploitable.",
+    suggestionsTitle: "Suggestions",
+    suggestions: [
+      "V00474 - ALPHACOM SERVICES - fournisseur prioritaire",
+      "V00444 - fournisseur surveille",
+      "V00343 - exposition elevee",
+    ],
   },
   case360: {
-    eyebrow: "Fraud Case 360 · données de démonstration",
-    header: "V00474 · ALPHACOM SERVICES",
-    subheader: "Dossier fournisseur 360 · faisceau d'indices à instruire",
+    eyebrow: "Fraud Case 360 - donnees de demonstration",
+    header: "V00474 - ALPHACOM SERVICES",
+    subheader: "Dossier fournisseur 360 - faisceau d'indices a instruire",
     gaugeLabel: "Score de risque",
     reasonCodesTitle: "Reason codes",
-    signalsTitle: "Signaux détectés",
-    prepareReview: "Préparer revue",
+    signalsTitle: "Signaux detectes",
+    prepareReview: "Preparer revue",
   },
   reasonCodes: {
     IBAN_RING: {
-      label: "Anneau IBAN partagé",
+      label: "Anneau IBAN partage",
       description:
-        "Même IBAN détecté sur plusieurs fournisseurs liés au référentiel P2P.",
+        "Meme IBAN detecte sur plusieurs fournisseurs lies au referentiel P2P.",
     },
     THRESHOLD_SPLIT: {
       label: "Fractionnement sous seuil",
       description:
-        "Série de factures rapprochées sous le seuil de validation interne.",
+        "Serie de factures rapprochees sous le seuil de validation interne.",
     },
     FOUR_EYES_BREAK: {
       label: "Rupture 4-eyes",
       description:
-        "Validation et création fournisseur rapprochées sur un même périmètre opérationnel.",
+        "Validation et creation fournisseur rapprochees sur un meme perimetre operationnel.",
     },
     RBE_MISMATCH: {
-      label: "Écart RBE / référentiel",
+      label: "Ecart RBE / referentiel",
       description:
-        "Écart entre les informations bénéficiaires effectifs et le référentiel fournisseur.",
+        "Ecart entre les informations beneficiaires effectifs et le referentiel fournisseur.",
+    },
+    SLA_UNASSIGNED: {
+      label: "Retard SLA / absence d'assignation",
+      description:
+        "Case prioritaire sans reviewer assigne dans la fenetre de demonstration.",
     },
   },
   evidence: {
     drawerTitle: "Evidence drawer",
-    drawerSub: "Pièces associées au scénario ALPHACOM",
-    sealed: "Preuve scellée",
+    drawerSub: "Pieces associees au scenario ALPHACOM",
+    sealed: "Preuve scellee",
     typeLabel: "Type",
     statusLabel: "Statut",
     items: {
       "ev-iban": {
-        title: "IBAN partagé",
+        title: "IBAN partage",
         type: "Signal bancaire",
-        status: "À qualifier",
-        detail: "IBAN commun observé entre V00474, V00231 et V00118.",
+        status: "A qualifier",
+        detail: "IBAN commun observe entre V00474, V00231 et V00118.",
       },
       "ev-invoice": {
         title: "Factures sous seuil",
-        type: "Contrôle interne",
-        status: "À instruire",
-        detail: "14 factures entre 4 200 € et 4 950 € sur 30 jours.",
+        type: "Controle interne",
+        status: "A instruire",
+        detail: "14 factures entre 4 200 EUR et 4 950 EUR sur 30 jours.",
       },
       "ev-four-eyes": {
         title: "Rupture 4-eyes",
         type: "Gouvernance P2P",
         status: "Revue requise",
         detail:
-          "Création fournisseur et validation rapprochées dans le même périmètre.",
+          "Creation fournisseur et validation rapprochees dans le meme perimetre.",
       },
       "ev-rbe": {
-        title: "Écart RBE / référentiel",
+        title: "Ecart RBE / referentiel",
         type: "KYS fournisseur",
-        status: "Mise à jour requise",
-        detail: "Bénéficiaire effectif non aligné avec le référentiel interne.",
+        status: "Mise a jour requise",
+        detail: "Beneficiaire effectif non aligne avec le referentiel interne.",
+      },
+      "ev-sla": {
+        title: "Absence d'assignation",
+        type: "Workflow audit",
+        status: "Reviewer requis",
+        detail: "Case prioritaire sans assignation dans le parcours de revue.",
       },
     },
   },
   alerts: {
     "iban-ring": {
-      title: "Anneau IBAN partagé détecté",
+      title: "Anneau IBAN partage",
       text:
-        "Trois fournisseurs de démonstration partagent un même IBAN de domiciliation. Signal caractéristique d'un schéma fournisseur à qualifier dans le cadre des contrôles anticorruption et du dispositif de contrôle interne.",
-      badges: ["Signal critique", "Sapin II", "Contrôle interne"],
+        "Trois fournisseurs de demonstration partagent un meme IBAN de domiciliation. Signal a qualifier dans le cadre des controles anticorruption et du controle interne.",
+      observation: "3 fournisseurs de demonstration partagent le meme IBAN.",
+      why:
+        "Un IBAN reutilise peut indiquer une anomalie fournisseur ou un schema a qualifier.",
+      proof: "ev-iban - ed25519:7f3a...91c2",
+      action: "Documenter le signal bancaire.",
+      badges: ["Signal critique", "Sapin II", "Controle interne"],
       cta: "Documenter le signal",
     },
     threshold: {
-      title: "Fractionnement sous seuil à instruire",
+      title: "Fractionnement sous seuil",
       text:
-        "Série de 14 factures entre 4 200 € et 4 950 € sur 30 jours. Le schéma suggère un possible contournement du seuil interne de validation à 5 000 €, à qualifier avant toute conclusion.",
+        "Serie de 14 factures entre 4 200 EUR et 4 950 EUR sur 30 jours. Le pattern suggere un possible contournement du seuil interne de validation a qualifier avant toute conclusion.",
+      observation: "14 factures concentrees sous le seuil interne de 5 000 EUR.",
+      why:
+        "La repetition sous seuil peut masquer une rupture de controle a instruire.",
+      proof: "ev-invoice - ed25519:93ab...4d20",
+      action: "Ouvrir les ecritures et assigner une revue.",
       badges: ["Threshold split", "4-eyes", "Revue P2P"],
-      cta: "Ouvrir les écritures",
+      cta: "Ouvrir les ecritures",
     },
     rbe: {
-      title: "Écart RBE / référentiel fournisseur",
+      title: "Ecart RBE / referentiel fournisseur",
       text:
-        "Les informations bénéficiaires effectifs ne sont pas alignées avec le référentiel fournisseur interne. Une mise à jour KYS et une revue documentaire sont recommandées.",
-      badges: ["RBE", "KYS", "Référentiel"],
-      cta: "Demander mise à jour",
+        "Les informations beneficiaires effectifs ne sont pas alignees avec le referentiel fournisseur interne. Une mise a jour KYS et une revue documentaire sont recommandees.",
+      observation: "Beneficiaire effectif externe different du referentiel interne.",
+      why: "Un ecart documentaire doit etre explique avant poursuite du parcours.",
+      proof: "ev-rbe - ed25519:b9aa...31e7",
+      action: "Demander une mise a jour KYS.",
+      badges: ["RBE", "KYS", "Referentiel"],
+      cta: "Demander mise a jour",
     },
     concentration: {
       title: "Concentration fournisseur critique",
       text:
-        "V00474 concentre une part significative de l'exposition critique du scénario. Si le fournisseur est qualifié de prestataire critique ou TIC, une revue risque tiers renforcée doit être envisagée.",
+        "V00474 concentre une part significative de l'exposition critique du scenario. Si le fournisseur est critique ou TIC, une revue risque tiers renforcee doit etre envisagee.",
+      observation: "ALPHACOM porte 4 706 422 EUR d'exposition dans la demo.",
+      why:
+        "La priorisation combine exposition, signaux et retard de traitement.",
+      proof: "ev-sla - ed25519:41f0...72ad",
+      action: "Preparer la revue humaine et le parcours d'escalade.",
       badges: ["Risque tiers", "Concentration", "DORA si applicable"],
-      cta: "Préparer revue tiers",
+      cta: "Preparer revue tiers",
     },
   },
   recommendations: {
-    eyebrow: "Parcours recommandé",
+    eyebrow: "Parcours recommande",
     title: "Dossier prêt pour revue",
-    sub: "Preuves scellées · piste d'audit générée",
+    sub: "Preuves scellées - piste d'audit générée",
     actions: [
       "Assigner reviewer",
-      "Générer audit trail",
-      "Préparer note d'escalade conformité",
+      "Generer audit trail",
+      "Preparer note d'escalade conformite",
     ],
-    note: "Aucune déclaration automatique. Le dossier prépare les éléments pour revue humaine.",
+    note: "Aucune declaration automatique. Le dossier prepare les elements pour revue humaine.",
   },
   final: {
-    title: "Investigation documentée en 60 secondes",
-    stats: "383 cases · 6 579 354 € d'exposition · 4 signaux explicables",
+    title: "Dossier ALPHACOM prêt pour revue",
+    stats: "Signaux priorisés - preuves scellées - piste d'audit générée",
     tagline:
-      "Le cockpit ne conclut pas à la fraude : il priorise, documente et prépare la revue humaine.",
+      "Le cockpit ne conclut pas a la fraude : il priorise, documente et prepare la revue humaine.",
     disclaimer:
-      "Démonstration fictive. Le cockpit priorise les signaux, documente les preuves et prépare la revue humaine. Il ne conclut pas juridiquement à une fraude.",
+      "Demonstration fictive. Le cockpit priorise les signaux, documente les preuves et prepare la revue humaine. Il ne conclut pas juridiquement a une fraude.",
   },
   rail: {
     brief: "Brief",
@@ -262,41 +378,247 @@ const FR: DemoContent = {
     evidence: "Preuves",
     recommendations: "Recommandations",
   },
+  sceneLabels: {
+    "cold-open": "Alerte prioritaire",
+    "command-launch": "Mission",
+    "cockpit-wide": "Cockpit",
+    "search-zoom": "Recherche fournisseur",
+    "data-cascade": "Cascade de signaux",
+    "supplier-row": "Priorisation",
+    "case-file-open": "Dossier 360",
+    "score-breakdown": "Score explicable",
+    "evidence-build": "Preuves",
+    "alert-sequence": "Findings",
+    "review-path": "Revue humaine",
+    "final-summary": "Case packet",
+  },
+  sceneCaptions: {
+    "cold-open": {
+      label: "Brief",
+      title: "Une alerte prioritaire ouvre l'enquete.",
+      body: "ALPHACOM SERVICES remonte a 92/100 dans le cockpit P2P.",
+    },
+    "command-launch": {
+      label: "Mission",
+      title: "La démo rejoue une investigation P2P en direct.",
+      body: "Le systeme cherche, rapproche, explique, puis prepare une revue humaine.",
+    },
+    "cockpit-wide": {
+      label: "Cockpit",
+      title: "La vue consolidee fixe le contexte de risque.",
+      body: "Exposition, cases ouverts et retard SLA orientent la priorisation.",
+    },
+    "search-zoom": {
+      label: "Recherche",
+      title: "L'auditeur isole le fournisseur V00474.",
+      body: "La recherche accepte fournisseur, SIREN, IBAN, case ou alerte.",
+    },
+    "data-cascade": {
+      label: "Cascade",
+      title: "Le moteur rapproche cinq sources de donnees.",
+      body: "Referentiel, ecritures P2P, IBAN, RBE et audit log convergent vers un dossier.",
+    },
+    "supplier-row": {
+      label: "Priorisation",
+      title: "ALPHACOM devient la ligne a traiter d'abord.",
+      body: "L'exposition financiere amplifie les signaux et fait emerger la criticite.",
+    },
+    "case-file-open": {
+      label: "Dossier 360",
+      title: "Le fournisseur est ouvert avec ses reason codes.",
+      body: "La jauge ne suffit pas : chaque point de score doit rester explicable.",
+    },
+    "score-breakdown": {
+      label: "Score",
+      title: "Le score 92 se decompose en indices auditables.",
+      body: "Chaque reason code ajoute une contribution illustrative et une preuve associee.",
+    },
+    "evidence-build": {
+      label: "Preuves",
+      title: "Les signaux deviennent des pieces de dossier.",
+      body: "IBAN, seuil, 4-eyes et RBE sont horodates, hashes et prets pour revue.",
+    },
+    "alert-sequence": {
+      label: "Findings",
+      title: "Les alertes sont editorialisees pour l'auditeur.",
+      body: "Observation, importance, preuve et action recommandee sont separes.",
+    },
+    "review-path": {
+      label: "Recommandations",
+      title: "Le parcours prepare la decision controlee.",
+      body: "Assigner un reviewer, generer l'audit trail, preparer l'escalade.",
+    },
+    "final-summary": {
+      label: "Case packet",
+      title: "Le dossier ALPHACOM est prêt pour revue.",
+      body: "Signaux priorisés, preuves scellées, piste d'audit et statut de revue humaine.",
+    },
+  },
+  consoleEvents: {
+    init: "[00:01.120] init cockpit_context",
+    "load-case": "[00:02.040] load priority_case supplier=V00474",
+    "query-supplier": "[00:03.018] query supplier_index id=V00474",
+    "fetch-ledger": "[00:06.211] fetch p2p_ledger window=30d",
+    "scan-iban": "[00:07.004] scan iban_reuse graph_depth=2",
+    "detect-threshold": "[00:08.440] detect threshold_split count=14 limit=5000",
+    "compare-rbe": "[00:09.205] compare rbe_snapshot supplier_ref",
+    "compute-score": "[00:10.880] compute risk_score -> 92",
+    "open-case": "[00:13.012] open vendor_360 case=CASE-P2P-V00474",
+    "seal-evidence": "[00:18.416] seal evidence_packet ed25519:7f3a...91c2",
+    "prepare-review": "[00:23.100] prepare review_path reviewer_required=true",
+    "packet-ready": "[00:27.000] packet status=ready_for_human_review",
+  },
+  callouts: {
+    "priority-score": {
+      title: "Score prioritaire 92/100",
+      body: "Agrege exposition, signaux bancaires, rupture de controle et retard SLA.",
+    },
+    "global-search": {
+      title: "Recherche orientee investigation",
+      body: "SIREN, fournisseur, IBAN, case ou alerte dans un seul point d'entree.",
+    },
+    "critical-kpi": {
+      title: "Exposition critique",
+      body: "Les montants guident le tri avant la revue des preuves.",
+    },
+    "supplier-row": {
+      title: "Fournisseur prioritaire",
+      body: "Exposition elevee, signaux multiples et criticite maximale.",
+    },
+    "data-lineage": {
+      title: "Cascade de rapprochement",
+      body: "5 sources rapprochees, 4 signaux priorises, 1 dossier fournisseur.",
+    },
+    "case-score": {
+      title: "Score explicable",
+      body: "Le total est rattache a des reason codes et a des preuves.",
+    },
+    "iban-ring": {
+      title: "Signal bancaire critique",
+      body: "Un meme IBAN apparait sur plusieurs fournisseurs de demonstration.",
+    },
+    "threshold-strip": {
+      title: "Pattern de fractionnement",
+      body: "14 factures proches du seuil interne de 5 000 EUR.",
+    },
+    "rbe-mismatch": {
+      title: "Revue documentaire requise",
+      body: "Le beneficiaire effectif externe ne matche pas le referentiel interne.",
+    },
+    "four-eyes": {
+      title: "Controle 4-eyes a revoir",
+      body: "Creation fournisseur et validation restent trop rapprochees.",
+    },
+    "evidence-seal": {
+      title: "Piste d'audit",
+      body: "Chaque piece est horodatee, hashee et prete pour revue.",
+    },
+    "review-human": {
+      title: "Decision controlee",
+      body: "La démo prépare l'analyse humaine, sans décision automatique.",
+    },
+  },
+  labels: {
+    scene: "Scene",
+    sources: "Sources",
+    findings: "Findings d'investigation",
+    observation: "Observation",
+    why: "Pourquoi c'est important",
+    proof: "Preuve associee",
+    action: "Action recommandee",
+    console: "Console d'analyse",
+  },
+  dataLineage: {
+    title: "Cascade de rapprochement",
+    subtitle: "5 sources rapprochees - 4 signaux priorises - 1 dossier fournisseur",
+    sources: [
+      "Referentiel fournisseur",
+      "Ecritures P2P",
+      "IBAN / coordonnees bancaires",
+      "RBE / beneficiaires effectifs",
+      "Audit log",
+    ],
+    output: "Score explicable 92/100",
+  },
+  scoreBreakdown: {
+    title: "Score 92/100",
+    subtitle: "Contribution illustrative des reason codes",
+    illustrative: "Score de demonstration - ponderation illustrative",
+  },
+  microVisuals: {
+    ibanTitle: "Anneau IBAN",
+    ibanLabel: "IBAN partage",
+    thresholdTitle: "Seuil 5 000 EUR",
+    thresholdLabel: "14 factures / 30 jours",
+    rbeTitle: "Comparatif RBE",
+    rbeInternal: "Referentiel interne: A. Martin",
+    rbeOfficial: "RBE INPI: L. Bernard",
+    rbeMismatch: "Ecart detecte",
+    fourEyesTitle: "Rupture 4-eyes",
+    fourEyesSteps: ["Creation fournisseur", "Validation facture", "Paiement"],
+    fourEyesLabel: "Meme perimetre / delai rapproche",
+  },
+  investigationMap: {
+    title: "Carte d'investigation",
+    steps: [
+      "Alerte prioritaire",
+      "Recherche fournisseur",
+      "Rapprochement signaux",
+      "Dossier 360",
+      "Preuves scellees",
+      "Revue humaine",
+    ],
+  },
+  casePacket: {
+    title: "Case packet",
+    subtitle: "Dossier ALPHACOM prêt pour revue",
+    idLabel: "ID",
+    supplierLabel: "Fournisseur",
+    scoreLabel: "Score",
+    exposureLabel: "Exposition",
+    signalsLabel: "Signaux",
+    evidenceLabel: "Preuves",
+    statusLabel: "Statut",
+    statusValue: "Revue humaine requise",
+    fingerprintLabel: "Empreinte",
+    sealPrimary: "PREUVE SCELLÉE",
+    sealSecondary: "AUDIT TRAIL READY",
+  },
 };
 
 const EN: DemoContent = {
   launch: {
-    topbar: "Guided demo · 60s",
+    topbar: "Guided demo 60s",
     sidebar: "ALPHACOM scenario",
     home: "Guided demo",
   },
   controls: {
     skip: "Skip",
     skipAria: "Skip the demonstration",
-    replay: "↺ Replay demo",
-    exploreCockpit: "Explore the cockpit →",
-    viewScenarios: "View P2P scenarios →",
+    replay: "Replay demo",
+    exploreCockpit: "Explore cockpit",
+    viewScenarios: "View P2P scenarios",
     demoBadge: "Fictional demonstration data",
   },
   demoNotice: "Fictional demonstration data",
   brief: {
-    kicker: "Demo mission · 60 seconds",
+    kicker: "Demo mission - 60 seconds",
     objectiveLabel: "Objective",
     objective: "Identify why ALPHACOM SERVICES triggers a priority risk of 92/100.",
     signalsLabel: "Expected signals",
-    signals: "Shared IBAN · sub-threshold structuring · 4-eyes breach · UBO mismatch.",
+    signals: "Shared IBAN - sub-threshold structuring - 4-eyes breach - UBO mismatch.",
     outputLabel: "Expected output",
     output: "Vendor 360 case file + audit trail + recommended path.",
   },
   cockpit: {
-    eyebrow: "P2P cockpit · consolidated view",
+    eyebrow: "P2P cockpit - consolidated view",
     title: "P2P risk cockpit",
     subtitle:
       "Consolidated view of vendor risks, sorted by financial exposure and ready for the audit decision.",
-    searchPlaceholder: "Search a SIREN, vendor, IBAN, case or alert…",
-    searchHint: "Vendor search · P2P master data · audit signals",
+    searchPlaceholder: "Search a SIREN, vendor, IBAN, case or alert...",
+    searchHint: "Vendor search - P2P master data - audit signals",
     loadingStatus:
-      "Querying vendor master data · P2P entries · audit log · UBO · internal signals…",
+      "Querying vendor master data - P2P entries - audit log - UBO - internal signals...",
     kpiTotal: "Total exposure",
     kpiCritical: "Critical exposure",
     kpiOpen: "Open cases",
@@ -313,11 +635,17 @@ const EN: DemoContent = {
     priorityTitle: "Reduce critical exposure",
     priorityBody:
       "Handle first the highest-criticality vendors with SLA overruns or no assignment. Each case must produce actionable evidence.",
+    suggestionsTitle: "Suggestions",
+    suggestions: [
+      "V00474 - ALPHACOM SERVICES - priority vendor",
+      "V00444 - monitored vendor",
+      "V00343 - high exposure",
+    ],
   },
   case360: {
-    eyebrow: "Fraud Case 360 · demonstration data",
-    header: "V00474 · ALPHACOM SERVICES",
-    subheader: "Vendor 360 case file · body of indicators to investigate",
+    eyebrow: "Fraud Case 360 - demonstration data",
+    header: "V00474 - ALPHACOM SERVICES",
+    subheader: "Vendor 360 case file - body of indicators to investigate",
     gaugeLabel: "Risk score",
     reasonCodesTitle: "Reason codes",
     signalsTitle: "Detected signals",
@@ -326,7 +654,7 @@ const EN: DemoContent = {
   reasonCodes: {
     IBAN_RING: {
       label: "Shared IBAN ring",
-      description: "Same IBAN detected across several vendors linked in the P2P master data.",
+      description: "Same IBAN detected across several vendors linked in P2P master data.",
     },
     THRESHOLD_SPLIT: {
       label: "Sub-threshold structuring",
@@ -334,13 +662,15 @@ const EN: DemoContent = {
     },
     FOUR_EYES_BREAK: {
       label: "4-eyes breach",
-      description:
-        "Vendor creation and approval clustered within the same operational perimeter.",
+      description: "Vendor creation and approval clustered within the same perimeter.",
     },
     RBE_MISMATCH: {
       label: "UBO / master-data mismatch",
-      description:
-        "Discrepancy between ultimate beneficial owner data and the vendor master record.",
+      description: "Discrepancy between UBO data and the internal vendor master record.",
+    },
+    SLA_UNASSIGNED: {
+      label: "SLA overrun / no assignment",
+      description: "Priority case still waiting for a reviewer in the demo window.",
     },
   },
   evidence: {
@@ -360,7 +690,7 @@ const EN: DemoContent = {
         title: "Sub-threshold invoices",
         type: "Internal control",
         status: "To investigate",
-        detail: "14 invoices between €4,200 and €4,950 over 30 days.",
+        detail: "14 invoices between EUR 4,200 and EUR 4,950 over 30 days.",
       },
       "ev-four-eyes": {
         title: "4-eyes breach",
@@ -374,20 +704,34 @@ const EN: DemoContent = {
         status: "Update required",
         detail: "Ultimate beneficial owner not aligned with the internal master data.",
       },
+      "ev-sla": {
+        title: "No assignment",
+        type: "Audit workflow",
+        status: "Reviewer required",
+        detail: "Priority case has no assigned reviewer in the review path.",
+      },
     },
   },
   alerts: {
     "iban-ring": {
-      title: "Shared IBAN ring detected",
+      title: "Shared IBAN ring",
       text:
-        "Three demonstration vendors share the same domiciliation IBAN. A signal characteristic of a vendor scheme to qualify within anti-corruption controls and the internal control framework.",
+        "Three demonstration vendors share the same domiciliation IBAN. This signal should be qualified within anti-corruption controls and the internal control framework.",
+      observation: "3 demonstration vendors share the same IBAN.",
+      why: "A reused IBAN may indicate a vendor anomaly or a pattern to qualify.",
+      proof: "ev-iban - ed25519:7f3a...91c2",
+      action: "Document the banking signal.",
       badges: ["Critical signal", "Sapin II", "Internal control"],
       cta: "Document the signal",
     },
     threshold: {
-      title: "Sub-threshold structuring to investigate",
+      title: "Sub-threshold structuring",
       text:
-        "Series of 14 invoices between €4,200 and €4,950 over 30 days. The pattern suggests a possible circumvention of the €5,000 internal approval threshold, to qualify before any conclusion.",
+        "Series of 14 invoices between EUR 4,200 and EUR 4,950 over 30 days. The pattern suggests a possible bypass of the EUR 5,000 approval threshold, to qualify before any conclusion.",
+      observation: "14 invoices are clustered below the EUR 5,000 internal threshold.",
+      why: "Repeated sub-threshold amounts can hide a control break to investigate.",
+      proof: "ev-invoice - ed25519:93ab...4d20",
+      action: "Open the entries and assign a review.",
       badges: ["Threshold split", "4-eyes", "P2P review"],
       cta: "Open the entries",
     },
@@ -395,13 +739,21 @@ const EN: DemoContent = {
       title: "UBO / vendor master-data mismatch",
       text:
         "Ultimate beneficial owner data is not aligned with the internal vendor master record. A KYS update and a documentary review are recommended.",
+      observation: "External UBO data differs from the internal master record.",
+      why: "A documentary discrepancy must be explained before continuing the path.",
+      proof: "ev-rbe - ed25519:b9aa...31e7",
+      action: "Request a KYS update.",
       badges: ["UBO", "KYS", "Master data"],
       cta: "Request update",
     },
     concentration: {
       title: "Critical vendor concentration",
       text:
-        "V00474 concentrates a significant share of the scenario's critical exposure. If the vendor qualifies as a critical or ICT provider, an enhanced third-party risk review should be considered.",
+        "V00474 concentrates a significant share of the scenario's critical exposure. If the vendor qualifies as critical or ICT, enhanced third-party review should be considered.",
+      observation: "ALPHACOM carries EUR 4,706,422 exposure in the demo.",
+      why: "Prioritisation combines exposure, signals and handling delay.",
+      proof: "ev-sla - ed25519:41f0...72ad",
+      action: "Prepare the human review and escalation path.",
       badges: ["Third-party risk", "Concentration", "DORA if applicable"],
       cta: "Prepare third-party review",
     },
@@ -409,13 +761,13 @@ const EN: DemoContent = {
   recommendations: {
     eyebrow: "Recommended path",
     title: "Case ready for review",
-    sub: "Sealed evidence · audit trail generated",
+    sub: "Sealed evidence - audit trail generated",
     actions: ["Assign reviewer", "Generate audit trail", "Prepare compliance escalation note"],
     note: "No automatic filing. The case prepares the elements for human review.",
   },
   final: {
-    title: "Investigation documented in 60 seconds",
-    stats: "383 cases · €6,579,354 exposure · 4 explainable signals",
+    title: "ALPHACOM case ready for review",
+    stats: "Prioritised signals - sealed evidence - audit trail generated",
     tagline:
       "The cockpit does not conclude on fraud: it prioritises, documents and prepares the human review.",
     disclaimer:
@@ -428,6 +780,212 @@ const EN: DemoContent = {
     case360: "Case 360",
     evidence: "Evidence",
     recommendations: "Recommendations",
+  },
+  sceneLabels: {
+    "cold-open": "Priority alert",
+    "command-launch": "Mission",
+    "cockpit-wide": "Cockpit",
+    "search-zoom": "Vendor search",
+    "data-cascade": "Signal cascade",
+    "supplier-row": "Prioritisation",
+    "case-file-open": "Case 360",
+    "score-breakdown": "Explainable score",
+    "evidence-build": "Evidence",
+    "alert-sequence": "Findings",
+    "review-path": "Human review",
+    "final-summary": "Case packet",
+  },
+  sceneCaptions: {
+    "cold-open": {
+      label: "Brief",
+      title: "A priority alert opens the investigation.",
+      body: "ALPHACOM SERVICES rises to 92/100 in the P2P cockpit.",
+    },
+    "command-launch": {
+      label: "Mission",
+      title: "The demo replays a P2P investigation live.",
+      body: "The system searches, reconciles, explains, then prepares a human review.",
+    },
+    "cockpit-wide": {
+      label: "Cockpit",
+      title: "The consolidated view sets the risk context.",
+      body: "Exposure, open cases and SLA overrun guide prioritisation.",
+    },
+    "search-zoom": {
+      label: "Search",
+      title: "The auditor isolates vendor V00474.",
+      body: "Search accepts vendor, SIREN, IBAN, case or alert.",
+    },
+    "data-cascade": {
+      label: "Cascade",
+      title: "The engine reconciles five data sources.",
+      body: "Master data, P2P entries, IBAN, UBO and audit log converge into a case.",
+    },
+    "supplier-row": {
+      label: "Prioritisation",
+      title: "ALPHACOM becomes the first row to review.",
+      body: "Financial exposure amplifies the signals and surfaces criticality.",
+    },
+    "case-file-open": {
+      label: "Case 360",
+      title: "The vendor opens with explainable reason codes.",
+      body: "The gauge is not enough: every score point must remain auditable.",
+    },
+    "score-breakdown": {
+      label: "Score",
+      title: "The 92 score breaks down into auditable indicators.",
+      body: "Each reason code adds an illustrative contribution and linked evidence.",
+    },
+    "evidence-build": {
+      label: "Evidence",
+      title: "Signals become case exhibits.",
+      body: "IBAN, threshold, 4-eyes and UBO are timestamped, hashed and review-ready.",
+    },
+    "alert-sequence": {
+      label: "Findings",
+      title: "Alerts are editorialised for the auditor.",
+      body: "Observation, importance, evidence and recommended action are separated.",
+    },
+    "review-path": {
+      label: "Recommendations",
+      title: "The path prepares a controlled decision.",
+      body: "Assign a reviewer, generate the audit trail, prepare escalation.",
+    },
+    "final-summary": {
+      label: "Case packet",
+      title: "The ALPHACOM case is ready for review.",
+      body: "Prioritised signals, sealed evidence, audit trail and human-review status.",
+    },
+  },
+  consoleEvents: {
+    init: "[00:01.120] init cockpit_context",
+    "load-case": "[00:02.040] load priority_case supplier=V00474",
+    "query-supplier": "[00:03.018] query supplier_index id=V00474",
+    "fetch-ledger": "[00:06.211] fetch p2p_ledger window=30d",
+    "scan-iban": "[00:07.004] scan iban_reuse graph_depth=2",
+    "detect-threshold": "[00:08.440] detect threshold_split count=14 limit=5000",
+    "compare-rbe": "[00:09.205] compare ubo_snapshot supplier_ref",
+    "compute-score": "[00:10.880] compute risk_score -> 92",
+    "open-case": "[00:13.012] open vendor_360 case=CASE-P2P-V00474",
+    "seal-evidence": "[00:18.416] seal evidence_packet ed25519:7f3a...91c2",
+    "prepare-review": "[00:23.100] prepare review_path reviewer_required=true",
+    "packet-ready": "[00:27.000] packet status=ready_for_human_review",
+  },
+  callouts: {
+    "priority-score": {
+      title: "Priority score 92/100",
+      body: "Combines exposure, banking signals, control break and SLA delay.",
+    },
+    "global-search": {
+      title: "Investigation-oriented search",
+      body: "SIREN, vendor, IBAN, case or alert from a single entry point.",
+    },
+    "critical-kpi": {
+      title: "Critical exposure",
+      body: "Amounts guide triage before the evidence review.",
+    },
+    "supplier-row": {
+      title: "Priority vendor",
+      body: "High exposure, multiple signals and maximum criticality.",
+    },
+    "data-lineage": {
+      title: "Reconciliation cascade",
+      body: "5 sources reconciled, 4 prioritised signals, 1 vendor case.",
+    },
+    "case-score": {
+      title: "Explainable score",
+      body: "The total is tied to reason codes and evidence.",
+    },
+    "iban-ring": {
+      title: "Critical banking signal",
+      body: "The same IBAN appears across multiple demonstration vendors.",
+    },
+    "threshold-strip": {
+      title: "Structuring pattern",
+      body: "14 invoices clustered near the EUR 5,000 internal threshold.",
+    },
+    "rbe-mismatch": {
+      title: "Documentary review required",
+      body: "The external UBO does not match internal master data.",
+    },
+    "four-eyes": {
+      title: "4-eyes control to review",
+      body: "Vendor creation and approval are too closely clustered.",
+    },
+    "evidence-seal": {
+      title: "Audit trail",
+      body: "Each exhibit is timestamped, hashed and review-ready.",
+    },
+    "review-human": {
+      title: "Controlled decision",
+      body: "The demo prepares human analysis without an automatic decision.",
+    },
+  },
+  labels: {
+    scene: "Scene",
+    sources: "Sources",
+    findings: "Investigation findings",
+    observation: "Observation",
+    why: "Why it matters",
+    proof: "Associated evidence",
+    action: "Recommended action",
+    console: "Analysis console",
+  },
+  dataLineage: {
+    title: "Reconciliation cascade",
+    subtitle: "5 sources reconciled - 4 prioritised signals - 1 vendor case",
+    sources: [
+      "Vendor master data",
+      "P2P entries",
+      "IBAN / bank details",
+      "UBO registry",
+      "Audit log",
+    ],
+    output: "Explainable score 92/100",
+  },
+  scoreBreakdown: {
+    title: "Score 92/100",
+    subtitle: "Illustrative reason-code contribution",
+    illustrative: "Demonstration score - illustrative weighting",
+  },
+  microVisuals: {
+    ibanTitle: "IBAN ring",
+    ibanLabel: "Shared IBAN",
+    thresholdTitle: "EUR 5,000 threshold",
+    thresholdLabel: "14 invoices / 30 days",
+    rbeTitle: "UBO comparison",
+    rbeInternal: "Internal record: A. Martin",
+    rbeOfficial: "UBO registry: L. Bernard",
+    rbeMismatch: "Mismatch detected",
+    fourEyesTitle: "4-eyes breach",
+    fourEyesSteps: ["Vendor creation", "Invoice approval", "Payment"],
+    fourEyesLabel: "Same perimeter / clustered delay",
+  },
+  investigationMap: {
+    title: "Investigation map",
+    steps: [
+      "Priority alert",
+      "Vendor search",
+      "Signal reconciliation",
+      "Case 360",
+      "Sealed evidence",
+      "Human review",
+    ],
+  },
+  casePacket: {
+    title: "Case packet",
+    subtitle: "ALPHACOM case ready for review",
+    idLabel: "ID",
+    supplierLabel: "Supplier",
+    scoreLabel: "Score",
+    exposureLabel: "Exposure",
+    signalsLabel: "Signals",
+    evidenceLabel: "Evidence",
+    statusLabel: "Status",
+    statusValue: "Human review required",
+    fingerprintLabel: "Fingerprint",
+    sealPrimary: "SEALED EVIDENCE",
+    sealSecondary: "AUDIT TRAIL READY",
   },
 };
 
