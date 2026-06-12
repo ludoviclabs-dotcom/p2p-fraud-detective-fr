@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
+import { P2PDemoLauncher } from "@/components/demo-p2p/P2PDemoLauncher";
 
 type Badge = "live" | "risk" | "new";
 type NavItem = { href: string; labelKey: string; glyph: string; badge?: Badge };
@@ -158,9 +159,7 @@ export function Sidebar() {
         </nav>
 
         <div className="sb-foot">
-          <Link href="/sandbox" className="quick" onClick={close}>
-            ▶ {t("shell.request_demo")}
-          </Link>
+          <P2PDemoLauncher variant="sidebar" />
           <div className="meta">
             <span>
               <span className="dot">●</span> RGPD-ready

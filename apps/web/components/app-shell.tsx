@@ -8,6 +8,7 @@ import { BarChart3, Command, FileSearch, Home, Moon, Play, Search, ShieldCheck, 
 import { RISK_SCENARIOS } from "@/data/risk-scenarios";
 import { Sidebar } from "@/components/sidebar";
 import { useLocale, type Locale } from "@/components/locale-provider";
+import { P2PDemoLauncher } from "@/components/demo-p2p/P2PDemoLauncher";
 
 const MOBILE_NAV = [
   { href: "/", labelKey: "nav.home", mobileLabelKey: "nav.home", Icon: Home },
@@ -199,10 +200,7 @@ function Topbar() {
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
-          <Link href="/sandbox" className="topbar-demo">
-            <Play size={13} />
-            {t("shell.request_demo")}
-          </Link>
+          <P2PDemoLauncher variant="topbar" />
         </div>
       </div>
     </header>

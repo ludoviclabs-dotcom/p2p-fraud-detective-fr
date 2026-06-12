@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SB_SECTIONS } from "./data";
+import { P2PDemoLauncher } from "@/components/demo-p2p/P2PDemoLauncher";
 
 export function ForensicSidebar({
   activeAnchor,
@@ -113,9 +114,7 @@ export function ForensicSidebar({
         </nav>
 
         <div className="sb-foot">
-          <Link href="/sandbox" className="quick">
-            ▶ Lancer la sandbox
-          </Link>
+          <P2PDemoLauncher variant="home" />
           <div className="meta">
             <span>
               <span className="dot">●</span> RGPD-ready
