@@ -13,7 +13,7 @@ const LOCALES = ["fr", "en"] as const;
 
 describe("cinematic P2P demo scene contract", () => {
   it("keeps the guided walkthrough close to a 60 second product demo", () => {
-    expect(DEMO_SCENES).toHaveLength(12);
+    expect(DEMO_SCENES).toHaveLength(13);
     expect(DEMO_TOTAL_DURATION_MS).toBeGreaterThanOrEqual(55_000);
     expect(DEMO_TOTAL_DURATION_MS).toBeLessThanOrEqual(65_000);
   });
@@ -55,8 +55,20 @@ describe("cinematic P2P demo scene contract", () => {
       "evidence-build",
       "alert-sequence",
       "review-path",
+      "export-ready",
       "final-summary",
     ]);
+  });
+
+  it("ships an explicit export-ready ending for analysis handoff", () => {
+    for (const locale of LOCALES) {
+      const content = getDemoContent(locale);
+      expect(content.casePacket.exportTitle).toBeTruthy();
+      expect(content.casePacket.exportMeta).toMatch(/PDF|JSON/i);
+      expect(content.casePacket.exportFeatures).toHaveLength(4);
+      expect(content.sceneCaptions["export-ready"].title).toBeTruthy();
+      expect(content.callouts["export-ready"].body).toBeTruthy();
+    }
   });
 
   it("keeps the bilingual narrative legally prudent", () => {

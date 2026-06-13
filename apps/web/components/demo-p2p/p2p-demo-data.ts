@@ -17,6 +17,7 @@ export type P2PDemoScene =
   | "evidence-build"
   | "alert-sequence"
   | "review-path"
+  | "export-ready"
   | "final-summary";
 
 export const FINAL_DEMO_SCENE: P2PDemoScene = "final-summary";
@@ -149,7 +150,8 @@ export type P2PCalloutId =
   | "rbe-mismatch"
   | "four-eyes"
   | "evidence-seal"
-  | "review-human";
+  | "review-human"
+  | "export-ready";
 
 export type P2PConsoleEventId =
   | "init"
@@ -163,6 +165,7 @@ export type P2PConsoleEventId =
   | "open-case"
   | "seal-evidence"
   | "prepare-review"
+  | "build-export"
   | "packet-ready";
 
 export interface SpotlightPreset {
@@ -191,7 +194,6 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "brief",
     consoleEvents: ["init", "load-case"],
     callouts: ["priority-score"],
-    spotlight: { x: 69, y: 23, width: 22, height: 24 },
     cockpitMode: "cockpit",
   },
   {
@@ -223,7 +225,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
   },
   {
     id: "data-cascade",
-    durationMs: 6500,
+    durationMs: 6000,
     camera: "kpiFocus",
     railStep: "cascade",
     consoleEvents: ["fetch-ledger", "scan-iban", "detect-threshold", "compare-rbe"],
@@ -237,7 +239,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "cascade",
     consoleEvents: ["compute-score"],
     callouts: ["supplier-row"],
-    spotlight: { x: 9, y: 62, width: 70, height: 11 },
+    spotlight: { x: 2, y: 58, width: 94, height: 12 },
     cockpitMode: "results",
   },
   {
@@ -250,7 +252,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
   },
   {
     id: "score-breakdown",
-    durationMs: 6000,
+    durationMs: 5500,
     camera: "scoreFocus",
     railStep: "case360",
     consoleEvents: ["compute-score"],
@@ -258,7 +260,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
   },
   {
     id: "evidence-build",
-    durationMs: 6000,
+    durationMs: 5500,
     camera: "evidenceFocus",
     railStep: "evidence",
     consoleEvents: ["seal-evidence"],
@@ -266,7 +268,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
   },
   {
     id: "alert-sequence",
-    durationMs: 5500,
+    durationMs: 5000,
     camera: "evidenceFocus",
     railStep: "evidence",
     consoleEvents: ["seal-evidence"],
@@ -274,19 +276,27 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
   },
   {
     id: "review-path",
-    durationMs: 4000,
+    durationMs: 3500,
     camera: "reviewFocus",
     railStep: "recommendations",
     consoleEvents: ["prepare-review"],
     callouts: ["review-human"],
   },
   {
+    id: "export-ready",
+    durationMs: 3500,
+    camera: "finalWide",
+    railStep: "recommendations",
+    consoleEvents: ["build-export"],
+    callouts: ["export-ready", "evidence-seal"],
+  },
+  {
     id: "final-summary",
-    durationMs: 4000,
+    durationMs: 3500,
     camera: "finalWide",
     railStep: "recommendations",
     consoleEvents: ["packet-ready"],
-    callouts: ["evidence-seal", "review-human"],
+    callouts: [],
   },
 ];
 

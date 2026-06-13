@@ -17,6 +17,8 @@ test("cinematic guided demo opens from the dashboard topbar and reaches the case
   await expect(dialog.getByRole("heading", { name: /Dossier ALPHACOM pr[eê]t pour revue/i })).toBeVisible();
   await expect(dialog.getByText("CASE-P2P-V00474", { exact: true })).toBeVisible();
   await expect(dialog.getByText("Revue humaine requise", { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/Export d'analyse pr[eê]t/i).first()).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Exporter pour analyse" })).toBeVisible();
 
   await dialog.getByRole("button", { name: /Rejouer la d[eé]mo|Replay demo/i }).click();
   await expect(dialog.getByText("Alerte prioritaire", { exact: true })).toBeVisible();
@@ -33,5 +35,7 @@ test("cinematic guided demo respects English locale and reduced motion", async (
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("ALPHACOM case ready for review")).toBeVisible();
   await expect(dialog.getByText("Human review required")).toBeVisible();
+  await expect(dialog.getByText("Analysis export ready").first()).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Export for analysis" })).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Explore cockpit" })).toBeVisible();
 });

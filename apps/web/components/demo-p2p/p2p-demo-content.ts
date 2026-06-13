@@ -36,6 +36,7 @@ export interface DemoContent {
     replay: string;
     exploreCockpit: string;
     viewScenarios: string;
+    exportAnalysis: string;
     demoBadge: string;
   };
   demoNotice: string;
@@ -165,6 +166,10 @@ export interface DemoContent {
     fingerprintLabel: string;
     sealPrimary: string;
     sealSecondary: string;
+    exportTitle: string;
+    exportSubtitle: string;
+    exportMeta: string;
+    exportFeatures: string[];
   };
 }
 
@@ -180,6 +185,7 @@ const FR: DemoContent = {
     replay: "Rejouer la démo",
     exploreCockpit: "Explorer le cockpit",
     viewScenarios: "Voir les scénarios P2P",
+    exportAnalysis: "Exporter pour analyse",
     demoBadge: "Données de démonstration fictives",
   },
   demoNotice: "Données de démonstration fictives",
@@ -390,68 +396,74 @@ const FR: DemoContent = {
     "evidence-build": "Preuves",
     "alert-sequence": "Findings",
     "review-path": "Revue humaine",
+    "export-ready": "Export analyse",
     "final-summary": "Case packet",
   },
   sceneCaptions: {
     "cold-open": {
       label: "Brief",
-      title: "Une alerte prioritaire ouvre l'enquete.",
-      body: "ALPHACOM SERVICES remonte a 92/100 dans le cockpit P2P.",
+      title: "Un fournisseur sort du bruit.",
+      body: "ALPHACOM remonte en tête : 92/100, 4,7 M EUR exposés et plusieurs signaux à qualifier.",
     },
     "command-launch": {
       label: "Mission",
-      title: "La démo rejoue une investigation P2P en direct.",
-      body: "Le systeme cherche, rapproche, explique, puis prepare une revue humaine.",
+      title: "On rejoue le raisonnement, pas seulement l'écran.",
+      body: "La démo montre comment passer d'une alerte brute à un dossier clair, relisible et assignable.",
     },
     "cockpit-wide": {
       label: "Cockpit",
-      title: "La vue consolidee fixe le contexte de risque.",
-      body: "Exposition, cases ouverts et retard SLA orientent la priorisation.",
+      title: "Le cockpit donne l'ordre de bataille.",
+      body: "Montants, retards et criticité indiquent où l'auditeur doit commencer sa revue.",
     },
     "search-zoom": {
       label: "Recherche",
-      title: "L'auditeur isole le fournisseur V00474.",
-      body: "La recherche accepte fournisseur, SIREN, IBAN, case ou alerte.",
+      title: "Un identifiant suffit pour isoler le sujet.",
+      body: "V00474 ouvre le contexte fournisseur, les alertes liées et les preuves déjà disponibles.",
     },
     "data-cascade": {
       label: "Cascade",
-      title: "Le moteur rapproche cinq sources de donnees.",
-      body: "Referentiel, ecritures P2P, IBAN, RBE et audit log convergent vers un dossier.",
+      title: "Les sources parlent ensemble.",
+      body: "Référentiel, écritures P2P, IBAN, RBE et audit log sont rapprochés avant toute conclusion.",
     },
     "supplier-row": {
       label: "Priorisation",
-      title: "ALPHACOM devient la ligne a traiter d'abord.",
-      body: "L'exposition financiere amplifie les signaux et fait emerger la criticite.",
+      title: "La ligne ALPHACOM devient actionnable.",
+      body: "Le tri explique pourquoi ce fournisseur passe avant les autres, sans masquer les raisons.",
     },
     "case-file-open": {
       label: "Dossier 360",
-      title: "Le fournisseur est ouvert avec ses reason codes.",
-      body: "La jauge ne suffit pas : chaque point de score doit rester explicable.",
+      title: "Le dossier 360 donne les pièces du puzzle.",
+      body: "Le score n'est utile que s'il montre les signaux, les dates et les preuves associées.",
     },
     "score-breakdown": {
       label: "Score",
-      title: "Le score 92 se decompose en indices auditables.",
-      body: "Chaque reason code ajoute une contribution illustrative et une preuve associee.",
+      title: "Le 92/100 devient compréhensible.",
+      body: "Chaque point fort du score renvoie à une raison lisible et à une pièce de dossier.",
     },
     "evidence-build": {
       label: "Preuves",
-      title: "Les signaux deviennent des pieces de dossier.",
-      body: "IBAN, seuil, 4-eyes et RBE sont horodates, hashes et prets pour revue.",
+      title: "Les indices deviennent des preuves de travail.",
+      body: "IBAN, seuil, 4-eyes et RBE sont horodatés, hashés et prêts à être relus.",
     },
     "alert-sequence": {
       label: "Findings",
-      title: "Les alertes sont editorialisees pour l'auditeur.",
-      body: "Observation, importance, preuve et action recommandee sont separes.",
+      title: "Chaque alerte répond à quatre questions.",
+      body: "Qu'a-t-on vu ? Pourquoi c'est important ? Quelle preuve ? Quelle action maintenant ?",
     },
     "review-path": {
       label: "Recommandations",
-      title: "Le parcours prepare la decision controlee.",
-      body: "Assigner un reviewer, generer l'audit trail, preparer l'escalade.",
+      title: "La suite est simple : assigner, tracer, décider.",
+      body: "Le cockpit prépare la revue humaine avec un parcours d'escalade clair et prudent.",
+    },
+    "export-ready": {
+      label: "Export analyse",
+      title: "Le dossier est prêt à sortir du cockpit.",
+      body: "Un paquet d'analyse est généré : synthèse, preuves, empreintes et prochaine action.",
     },
     "final-summary": {
       label: "Case packet",
       title: "Le dossier ALPHACOM est prêt pour revue.",
-      body: "Signaux priorisés, preuves scellées, piste d'audit et statut de revue humaine.",
+      body: "Le document est prêt à être exporté, partagé et relu par un reviewer humain.",
     },
   },
   consoleEvents: {
@@ -466,32 +478,33 @@ const FR: DemoContent = {
     "open-case": "[00:13.012] open vendor_360 case=CASE-P2P-V00474",
     "seal-evidence": "[00:18.416] seal evidence_packet ed25519:7f3a...91c2",
     "prepare-review": "[00:23.100] prepare review_path reviewer_required=true",
+    "build-export": "[00:26.420] build analysis_export format=case_packet",
     "packet-ready": "[00:27.000] packet status=ready_for_human_review",
   },
   callouts: {
     "priority-score": {
       title: "Score prioritaire 92/100",
-      body: "Agrege exposition, signaux bancaires, rupture de controle et retard SLA.",
+      body: "Ce score dit ou regarder en premier, pas quoi conclure.",
     },
     "global-search": {
-      title: "Recherche orientee investigation",
-      body: "SIREN, fournisseur, IBAN, case ou alerte dans un seul point d'entree.",
+      title: "Recherche sans détour",
+      body: "Tapez un fournisseur ou un identifiant : le cockpit remonte le dossier utile.",
     },
     "critical-kpi": {
       title: "Exposition critique",
-      body: "Les montants guident le tri avant la revue des preuves.",
+      body: "Le risque financier donne le tempo de revue.",
     },
     "supplier-row": {
       title: "Fournisseur prioritaire",
-      body: "Exposition elevee, signaux multiples et criticite maximale.",
+      body: "ALPHACOM combine montant élevé, signaux multiples et retard de traitement.",
     },
     "data-lineage": {
       title: "Cascade de rapprochement",
-      body: "5 sources rapprochees, 4 signaux priorises, 1 dossier fournisseur.",
+      body: "Les données sont rapprochées avant d'être résumées.",
     },
     "case-score": {
       title: "Score explicable",
-      body: "Le total est rattache a des reason codes et a des preuves.",
+      body: "Chaque raison doit pouvoir être relue par un auditeur.",
     },
     "iban-ring": {
       title: "Signal bancaire critique",
@@ -511,11 +524,15 @@ const FR: DemoContent = {
     },
     "evidence-seal": {
       title: "Piste d'audit",
-      body: "Chaque piece est horodatee, hashee et prete pour revue.",
+      body: "Les pièces sont horodatées, hashées et prêtes à être partagées.",
     },
     "review-human": {
       title: "Decision controlee",
-      body: "La démo prépare l'analyse humaine, sans décision automatique.",
+      body: "Le système prépare la revue ; la décision reste humaine.",
+    },
+    "export-ready": {
+      title: "Document prêt",
+      body: "Le paquet d'analyse rassemble synthèse, preuves et actions recommandées.",
     },
   },
   labels: {
@@ -583,6 +600,15 @@ const FR: DemoContent = {
     fingerprintLabel: "Empreinte",
     sealPrimary: "PREUVE SCELLÉE",
     sealSecondary: "AUDIT TRAIL READY",
+    exportTitle: "Export d'analyse prêt",
+    exportSubtitle: "Document structuré pour revue humaine",
+    exportMeta: "PDF + JSON audit · 5 preuves · 4 findings",
+    exportFeatures: [
+      "Synthèse décisionnelle",
+      "Preuves horodatées",
+      "Reason codes explicables",
+      "Actions de revue",
+    ],
   },
 };
 
@@ -598,6 +624,7 @@ const EN: DemoContent = {
     replay: "Replay demo",
     exploreCockpit: "Explore cockpit",
     viewScenarios: "View P2P scenarios",
+    exportAnalysis: "Export for analysis",
     demoBadge: "Fictional demonstration data",
   },
   demoNotice: "Fictional demonstration data",
@@ -793,68 +820,74 @@ const EN: DemoContent = {
     "evidence-build": "Evidence",
     "alert-sequence": "Findings",
     "review-path": "Human review",
+    "export-ready": "Analysis export",
     "final-summary": "Case packet",
   },
   sceneCaptions: {
     "cold-open": {
       label: "Brief",
-      title: "A priority alert opens the investigation.",
-      body: "ALPHACOM SERVICES rises to 92/100 in the P2P cockpit.",
+      title: "One vendor rises above the noise.",
+      body: "ALPHACOM reaches the top of the queue: 92/100, EUR 4.7M exposed and several signals to qualify.",
     },
     "command-launch": {
       label: "Mission",
-      title: "The demo replays a P2P investigation live.",
-      body: "The system searches, reconciles, explains, then prepares a human review.",
+      title: "We replay the reasoning, not just the screen.",
+      body: "The demo shows how a raw alert becomes a clear, reviewable and assignable case file.",
     },
     "cockpit-wide": {
       label: "Cockpit",
-      title: "The consolidated view sets the risk context.",
-      body: "Exposure, open cases and SLA overrun guide prioritisation.",
+      title: "The cockpit sets the order of work.",
+      body: "Amounts, delays and criticality show where the auditor should start.",
     },
     "search-zoom": {
       label: "Search",
-      title: "The auditor isolates vendor V00474.",
-      body: "Search accepts vendor, SIREN, IBAN, case or alert.",
+      title: "One identifier is enough to isolate the subject.",
+      body: "V00474 opens the vendor context, linked alerts and evidence already available.",
     },
     "data-cascade": {
       label: "Cascade",
-      title: "The engine reconciles five data sources.",
-      body: "Master data, P2P entries, IBAN, UBO and audit log converge into a case.",
+      title: "The sources start speaking together.",
+      body: "Master data, P2P entries, IBAN, UBO and audit log are reconciled before any conclusion.",
     },
     "supplier-row": {
       label: "Prioritisation",
-      title: "ALPHACOM becomes the first row to review.",
-      body: "Financial exposure amplifies the signals and surfaces criticality.",
+      title: "The ALPHACOM row becomes actionable.",
+      body: "The ranking explains why this vendor goes first without hiding the reasons.",
     },
     "case-file-open": {
       label: "Case 360",
-      title: "The vendor opens with explainable reason codes.",
-      body: "The gauge is not enough: every score point must remain auditable.",
+      title: "Case 360 gives the pieces of the puzzle.",
+      body: "The score only helps if it exposes the signals, dates and linked evidence.",
     },
     "score-breakdown": {
       label: "Score",
-      title: "The 92 score breaks down into auditable indicators.",
-      body: "Each reason code adds an illustrative contribution and linked evidence.",
+      title: "The 92/100 becomes understandable.",
+      body: "Each strong score driver maps to a readable reason and a case exhibit.",
     },
     "evidence-build": {
       label: "Evidence",
-      title: "Signals become case exhibits.",
-      body: "IBAN, threshold, 4-eyes and UBO are timestamped, hashed and review-ready.",
+      title: "Indicators become working evidence.",
+      body: "IBAN, threshold, 4-eyes and UBO are timestamped, hashed and ready to review.",
     },
     "alert-sequence": {
       label: "Findings",
-      title: "Alerts are editorialised for the auditor.",
-      body: "Observation, importance, evidence and recommended action are separated.",
+      title: "Each alert answers four questions.",
+      body: "What did we see? Why does it matter? What evidence supports it? What action comes next?",
     },
     "review-path": {
       label: "Recommendations",
-      title: "The path prepares a controlled decision.",
-      body: "Assign a reviewer, generate the audit trail, prepare escalation.",
+      title: "The next step is simple: assign, trace, decide.",
+      body: "The cockpit prepares human review with a clear and prudent escalation path.",
+    },
+    "export-ready": {
+      label: "Analysis export",
+      title: "The case is ready to leave the cockpit.",
+      body: "An analysis packet is generated: summary, evidence, fingerprints and next action.",
     },
     "final-summary": {
       label: "Case packet",
       title: "The ALPHACOM case is ready for review.",
-      body: "Prioritised signals, sealed evidence, audit trail and human-review status.",
+      body: "The document is ready to export, share and review by a human reviewer.",
     },
   },
   consoleEvents: {
@@ -869,32 +902,33 @@ const EN: DemoContent = {
     "open-case": "[00:13.012] open vendor_360 case=CASE-P2P-V00474",
     "seal-evidence": "[00:18.416] seal evidence_packet ed25519:7f3a...91c2",
     "prepare-review": "[00:23.100] prepare review_path reviewer_required=true",
+    "build-export": "[00:26.420] build analysis_export format=case_packet",
     "packet-ready": "[00:27.000] packet status=ready_for_human_review",
   },
   callouts: {
     "priority-score": {
       title: "Priority score 92/100",
-      body: "Combines exposure, banking signals, control break and SLA delay.",
+      body: "This score says where to look first, not what to conclude.",
     },
     "global-search": {
-      title: "Investigation-oriented search",
-      body: "SIREN, vendor, IBAN, case or alert from a single entry point.",
+      title: "Search without detours",
+      body: "Enter a vendor or identifier: the cockpit brings up the useful case.",
     },
     "critical-kpi": {
       title: "Critical exposure",
-      body: "Amounts guide triage before the evidence review.",
+      body: "Financial exposure sets the review tempo.",
     },
     "supplier-row": {
       title: "Priority vendor",
-      body: "High exposure, multiple signals and maximum criticality.",
+      body: "ALPHACOM combines high exposure, multiple signals and handling delay.",
     },
     "data-lineage": {
       title: "Reconciliation cascade",
-      body: "5 sources reconciled, 4 prioritised signals, 1 vendor case.",
+      body: "Data is reconciled before it is summarised.",
     },
     "case-score": {
       title: "Explainable score",
-      body: "The total is tied to reason codes and evidence.",
+      body: "Each reason must be readable by an auditor.",
     },
     "iban-ring": {
       title: "Critical banking signal",
@@ -914,11 +948,15 @@ const EN: DemoContent = {
     },
     "evidence-seal": {
       title: "Audit trail",
-      body: "Each exhibit is timestamped, hashed and review-ready.",
+      body: "Exhibits are timestamped, hashed and ready to share.",
     },
     "review-human": {
       title: "Controlled decision",
-      body: "The demo prepares human analysis without an automatic decision.",
+      body: "The system prepares the review; the decision remains human.",
+    },
+    "export-ready": {
+      title: "Document ready",
+      body: "The analysis packet gathers summary, evidence and recommended actions.",
     },
   },
   labels: {
@@ -986,6 +1024,15 @@ const EN: DemoContent = {
     fingerprintLabel: "Fingerprint",
     sealPrimary: "SEALED EVIDENCE",
     sealSecondary: "AUDIT TRAIL READY",
+    exportTitle: "Analysis export ready",
+    exportSubtitle: "Structured document for human review",
+    exportMeta: "PDF + audit JSON · 5 exhibits · 4 findings",
+    exportFeatures: [
+      "Decision summary",
+      "Timestamped evidence",
+      "Explainable reason codes",
+      "Review actions",
+    ],
   },
 };
 

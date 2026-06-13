@@ -18,6 +18,7 @@ import { P2PCommandCockpit } from "./P2PCommandCockpit";
 import { P2PCommandConsole } from "./P2PCommandConsole";
 import { P2PDataLineageBeam } from "./P2PDataLineageBeam";
 import { P2PEvidenceDrawer } from "./P2PEvidenceDrawer";
+import { P2PExportReadyPanel } from "./P2PExportReadyPanel";
 import { P2PFocusSpotlight } from "./P2PFocusSpotlight";
 import { P2PForensicOverlay } from "./P2PForensicOverlay";
 import { P2PInvestigationMap } from "./P2PInvestigationMap";
@@ -161,9 +162,9 @@ export function P2PDemoSceneDirector({
           {renderScene(currentScene.id)}
         </P2PCameraFrame>
         <P2PFocusSpotlight spotlight={currentScene.spotlight} />
-        <P2PCalloutLayer ids={currentScene.callouts} content={content} />
-        <P2PSceneCaption scene={currentScene.id} content={content} />
-        <P2PCommandConsole events={consoleEvents} content={content} />
+        <P2PCalloutLayer scene={currentScene.id} ids={currentScene.callouts} content={content} />
+        {!isFinal ? <P2PSceneCaption scene={currentScene.id} content={content} /> : null}
+        {!isFinal ? <P2PCommandConsole events={consoleEvents} content={content} /> : null}
       </div>
     </P2PForensicOverlay>
   );
@@ -250,11 +251,16 @@ export function P2PDemoSceneDirector({
       );
     }
 
+    if (scene === "export-ready") {
+      return <P2PExportReadyPanel content={content} />;
+    }
+
     return (
       <P2PCasePacket
         content={content}
         onExplore={() => go("/dashboard")}
         onScenarios={() => go("/sandbox")}
+        onExport={() => go("/exports")}
         onReplay={handleReplay}
       />
     );
