@@ -2,7 +2,7 @@
 
 import { Badge, SeverityBadge } from "@/components/ui/badge";
 import { formatEuro, formatNumber } from "@/lib/p2p-demo-format";
-import { DEMO_KPIS, DEMO_SUPPLIER, DEMO_VENDORS, type P2PDemoPhase } from "./p2p-demo-data";
+import { DEMO_KPIS, DEMO_SUPPLIER, DEMO_VENDORS, type P2PCockpitMode } from "./p2p-demo-data";
 import type { DemoContent } from "./p2p-demo-content";
 import { P2PKpiCounter } from "./P2PKpiCounter";
 
@@ -13,7 +13,7 @@ export function P2PCommandCockpit({
   typed,
 }: {
   content: DemoContent;
-  phase: P2PDemoPhase;
+  phase: P2PCockpitMode;
   typed: string;
 }) {
   const c = content.cockpit;
@@ -48,7 +48,19 @@ export function P2PCommandCockpit({
           </span>
         </div>
         {isSearch ? (
-          <div className="p2p-demo-eyebrow" style={{ marginTop: 8 }}>{c.searchHint}</div>
+          <div style={{ marginTop: 8 }}>
+            <div className="p2p-demo-eyebrow">{c.searchHint}</div>
+            <div className="p2p-demo-suggestions" aria-label={c.suggestionsTitle}>
+              {c.suggestions.map((suggestion, index) => (
+                <div
+                  key={suggestion}
+                  className={`p2p-demo-suggestion ${index === 0 ? "active" : ""}`}
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : null}
         {isLoading ? (
           <div className="p2p-demo-eyebrow" style={{ marginTop: 8, color: "var(--warn)" }}>{c.loadingStatus}</div>

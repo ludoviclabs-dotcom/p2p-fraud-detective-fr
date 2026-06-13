@@ -5,6 +5,16 @@ import type { P2PSeverity } from "./p2p-demo-data";
 export interface P2PRegulatoryAlertProps {
   title: string;
   text: string;
+  observation?: string;
+  why?: string;
+  proof?: string;
+  action?: string;
+  labels?: {
+    observation: string;
+    why: string;
+    proof: string;
+    action: string;
+  };
   badges: string[];
   cta: string;
   severity: P2PSeverity;
@@ -18,6 +28,11 @@ export interface P2PRegulatoryAlertProps {
 export function P2PRegulatoryAlert({
   title,
   text,
+  observation,
+  why,
+  proof,
+  action,
+  labels,
   badges,
   cta,
   severity,
@@ -47,6 +62,26 @@ export function P2PRegulatoryAlert({
       <p style={{ margin: "6px 0 10px", fontSize: 13, lineHeight: 1.6, color: "var(--fg-2)" }}>
         {text}
       </p>
+      {labels && observation && why && proof && action ? (
+        <dl className="p2p-demo-finding-grid">
+          <div>
+            <dt>{labels.observation}</dt>
+            <dd>{observation}</dd>
+          </div>
+          <div>
+            <dt>{labels.why}</dt>
+            <dd>{why}</dd>
+          </div>
+          <div>
+            <dt>{labels.proof}</dt>
+            <dd>{proof}</dd>
+          </div>
+          <div>
+            <dt>{labels.action}</dt>
+            <dd>{action}</dd>
+          </div>
+        </dl>
+      ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
         {badges.map((b) => (
           <span

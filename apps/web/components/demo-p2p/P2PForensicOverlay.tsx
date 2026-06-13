@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
-import type { P2PDemoPhase } from "./p2p-demo-data";
+import type { P2PDemoScene } from "./p2p-demo-data";
 import type { DemoContent } from "./p2p-demo-content";
 import { P2PTimelineRail } from "./P2PTimelineRail";
 import "./p2p-demo-motion.css";
@@ -18,13 +18,17 @@ import "./p2p-demo-motion.css";
  * interactifs.
  */
 export function P2PForensicOverlay({
-  phase,
+  scene,
+  sceneIndex,
+  sceneCount,
   content,
   onSkip,
   isFinal,
   children,
 }: {
-  phase: P2PDemoPhase;
+  scene: P2PDemoScene;
+  sceneIndex: number;
+  sceneCount: number;
   content: DemoContent;
   onSkip: () => void;
   isFinal: boolean;
@@ -57,7 +61,12 @@ export function P2PForensicOverlay({
     >
       <div className="p2p-demo-scrim">
         <div className="p2p-demo-top">
-          <P2PTimelineRail phase={phase} labels={content.rail} />
+          <P2PTimelineRail
+            scene={scene}
+            sceneIndex={sceneIndex}
+            sceneCount={sceneCount}
+            content={content}
+          />
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
             <span className="p2p-demo-notice">{content.controls.demoBadge}</span>
             <button

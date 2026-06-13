@@ -1,35 +1,25 @@
-// Données structurelles (locale-indépendantes) de la démo guidée P2P.
-//
-// Toutes les valeurs sont FICTIVES et de DÉMONSTRATION. Les libellés et la
-// narration vivent dans `p2p-demo-content.ts` (bilingue), fusionnés par `id`/`code`.
-// Les KPI et la ligne V00474 sont alignés sur la démo du cockpit (`/dashboard`).
+// Donnees structurelles locale-independantes de la demo guidee P2P.
+// Toutes les valeurs sont fictives et de demonstration.
 
 export type P2PSeverity = "critical" | "high" | "medium" | "low";
 
-export type P2PDemoPhase =
-  | "preflight"
-  | "cockpit"
-  | "search"
-  | "loading"
-  | "results"
-  | "case360"
-  | "evidence"
-  | "alerts"
-  | "recommendations"
-  | "final";
+export type P2PCockpitMode = "cockpit" | "search" | "loading" | "results";
 
-export const DEMO_PHASES: P2PDemoPhase[] = [
-  "preflight",
-  "cockpit",
-  "search",
-  "loading",
-  "results",
-  "case360",
-  "evidence",
-  "alerts",
-  "recommendations",
-  "final",
-];
+export type P2PDemoScene =
+  | "cold-open"
+  | "command-launch"
+  | "cockpit-wide"
+  | "search-zoom"
+  | "data-cascade"
+  | "supplier-row"
+  | "case-file-open"
+  | "score-breakdown"
+  | "evidence-build"
+  | "alert-sequence"
+  | "review-path"
+  | "final-summary";
+
+export const FINAL_DEMO_SCENE: P2PDemoScene = "final-summary";
 
 export const DEMO_SUPPLIER = {
   id: "V00474",
@@ -54,7 +44,6 @@ export interface DemoVendorRow {
   severity: P2PSeverity;
 }
 
-// Aligné sur la table « Top fournisseurs par exposition » du cockpit démo.
 export const DEMO_VENDORS: DemoVendorRow[] = [
   { id: "V00474", exposure: 4_706_422, findings: 173, severity: "critical" },
   { id: "V00444", exposure: 105_441, findings: 4, severity: "critical" },
@@ -67,13 +56,16 @@ export const DEMO_VENDORS: DemoVendorRow[] = [
 export interface DemoReasonCode {
   code: string;
   severity: P2PSeverity;
+  points: number;
+  evidenceId: string;
 }
 
 export const DEMO_REASON_CODES: DemoReasonCode[] = [
-  { code: "IBAN_RING", severity: "critical" },
-  { code: "THRESHOLD_SPLIT", severity: "high" },
-  { code: "FOUR_EYES_BREAK", severity: "high" },
-  { code: "RBE_MISMATCH", severity: "medium" },
+  { code: "IBAN_RING", severity: "critical", points: 30, evidenceId: "ev-iban" },
+  { code: "THRESHOLD_SPLIT", severity: "high", points: 24, evidenceId: "ev-invoice" },
+  { code: "FOUR_EYES_BREAK", severity: "high", points: 21, evidenceId: "ev-four-eyes" },
+  { code: "RBE_MISMATCH", severity: "medium", points: 12, evidenceId: "ev-rbe" },
+  { code: "SLA_UNASSIGNED", severity: "medium", points: 5, evidenceId: "ev-sla" },
 ];
 
 export interface DemoEvidenceRef {
@@ -83,25 +75,26 @@ export interface DemoEvidenceRef {
 }
 
 export const DEMO_EVIDENCE: DemoEvidenceRef[] = [
-  { id: "ev-iban", hash: "ed25519:7f3a…91c2", severity: "critical" },
-  { id: "ev-invoice", hash: "ed25519:93ab…4d20", severity: "high" },
-  { id: "ev-four-eyes", hash: "ed25519:11dc…8fa1", severity: "high" },
-  { id: "ev-rbe", hash: "ed25519:b9aa…31e7", severity: "medium" },
+  { id: "ev-iban", hash: "ed25519:7f3a...91c2", severity: "critical" },
+  { id: "ev-invoice", hash: "ed25519:93ab...4d20", severity: "high" },
+  { id: "ev-four-eyes", hash: "ed25519:11dc...8fa1", severity: "high" },
+  { id: "ev-rbe", hash: "ed25519:b9aa...31e7", severity: "medium" },
+  { id: "ev-sla", hash: "ed25519:41f0...72ad", severity: "medium" },
 ];
 
 export interface DemoAlertRef {
   id: string;
   severity: P2PSeverity;
+  evidenceId: string;
 }
 
 export const DEMO_ALERTS: DemoAlertRef[] = [
-  { id: "iban-ring", severity: "critical" },
-  { id: "threshold", severity: "high" },
-  { id: "rbe", severity: "medium" },
-  { id: "concentration", severity: "high" },
+  { id: "iban-ring", severity: "critical", evidenceId: "ev-iban" },
+  { id: "threshold", severity: "high", evidenceId: "ev-invoice" },
+  { id: "rbe", severity: "medium", evidenceId: "ev-rbe" },
+  { id: "concentration", severity: "high", evidenceId: "ev-sla" },
 ];
 
-// Étapes du rail de progression (libellés fournis par le contenu bilingue).
 export const DEMO_RAIL_STEPS = [
   "brief",
   "search",
@@ -113,16 +106,209 @@ export const DEMO_RAIL_STEPS = [
 
 export type DemoRailStep = (typeof DEMO_RAIL_STEPS)[number];
 
-// Quelle étape du rail est active pour une phase donnée.
-export const PHASE_TO_RAIL: Record<P2PDemoPhase, DemoRailStep> = {
-  preflight: "brief",
-  cockpit: "search",
-  search: "search",
-  loading: "cascade",
-  results: "cascade",
-  case360: "case360",
-  evidence: "evidence",
-  alerts: "evidence",
-  recommendations: "recommendations",
-  final: "recommendations",
+export type DemoCameraPreset =
+  | "cockpitWide"
+  | "commandFocus"
+  | "searchFocus"
+  | "kpiFocus"
+  | "supplierRowFocus"
+  | "case360Focus"
+  | "scoreFocus"
+  | "evidenceFocus"
+  | "reviewFocus"
+  | "finalWide";
+
+export interface CameraPreset {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+export const CAMERA_PRESETS: Record<DemoCameraPreset, CameraPreset> = {
+  cockpitWide: { scale: 1, x: 0, y: 0 },
+  commandFocus: { scale: 1.06, x: 0, y: 28 },
+  searchFocus: { scale: 1.14, x: 0, y: 78 },
+  kpiFocus: { scale: 1.18, x: -78, y: 36 },
+  supplierRowFocus: { scale: 1.2, x: -42, y: -112 },
+  case360Focus: { scale: 1.08, x: 0, y: 0 },
+  scoreFocus: { scale: 1.14, x: 70, y: 10 },
+  evidenceFocus: { scale: 1.12, x: -150, y: 0 },
+  reviewFocus: { scale: 1.06, x: 0, y: 0 },
+  finalWide: { scale: 1, x: 0, y: 0 },
 };
+
+export type P2PCalloutId =
+  | "priority-score"
+  | "global-search"
+  | "critical-kpi"
+  | "supplier-row"
+  | "data-lineage"
+  | "case-score"
+  | "iban-ring"
+  | "threshold-strip"
+  | "rbe-mismatch"
+  | "four-eyes"
+  | "evidence-seal"
+  | "review-human";
+
+export type P2PConsoleEventId =
+  | "init"
+  | "load-case"
+  | "query-supplier"
+  | "fetch-ledger"
+  | "scan-iban"
+  | "detect-threshold"
+  | "compare-rbe"
+  | "compute-score"
+  | "open-case"
+  | "seal-evidence"
+  | "prepare-review"
+  | "packet-ready";
+
+export interface SpotlightPreset {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface DemoSceneConfig {
+  id: P2PDemoScene;
+  durationMs: number;
+  camera: DemoCameraPreset;
+  railStep: DemoRailStep;
+  consoleEvents: P2PConsoleEventId[];
+  callouts: P2PCalloutId[];
+  spotlight?: SpotlightPreset;
+  cockpitMode?: P2PCockpitMode;
+}
+
+export const DEMO_SCENES: DemoSceneConfig[] = [
+  {
+    id: "cold-open",
+    durationMs: 3500,
+    camera: "cockpitWide",
+    railStep: "brief",
+    consoleEvents: ["init", "load-case"],
+    callouts: ["priority-score"],
+    spotlight: { x: 69, y: 23, width: 22, height: 24 },
+    cockpitMode: "cockpit",
+  },
+  {
+    id: "command-launch",
+    durationMs: 4500,
+    camera: "commandFocus",
+    railStep: "brief",
+    consoleEvents: ["init", "load-case"],
+    callouts: ["review-human"],
+  },
+  {
+    id: "cockpit-wide",
+    durationMs: 4500,
+    camera: "cockpitWide",
+    railStep: "search",
+    consoleEvents: ["query-supplier"],
+    callouts: ["global-search", "critical-kpi"],
+    cockpitMode: "cockpit",
+  },
+  {
+    id: "search-zoom",
+    durationMs: 5000,
+    camera: "searchFocus",
+    railStep: "search",
+    consoleEvents: ["query-supplier"],
+    callouts: ["global-search"],
+    spotlight: { x: 8, y: 17, width: 72, height: 15 },
+    cockpitMode: "search",
+  },
+  {
+    id: "data-cascade",
+    durationMs: 6500,
+    camera: "kpiFocus",
+    railStep: "cascade",
+    consoleEvents: ["fetch-ledger", "scan-iban", "detect-threshold", "compare-rbe"],
+    callouts: ["data-lineage", "critical-kpi"],
+    cockpitMode: "loading",
+  },
+  {
+    id: "supplier-row",
+    durationMs: 4500,
+    camera: "supplierRowFocus",
+    railStep: "cascade",
+    consoleEvents: ["compute-score"],
+    callouts: ["supplier-row"],
+    spotlight: { x: 9, y: 62, width: 70, height: 11 },
+    cockpitMode: "results",
+  },
+  {
+    id: "case-file-open",
+    durationMs: 5000,
+    camera: "case360Focus",
+    railStep: "case360",
+    consoleEvents: ["open-case"],
+    callouts: ["case-score"],
+  },
+  {
+    id: "score-breakdown",
+    durationMs: 6000,
+    camera: "scoreFocus",
+    railStep: "case360",
+    consoleEvents: ["compute-score"],
+    callouts: ["case-score", "iban-ring", "threshold-strip"],
+  },
+  {
+    id: "evidence-build",
+    durationMs: 6000,
+    camera: "evidenceFocus",
+    railStep: "evidence",
+    consoleEvents: ["seal-evidence"],
+    callouts: ["rbe-mismatch", "four-eyes", "evidence-seal"],
+  },
+  {
+    id: "alert-sequence",
+    durationMs: 5500,
+    camera: "evidenceFocus",
+    railStep: "evidence",
+    consoleEvents: ["seal-evidence"],
+    callouts: ["iban-ring", "threshold-strip", "evidence-seal"],
+  },
+  {
+    id: "review-path",
+    durationMs: 4000,
+    camera: "reviewFocus",
+    railStep: "recommendations",
+    consoleEvents: ["prepare-review"],
+    callouts: ["review-human"],
+  },
+  {
+    id: "final-summary",
+    durationMs: 4000,
+    camera: "finalWide",
+    railStep: "recommendations",
+    consoleEvents: ["packet-ready"],
+    callouts: ["evidence-seal", "review-human"],
+  },
+];
+
+export const DEMO_SCENE_IDS = DEMO_SCENES.map((scene) => scene.id);
+
+export const DEMO_TOTAL_DURATION_MS = DEMO_SCENES.reduce(
+  (total, scene) => total + scene.durationMs,
+  0,
+);
+
+export const SCENE_TO_RAIL = DEMO_SCENES.reduce(
+  (acc, scene) => {
+    acc[scene.id] = scene.railStep;
+    return acc;
+  },
+  {} as Record<P2PDemoScene, DemoRailStep>,
+);
+
+export const DEMO_FORBIDDEN_TERMS = [
+  "fraude confirmée",
+  "fraude confirmee",
+  "coupable",
+  "TRACFIN automatique",
+  "notification automatique TRACFIN",
+];
