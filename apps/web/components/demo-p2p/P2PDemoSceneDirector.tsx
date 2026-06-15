@@ -10,7 +10,6 @@ import {
   type P2PConsoleEventId,
   type P2PDemoScene,
 } from "./p2p-demo-data";
-import { P2PCalloutLayer } from "./P2PCalloutLayer";
 import { P2PCameraFrame } from "./P2PCameraFrame";
 import { P2PCaseFile360 } from "./P2PCaseFile360";
 import { P2PCasePacket } from "./P2PCasePacket";
@@ -21,6 +20,7 @@ import { P2PEvidenceDrawer } from "./P2PEvidenceDrawer";
 import { P2PFocusSpotlight } from "./P2PFocusSpotlight";
 import { P2PForensicOverlay } from "./P2PForensicOverlay";
 import { P2PInvestigationMap } from "./P2PInvestigationMap";
+import { P2PNotificationStack } from "./P2PNotificationStack";
 import { P2PPreflightBrief } from "./P2PPreflightBrief";
 import { P2PRecommendationPanel } from "./P2PRecommendationPanel";
 import { P2PRegulatoryAlert } from "./P2PRegulatoryAlert";
@@ -42,6 +42,7 @@ export function P2PDemoSceneDirector({
   const [typed, setTyped] = useState("");
   const [runId, setRunId] = useState(0);
   const timersRef = useRef<number[]>([]);
+  const stageRef = useRef<HTMLDivElement | null>(null);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -156,12 +157,25 @@ export function P2PDemoSceneDirector({
       onSkip={handleSkip}
       isFinal={isFinal}
     >
-      <div className="p2p-demo-directed-stage" key={`${runId}-${currentScene.id}`}>
+      <div
+        className="p2p-demo-directed-stage"
+        key={`${runId}-${currentScene.id}`}
+        ref={stageRef}
+      >
         <P2PCameraFrame preset={currentScene.camera} scene={currentScene.id}>
           {renderScene(currentScene.id)}
         </P2PCameraFrame>
-        <P2PFocusSpotlight spotlight={currentScene.spotlight} />
-        <P2PCalloutLayer ids={currentScene.callouts} content={content} />
+        <P2PFocusSpotlight
+          anchor={currentScene.focus}
+          stageRef={stageRef}
+          token={sceneIndex}
+        />
+        <P2PNotificationStack
+          scene={currentScene.id}
+          callouts={currentScene.callouts}
+          content={content}
+          durationMs={currentScene.durationMs}
+        />
         <P2PSceneCaption scene={currentScene.id} content={content} />
         <P2PCommandConsole events={consoleEvents} content={content} />
       </div>
@@ -215,7 +229,7 @@ export function P2PDemoSceneDirector({
 
     if (scene === "alert-sequence") {
       return (
-        <div className="p2p-demo-alert-sequence">
+        <div className="p2p-demo-alert-sequence" data-demo-anchor="findings-list">
           <div className="p2p-demo-eyebrow">{content.labels.findings}</div>
           {DEMO_ALERTS.map((alert, index) => {
             const copy = content.alerts[alert.id];

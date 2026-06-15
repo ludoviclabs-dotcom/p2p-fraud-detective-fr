@@ -165,12 +165,28 @@ export type P2PConsoleEventId =
   | "prepare-review"
   | "packet-ready";
 
-export interface SpotlightPreset {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+/**
+ * Ancres DOM ciblees par le reticule d'analyse (focus). Chaque scene pointe
+ * vers un element reel rendu *dans* le cadre camera ; le reticule mesure sa
+ * position ecran (getBoundingClientRect relatif au stage) et se cale dessus.
+ * Cela supprime tout decalage lie au pan/zoom de la camera ou au reflow
+ * responsive — l'ancien systeme de pourcentages statiques etait, lui, calcule
+ * dans le repere du stage et non du contenu transforme, d'ou les carres mal
+ * places.
+ */
+export type DemoAnchorId =
+  | "priority-card"
+  | "mission-brief"
+  | "search-bar"
+  | "kpi-critical"
+  | "supplier-row"
+  | "data-lineage"
+  | "case-gauge"
+  | "score-total"
+  | "evidence-drawer"
+  | "findings-list"
+  | "review-panel"
+  | "audit-seal";
 
 export interface DemoSceneConfig {
   id: P2PDemoScene;
@@ -179,9 +195,26 @@ export interface DemoSceneConfig {
   railStep: DemoRailStep;
   consoleEvents: P2PConsoleEventId[];
   callouts: P2PCalloutId[];
-  spotlight?: SpotlightPreset;
+  /** Element reel encadre par le reticule pour cette scene (ancre mesuree). */
+  focus?: DemoAnchorId;
   cockpitMode?: P2PCockpitMode;
 }
+
+/** Severite portee par chaque notification du flux de signaux (toasts). */
+export const CALLOUT_SEVERITY: Record<P2PCalloutId, P2PSeverity> = {
+  "priority-score": "critical",
+  "global-search": "low",
+  "critical-kpi": "high",
+  "supplier-row": "critical",
+  "data-lineage": "medium",
+  "case-score": "high",
+  "iban-ring": "critical",
+  "threshold-strip": "high",
+  "rbe-mismatch": "medium",
+  "four-eyes": "high",
+  "evidence-seal": "low",
+  "review-human": "medium",
+};
 
 export const DEMO_SCENES: DemoSceneConfig[] = [
   {
@@ -191,7 +224,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "brief",
     consoleEvents: ["init", "load-case"],
     callouts: ["priority-score"],
-    spotlight: { x: 69, y: 23, width: 22, height: 24 },
+    focus: "priority-card",
     cockpitMode: "cockpit",
   },
   {
@@ -201,6 +234,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "brief",
     consoleEvents: ["init", "load-case"],
     callouts: ["review-human"],
+    focus: "mission-brief",
   },
   {
     id: "cockpit-wide",
@@ -209,6 +243,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "search",
     consoleEvents: ["query-supplier"],
     callouts: ["global-search", "critical-kpi"],
+    focus: "search-bar",
     cockpitMode: "cockpit",
   },
   {
@@ -218,7 +253,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "search",
     consoleEvents: ["query-supplier"],
     callouts: ["global-search"],
-    spotlight: { x: 8, y: 17, width: 72, height: 15 },
+    focus: "search-bar",
     cockpitMode: "search",
   },
   {
@@ -228,6 +263,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "cascade",
     consoleEvents: ["fetch-ledger", "scan-iban", "detect-threshold", "compare-rbe"],
     callouts: ["data-lineage", "critical-kpi"],
+    focus: "data-lineage",
     cockpitMode: "loading",
   },
   {
@@ -237,7 +273,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "cascade",
     consoleEvents: ["compute-score"],
     callouts: ["supplier-row"],
-    spotlight: { x: 9, y: 62, width: 70, height: 11 },
+    focus: "supplier-row",
     cockpitMode: "results",
   },
   {
@@ -247,6 +283,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "case360",
     consoleEvents: ["open-case"],
     callouts: ["case-score"],
+    focus: "case-gauge",
   },
   {
     id: "score-breakdown",
@@ -255,6 +292,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "case360",
     consoleEvents: ["compute-score"],
     callouts: ["case-score", "iban-ring", "threshold-strip"],
+    focus: "score-total",
   },
   {
     id: "evidence-build",
@@ -263,14 +301,16 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "evidence",
     consoleEvents: ["seal-evidence"],
     callouts: ["rbe-mismatch", "four-eyes", "evidence-seal"],
+    focus: "evidence-drawer",
   },
   {
     id: "alert-sequence",
     durationMs: 5500,
-    camera: "evidenceFocus",
+    camera: "reviewFocus",
     railStep: "evidence",
     consoleEvents: ["seal-evidence"],
     callouts: ["iban-ring", "threshold-strip", "evidence-seal"],
+    focus: "findings-list",
   },
   {
     id: "review-path",
@@ -279,6 +319,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "recommendations",
     consoleEvents: ["prepare-review"],
     callouts: ["review-human"],
+    focus: "review-panel",
   },
   {
     id: "final-summary",
@@ -287,6 +328,7 @@ export const DEMO_SCENES: DemoSceneConfig[] = [
     railStep: "recommendations",
     consoleEvents: ["packet-ready"],
     callouts: ["evidence-seal", "review-human"],
+    focus: "audit-seal",
   },
 ];
 

@@ -123,6 +123,13 @@ export interface DemoContent {
     action: string;
     console: string;
   };
+  notify: {
+    label: string;
+    critical: string;
+    high: string;
+    medium: string;
+    low: string;
+  };
   dataLineage: {
     title: string;
     subtitle: string;
@@ -528,6 +535,13 @@ const FR: DemoContent = {
     action: "Action recommandee",
     console: "Console d'analyse",
   },
+  notify: {
+    label: "Flux signaux",
+    critical: "Critique",
+    high: "Eleve",
+    medium: "Moyen",
+    low: "Info",
+  },
   dataLineage: {
     title: "Cascade de rapprochement",
     subtitle: "5 sources rapprochees - 4 signaux priorises - 1 dossier fournisseur",
@@ -930,6 +944,13 @@ const EN: DemoContent = {
     proof: "Associated evidence",
     action: "Recommended action",
     console: "Analysis console",
+  },
+  notify: {
+    label: "Signal feed",
+    critical: "Critical",
+    high: "High",
+    medium: "Medium",
+    low: "Info",
   },
   dataLineage: {
     title: "Reconciliation cascade",

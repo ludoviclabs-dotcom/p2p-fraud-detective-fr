@@ -40,7 +40,11 @@ export function P2PCommandCockpit({
         <p style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted)", lineHeight: 1.6, maxWidth: 640 }}>
           {c.subtitle}
         </p>
-        <div className={`p2p-demo-search ${isSearch ? "p2p-demo-input-pulse" : ""}`} style={{ marginTop: 14 }}>
+        <div
+          className={`p2p-demo-search ${isSearch ? "p2p-demo-input-pulse" : ""}`}
+          style={{ marginTop: 14 }}
+          data-demo-anchor="search-bar"
+        >
           <span aria-hidden style={{ color: "var(--muted)" }}>⌕</span>
           <span>
             {typed || (!isSearch ? c.searchPlaceholder : "")}
@@ -70,7 +74,7 @@ export function P2PCommandCockpit({
       {/* KPI */}
       <div className="p2p-demo-kpis">
         <P2PKpiCounter label={c.kpiTotal} target={DEMO_KPIS.totalExposure} format={formatEuro} glyph="Σ" tone="neutral" active={showResults} />
-        <P2PKpiCounter label={c.kpiCritical} target={DEMO_KPIS.criticalExposure} format={formatEuro} glyph="▲" tone="risk" active={showResults} />
+        <P2PKpiCounter label={c.kpiCritical} target={DEMO_KPIS.criticalExposure} format={formatEuro} glyph="▲" tone="risk" active={showResults} anchorId="kpi-critical" />
         <P2PKpiCounter label={c.kpiOpen} target={DEMO_KPIS.openCases} format={formatNumber} glyph="▣" tone="neutral" active={showResults} />
         <P2PKpiCounter label={c.kpiSla} target={DEMO_KPIS.lateSla} format={formatNumber} glyph="◷" tone="warn" active={showResults} />
       </div>
@@ -107,6 +111,7 @@ export function P2PCommandCockpit({
                             key={v.id}
                             className={`p2p-demo-row ${heat ? "p2p-demo-risk-heat" : ""}`}
                             style={{ animationDelay: `${i * 90}ms` }}
+                            data-demo-anchor={heat ? "supplier-row" : undefined}
                           >
                             <td style={{ fontFamily: "var(--font-mono)", color: heat ? "var(--risk)" : "var(--fg)", fontWeight: heat ? 700 : 400 }}>
                               {v.id}
@@ -128,6 +133,7 @@ export function P2PCommandCockpit({
         <div
           className={`p2p-demo-panel ${phase === "cockpit" ? "p2p-demo-critical-pulse" : ""}`}
           style={{ borderLeft: "3px solid var(--risk)" }}
+          data-demo-anchor="priority-card"
         >
           <div className="p2p-demo-eyebrow">{c.priorityEyebrow}</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8 }}>

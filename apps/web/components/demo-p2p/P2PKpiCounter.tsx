@@ -11,6 +11,8 @@ export interface P2PKpiCounterProps {
   duration?: number;
   /** Démarre le count-up quand passe à true. */
   active: boolean;
+  /** Ancre DOM optionnelle ciblée par le réticule d'analyse. */
+  anchorId?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export function P2PKpiCounter({
   tone = "neutral",
   duration = 1100,
   active,
+  anchorId,
 }: P2PKpiCounterProps) {
   const [n, setN] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -54,7 +57,7 @@ export function P2PKpiCounter({
     tone === "risk" ? "var(--risk)" : tone === "warn" ? "var(--warn)" : "var(--info)";
 
   return (
-    <div className="p2p-demo-kpi">
+    <div className="p2p-demo-kpi" data-demo-anchor={anchorId}>
       <span className="glyph" aria-hidden style={{ fontFamily: "var(--font-mono)", color }}>
         {glyph}
       </span>
