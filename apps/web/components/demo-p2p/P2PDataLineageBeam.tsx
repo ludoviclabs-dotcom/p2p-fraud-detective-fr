@@ -4,7 +4,7 @@ import type { DemoContent } from "./p2p-demo-content";
 
 export function P2PDataLineageBeam({ content }: { content: DemoContent }) {
   return (
-    <div className="p2p-demo-panel p2p-demo-lineage">
+    <div className="p2p-demo-panel p2p-demo-lineage" data-demo-anchor="data-lineage">
       <div className="p2p-demo-eyebrow">{content.dataLineage.title}</div>
       <p>{content.dataLineage.subtitle}</p>
       <div className="p2p-demo-lineage-chain" aria-label={content.labels.sources}>

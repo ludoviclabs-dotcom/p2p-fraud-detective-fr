@@ -6,7 +6,7 @@ import type { DemoContent } from "./p2p-demo-content";
 export function P2PRecommendationPanel({ content }: { content: DemoContent }) {
   const r = content.recommendations;
   return (
-    <div className="p2p-demo-panel p2p-demo-spring">
+    <div className="p2p-demo-panel p2p-demo-spring" data-demo-anchor="review-panel">
       <div className="p2p-demo-eyebrow">{r.eyebrow}</div>
       <h2 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "var(--fg)", margin: "6px 0 4px", fontWeight: 400 }}>
         {r.title}

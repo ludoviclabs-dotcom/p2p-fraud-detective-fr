@@ -9,6 +9,7 @@ export function P2PPreflightBrief({ content }: { content: DemoContent }) {
     <div
       className="p2p-demo-panel p2p-demo-spring"
       style={{ maxWidth: 560, margin: "auto", borderTop: "3px solid var(--risk)" }}
+      data-demo-anchor="mission-brief"
     >
       <div className="p2p-demo-eyebrow" style={{ color: "var(--risk)" }}>
         {b.kicker}

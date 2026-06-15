@@ -16,7 +16,7 @@ export function P2PScoreBreakdown({ content }: { content: DemoContent }) {
     <div className="p2p-demo-score-layout">
       <div className="p2p-demo-panel p2p-demo-score-breakdown">
         <div className="p2p-demo-eyebrow">{content.scoreBreakdown.subtitle}</div>
-        <div className="p2p-demo-score-total">
+        <div className="p2p-demo-score-total" data-demo-anchor="score-total">
           <span>{DEMO_SUPPLIER.score}</span>
           <span>/100</span>
         </div>

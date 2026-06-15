@@ -77,13 +77,36 @@
   0% { filter: blur(2px); }
   100% { filter: blur(0); }
 }
-@keyframes spotlightReveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes reticleReveal {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
 }
-@keyframes calloutDraw {
-  from { stroke-dashoffset: 120; opacity: 0; }
-  to { stroke-dashoffset: 0; opacity: 1; }
+@keyframes reticleCorner {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes reticleScan {
+  0% { top: 3%; opacity: 0; }
+  14% { opacity: 0.6; }
+  86% { opacity: 0.6; }
+  100% { top: 97%; opacity: 0; }
+}
+@keyframes reticlePing {
+  0% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+@keyframes toastIn {
+  0% { opacity: 0; transform: translateX(22px) scale(0.97); filter: blur(2px); }
+  60% { filter: blur(0); }
+  100% { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
+@keyframes toastDot {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sev) 50%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--sev) 0%, transparent); }
+}
+@keyframes toastBar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }
 @keyframes consoleLineIn {
   from { opacity: 0; transform: translateY(4px); }
@@ -210,7 +233,7 @@
 .p2p-demo-root[data-theme="light"] .p2p-demo-case-packet-main,
 .p2p-demo-root[data-theme="light"] .p2p-demo-command-console,
 .p2p-demo-root[data-theme="light"] .p2p-demo-scene-caption,
-.p2p-demo-root[data-theme="light"] .p2p-demo-callout-card,
+.p2p-demo-root[data-theme="light"] .p2p-demo-toast,
 .p2p-demo-root[data-theme="light"] .p2p-demo-micro-card {
   background: rgba(255, 255, 255, 0.98);
   border-color: #b8b0a0;
@@ -402,67 +425,112 @@
   align-items: start;
 }
 .p2p-demo-cascade-grid { grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr); }
-.p2p-demo-spotlight {
+/* ── Reticule d'analyse (focus ancré, ex-spotlight) ────────────────────── */
+.p2p-demo-reticle {
   position: absolute;
   z-index: 2;
-  border: 1px solid color-mix(in srgb, var(--warn) 72%, transparent);
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--risk) 42%, transparent);
+  background: color-mix(in srgb, var(--risk) 5%, transparent);
   box-shadow:
-    0 0 0 999px color-mix(in srgb, var(--bg) 64%, transparent),
-    0 0 24px color-mix(in srgb, var(--risk) 34%, transparent);
-  pointer-events: none;
-  animation: spotlightReveal 280ms ease-out both;
+    0 0 0 9999px color-mix(in srgb, var(--bg) 40%, transparent),
+    0 0 26px color-mix(in srgb, var(--risk) 26%, transparent);
+  animation: reticleReveal 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.p2p-demo-callout-layer {
+.p2p-demo-reticle-corner {
   position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--risk);
+  animation: reticleCorner 380ms ease-out both;
 }
-.p2p-demo-callout {
+.p2p-demo-reticle-corner.tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.p2p-demo-reticle-corner.tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+.p2p-demo-reticle-corner.bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+.p2p-demo-reticle-corner.br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+.p2p-demo-reticle-scan {
   position: absolute;
-  width: min(260px, 24vw);
-  opacity: 0;
-  animation: consoleLineIn 320ms ease-out both;
-}
-.p2p-demo-callout.right { transform: translateX(-100%); }
-.p2p-demo-callout-line {
-  position: absolute;
-  width: 120px;
-  height: 64px;
   left: 0;
-  top: 0;
-  transform: translateY(-48px);
-  overflow: visible;
-}
-.p2p-demo-callout.right .p2p-demo-callout-line {
-  left: auto;
   right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--risk), transparent);
+  animation: reticleScan 2.4s linear infinite;
 }
-.p2p-demo-callout-line path {
-  fill: none;
-  stroke: var(--warn);
-  stroke-width: 1;
-  stroke-dasharray: 120;
-  animation: calloutDraw 420ms ease-out both;
+.p2p-demo-reticle-ping {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--risk);
+  border-radius: 50%;
+  animation: reticlePing 760ms ease-out both;
 }
-.p2p-demo-callout-card {
+
+/* ── Flux de notifications « fraud-ops » (ex-callouts) ──────────────────── */
+.p2p-demo-notify {
+  position: absolute;
+  z-index: 8;
+  top: 14px;
+  right: 16px;
+  width: min(330px, 32vw);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.p2p-demo-toast {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  padding: 10px 12px;
-  box-shadow: 0 18px 38px color-mix(in srgb, var(--bg) 40%, transparent);
+  border-left: 3px solid var(--sev, var(--risk));
+  background: color-mix(in srgb, var(--panel) 95%, transparent);
+  box-shadow: 0 16px 38px color-mix(in srgb, var(--bg) 46%, transparent);
+  padding: 10px 12px 12px;
+  animation: toastIn 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.p2p-demo-callout-card div {
+.p2p-demo-toast-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--warn);
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--sev, var(--risk));
 }
-.p2p-demo-callout-card p {
-  margin: 5px 0 0;
-  font-size: 12px;
-  line-height: 1.45;
+.p2p-demo-toast-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sev, var(--risk));
+  animation: toastDot 1.5s ease-in-out infinite;
+}
+.p2p-demo-toast-glyph { margin-left: auto; font-size: 9px; }
+.p2p-demo-toast-title {
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--fg);
+}
+.p2p-demo-toast-body {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--fg-2);
+}
+.p2p-demo-toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--sev, var(--risk));
+  opacity: 0.5;
+  transform-origin: left center;
+  animation: toastBar var(--life, 5000ms) linear both;
 }
 .p2p-demo-scene-caption {
   position: absolute;
@@ -932,9 +1000,16 @@
   .p2p-demo-case-packet {
     grid-template-columns: 1fr;
   }
-  .p2p-demo-callout-layer,
-  .p2p-demo-spotlight {
+  .p2p-demo-reticle {
     display: none;
+  }
+  .p2p-demo-notify {
+    position: static;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .p2p-demo-toast {
+    animation-delay: 0ms !important;
   }
   .p2p-demo-scene-caption {
     position: static;
@@ -980,4 +1055,8 @@
   }
   .p2p-demo-routewash { opacity: 0 !important; }
   .p2p-demo-cursor { display: none !important; }
+  .p2p-demo-reticle-scan,
+  .p2p-demo-reticle-ping { display: none !important; }
+  .p2p-demo-reticle { transform: none !important; }
+  .p2p-demo-toast-bar { display: none !important; }
 }

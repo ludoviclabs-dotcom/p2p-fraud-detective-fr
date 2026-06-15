@@ -43,7 +43,9 @@ export function P2PCaseFile360({
           marginTop: 16,
         }}
       >
-        <P2PRiskGauge target={DEMO_SUPPLIER.score} label={c.gaugeLabel} active={gaugeActive} />
+        <div data-demo-anchor="case-gauge">
+          <P2PRiskGauge target={DEMO_SUPPLIER.score} label={c.gaugeLabel} active={gaugeActive} />
+        </div>
         <div>
           <div className="p2p-demo-eyebrow" style={{ marginBottom: 8 }}>{c.reasonCodesTitle}</div>
           <P2PSignalList items={signals} revealed={signals.length} />

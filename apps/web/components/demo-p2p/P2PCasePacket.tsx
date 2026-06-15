@@ -54,7 +54,7 @@ export function P2PCasePacket({
         </div>
         <p>{content.final.disclaimer}</p>
       </div>
-      <div className="p2p-demo-audit-stamp" aria-hidden>
+      <div className="p2p-demo-audit-stamp" aria-hidden data-demo-anchor="audit-seal">
         <strong>{c.sealPrimary}</strong>
         <span>{c.sealSecondary}</span>
       </div>

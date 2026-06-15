@@ -7,7 +7,7 @@ import type { DemoContent } from "./p2p-demo-content";
 export function P2PEvidenceDrawer({ content }: { content: DemoContent }) {
   const e = content.evidence;
   return (
-    <div className="p2p-demo-drawer">
+    <div className="p2p-demo-drawer" data-demo-anchor="evidence-drawer">
       <div className="p2p-demo-eyebrow">{e.drawerTitle}</div>
       <p style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)", margin: "4px 0 12px" }}>
         {e.drawerSub}
