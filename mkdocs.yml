@@ -59,6 +59,7 @@ nav:
   - Accueil: index.md
   - Architecture: architecture.md
   - Méthodologie audit: methodologie-audit.md
+  - Plan d'action (audit 2026): plan-action-audit-2026.md
   - Benchmark F1: benchmark.md
   - Conformité:
       - DPIA (CNIL): compliance/dpia_template.md
