@@ -138,6 +138,18 @@ export default function SandboxPage() {
   );
 }
 
+const DETECTOR_HINT: Record<string, string> = {
+  master_data_changes: "Modifications de coordonnées bancaires",
+  under_thresholds: "Factures sous seuils de délégation",
+  duplicates: "Doublons par raison sociale / IBAN",
+  network_rings: "Graphe de fournisseurs liés",
+  shell_companies: "Entités sans substance vérifiable",
+  sanctions: "Screening listes sanctions OFAC / Trésor",
+  pep: "Exposition personne politiquement exposée",
+  benford: "Distribution Benford sur montants",
+  score_explorer: "Score de risque consolidé",
+};
+
 function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
   const detectorPages = Array.from(
     new Set(
@@ -151,10 +163,26 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
     ? `/vendors/${encodeURIComponent(scenario.target_vendor)}`
     : "/vendors";
 
+  const scoreMatch = scenario.storyline.match(/score\s+(\d+)\/100/i);
+  const score = scoreMatch ? `${scoreMatch[1]}/100` : null;
+  const demo = `?demo=${encodeURIComponent(scenario.name)}`;
+
   const conversionSteps = [
-    { label: "Voir le cockpit", href: "/dashboard" },
-    { label: "Ouvrir le vendor 360", href: vendorHref },
-    { label: "Exporter la preuve", href: "/exports" },
+    {
+      label: "Voir le cockpit",
+      href: `/dashboard${demo}`,
+      hint: score ? `Score ${score} · ${scenario.severity}` : scenario.severity,
+    },
+    {
+      label: "Ouvrir le vendor 360",
+      href: `${vendorHref}${demo}`,
+      hint: scenario.target_vendor ? `Fournisseur ${scenario.target_vendor}` : "Vue multi-fournisseur",
+    },
+    {
+      label: "Exporter la preuve",
+      href: `/exports${demo}`,
+      hint: "Piste d'audit signée",
+    },
   ];
 
   return (
@@ -167,10 +195,11 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
         <SeverityBadge value={scenario.severity} />
       </div>
       <div className="fx-panel-body space-y-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <FactBox label="Pilier" value={scenario.pillar} />
           <FactBox label="Cible" value={scenario.target_vendor ?? "Multi-vendor"} />
           <FactBox label="Détecteurs" value={String(scenario.detectors.length)} />
+          {score ? <FactBox label="Score" value={score} /> : null}
         </div>
 
         <div className="fx-card">
@@ -192,6 +221,7 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
             {scenario.detectors.map((d) => (
               <span
                 key={d}
+                title={DETECTOR_HINT[d]}
                 className="fx-mono"
                 style={{
                   fontSize: 11,
@@ -199,6 +229,7 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
                   background: "var(--panel-2)",
                   border: "1px solid var(--border-strong)",
                   color: "var(--info)",
+                  cursor: "help",
                 }}
               >
                 {d}
@@ -208,7 +239,7 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
         </div>
 
         <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", padding: "14px 16px" }}>
-          <div className="fx-eyebrow" style={{ marginBottom: 10 }}>◷ Parcours de conversion</div>
+          <div className="fx-eyebrow" style={{ marginBottom: 10 }}>◷ Parcours de conversion · simulation</div>
           <div className="grid gap-2 sm:grid-cols-3">
             {conversionSteps.map((step) => (
               <Link
@@ -225,18 +256,45 @@ function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
                   display: "block",
                 }}
               >
-                {step.label} →
+                <span style={{ color: "var(--fg)", display: "block", marginBottom: 3 }}>
+                  {step.label} →
+                </span>
+                <span style={{ color: "var(--muted)", fontSize: 10 }}>
+                  {step.hint}
+                </span>
               </Link>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {detectorPages.map((p) => (
-            <Link key={p} href={p} className="fx-btn-ghost sm">
-              Explorer {p} →
-            </Link>
-          ))}
+        <div>
+          <div className="fx-eyebrow" style={{ marginBottom: 8 }}>Détecteurs à investiguer</div>
+          <div className="flex flex-col gap-2">
+            {detectorPages.map((p) => (
+              <Link
+                key={p}
+                href={`${p}${demo}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 12px",
+                  background: "var(--panel)",
+                  border: "1px solid var(--border)",
+                  textDecoration: "none",
+                  fontSize: 12,
+                }}
+              >
+                <span className="fx-mono" style={{ color: "var(--info)" }}>Explorer {p}</span>
+                <span style={{ color: "var(--muted)", fontSize: 10 }}>
+                  {scenario.detectors
+                    .filter((d) => DETECTOR_TO_PAGE[d] === p)
+                    .map((d) => DETECTOR_HINT[d] ?? d)
+                    .join(" · ")}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>

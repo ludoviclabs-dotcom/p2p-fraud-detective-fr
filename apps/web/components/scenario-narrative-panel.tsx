@@ -24,7 +24,8 @@ export function ScenarioNarrativePanel({
   scenarioId: string;
   staticNarrative?: ScenarioNarrative;
 }) {
-  const [revealed, setRevealed] = useState(false);
+  // Pré-déployé quand le narratif est statique (sandbox mode).
+  const [revealed, setRevealed] = useState(!!staticNarrative);
   const mutation = useMutation({
     mutationFn: () => generateScenarioNarrative(scenarioId),
   });
@@ -39,7 +40,7 @@ export function ScenarioNarrativePanel({
           type="button"
           onClick={() => setRevealed((v) => !v)}
         >
-          {revealed ? "× Masquer le narratif" : "¶ Narratif du scénario"}
+          {revealed ? "× Replier le narratif" : "¶ Narratif du scénario"}
         </button>
 
         {revealed ? <NarrativeBody narrative={staticNarrative} source="static" /> : null}
