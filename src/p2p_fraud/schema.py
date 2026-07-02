@@ -131,6 +131,25 @@ class RiskScore(BaseModel):
         return round(v, 2)
 
 
+class EmployeeRecord(BaseModel):
+    """Ligne du référentiel RH — croisée avec les fournisseurs (conflits d'intérêts).
+
+    L'``iban`` est celui du versement de salaire : en production il doit être
+    haché côté ingestion (``security.iban``), jamais stocké en clair.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    employee_id: str
+    full_name: str
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    iban: str | None = None
+    department: str | None = None
+    can_approve_payments: bool = False
+
+
 class MasterDataField(StrEnum):
     """Champs sensibles d'un fournisseur dont les changements sont surveillés."""
 

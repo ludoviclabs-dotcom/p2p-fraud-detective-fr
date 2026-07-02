@@ -205,7 +205,7 @@ export const SANDBOX_SCENARIOS: SandboxScenario[] = [
     severity: "HIGH",
     short: "Fournisseur sans identifiant FR vérifiable, créé juste avant la 1re facture.",
     target_vendor: "V03110",
-    detectors: ["shell_companies", "score_explorer"],
+    detectors: ["shell_companies", "ghost_vendor", "score_explorer"],
     storyline:
       "Pour un marché de fournitures, la collectivité référence Eurotech Supplies Ltd (V03110), dont le " +
       "SIREN déclaré est introuvable au répertoire Sirene et dont l'adresse renvoie à une boîte postale " +
@@ -222,7 +222,7 @@ export const SANDBOX_SCENARIOS: SandboxScenario[] = [
         { text: "Adresse en boîte postale et IBAN LT12…1000 hors juridiction de la collectivité.", source_ids: ["IBAN-LT-1000"] },
         { text: "Première facture de 63 400 €, sans antériorité commerciale.", source_ids: ["INV-63400"] },
       ],
-      expected_detectors: ["shell_companies", "score_explorer"],
+      expected_detectors: ["shell_companies", "ghost_vendor", "score_explorer"],
       false_positive_traps: [
         "Une entreprise étrangère légitime peut ne pas avoir de SIREN — vérifier un identifiant équivalent (VAT intra-UE).",
         "Une jeune société n'est pas frauduleuse en soi : corroborer avec des références client et un site actif.",
@@ -344,7 +344,7 @@ export const SANDBOX_SCENARIOS: SandboxScenario[] = [
     severity: "CRITICAL",
     short: "L'approbateur du paiement est relié au bénéficiaire dans le graphe.",
     target_vendor: "V02890",
-    detectors: ["network_rings", "master_data_changes"],
+    detectors: ["network_rings", "conflicts_of_interest", "master_data_changes"],
     storyline:
       "Le cabinet Prestaconseil RH (V02890, SIREN 489 330 715) est créé puis référencé, et ses factures " +
       "sont systématiquement validées par le même approbateur interne (USER-VAL-204). Le détecteur " +
@@ -362,7 +362,7 @@ export const SANDBOX_SCENARIOS: SandboxScenario[] = [
         { text: "100 % des 14 règlements (92 700 €) validés par ce même approbateur sur 6 mois.", source_ids: ["APPR-204-14"] },
         { text: "Absence de mise en concurrence et de pièces de réception pour des prestations immatérielles.", source_ids: ["RECEPT-NONE"] },
       ],
-      expected_detectors: ["network_rings", "master_data_changes"],
+      expected_detectors: ["network_rings", "conflicts_of_interest", "master_data_changes"],
       false_positive_traps: [
         "Une homonymie d'adresse (immeuble de bureaux partagé) peut créer un faux lien de graphe.",
         "Dans une petite structure, un même valideur peut légitimement couvrir un périmètre — vérifier la délégation formelle.",

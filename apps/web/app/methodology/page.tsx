@@ -36,14 +36,22 @@ export default function MethodologyPage() {
             <strong style={{ color: "var(--fg)" }}>P2P Fraud Detective FR</strong>{" "}
             est un démonstrateur d&apos;audit du cycle Procure-to-Pay orienté
             détection de fraude : sous-seuils, doublons, BEC (Business Email
-            Compromise), sanctions, anneaux IBAN. Aligné sur les méthodologies
-            AML/CFT et les contrôles attendus en audit P2P public :{" "}
+            Compromise), sanctions, anneaux IBAN, fournisseurs fantômes,
+            conflits d&apos;intérêts. Aligné sur les méthodologies AML/CFT et
+            les contrôles attendus en audit P2P public :{" "}
             <strong style={{ color: "var(--fg)" }}>ISA 240</strong>,{" "}
             <strong style={{ color: "var(--fg)" }}>AS 2401</strong>,{" "}
             <strong style={{ color: "var(--fg)" }}>Sapin 2</strong>,{" "}
             <strong style={{ color: "var(--fg)" }}>LCB-FT</strong>,{" "}
             <strong style={{ color: "var(--fg)" }}>DORA art. 28</strong>,{" "}
-            <strong style={{ color: "var(--fg)" }}>AMLD6</strong>.
+            <strong style={{ color: "var(--fg)" }}>AMLD6</strong>,{" "}
+            <strong style={{ color: "var(--fg)" }}>NIS2 art. 21</strong>{" "}
+            (risque tiers / supply chain),{" "}
+            <strong style={{ color: "var(--fg)" }}>IPR 2024/886</strong>{" "}
+            (Verification of Payee). Positionnement : couche de contrôle
+            interne <em>pre-payment</em>, en amont du VoP des PSP et du{" "}
+            <strong style={{ color: "var(--fg)" }}>FNC-RF</strong> Banque de
+            France (mai 2026).
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
             Pertinent pour les ETI 500 M€-2 Md€, cabinets d&apos;audit
@@ -80,6 +88,8 @@ export default function MethodologyPage() {
                 ["UE consolidée", "via Yente", "EU Open Data", "Quotidienne"],
                 ["OFAC SDN", "via Yente", "US Public Domain", "Hebdomadaire"],
                 ["Trésor FR (gels)", "tresor.economie.gouv.fr", "Légifrance", "Quotidienne"],
+                ["Bodacc (procédures collectives)", "bodacc-datadila.opendatasoft.com", "Licence Ouverte 2.0", "Quotidienne"],
+                ["FNC-RF (Banque de France)", "connecteur réservé — API PSP uniquement", "—", "En attente d'ouverture"],
               ].map(([src, ep, lic, freq]) => (
                 <tr key={src}>
                   <td className="key">{src}</td>

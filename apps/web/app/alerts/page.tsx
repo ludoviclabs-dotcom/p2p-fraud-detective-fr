@@ -1,8 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { listAudit, type AuditEntryOut } from "@/lib/api-client";
+import {
+  listAlertChannels,
+  listAudit,
+  sendTestAlert,
+  type AlertTestResponse,
+  type AuditEntryOut,
+} from "@/lib/api-client";
 import {
   ALERTS_FEED_LIMIT,
   ALERTS_REFETCH_MS,
@@ -188,97 +194,7 @@ export default function AlertsPage() {
         </div>
       </div>
 
-      <div className="fx-panel" style={{ marginBottom: 16 }}>
-        <div className="fx-panel-head">
-          <h2>{t("alerts.channels_title")}</h2>
-          <span className="glyph">◷</span>
-        </div>
-        <div className="fx-table-wrap">
-          <table data-testid="alerts-channel-table" className="fx-table">
-            <thead>
-              <tr>
-                <th>{t("alerts.channel")}</th>
-                <th>{t("alerts.status")}</th>
-                <th>{t("alerts.target")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="key">Slack Webhook</td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11 }}>
-                    {t("alerts.configurable_via")}{" "}
-                    <code
-                      style={{
-                        background: "var(--panel-2)",
-                        border: "1px solid var(--border)",
-                        padding: "1px 5px",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                      }}
-                    >
-                      SLACK_WEBHOOK_URL
-                    </code>
-                  </span>
-                </td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-                    {t("alerts.slack_target")}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="key">Microsoft Teams</td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11 }}>
-                    {t("alerts.configurable_via")}{" "}
-                    <code
-                      style={{
-                        background: "var(--panel-2)",
-                        border: "1px solid var(--border)",
-                        padding: "1px 5px",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                      }}
-                    >
-                      TEAMS_WEBHOOK_URL
-                    </code>
-                  </span>
-                </td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-                    {t("alerts.teams_target")}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="key">Webhook B2B CloudEvents</td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11 }}>
-                    {t("alerts.hmac_signed_via")}{" "}
-                    <code
-                      style={{
-                        background: "var(--panel-2)",
-                        border: "1px solid var(--border)",
-                        padding: "1px 5px",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                      }}
-                    >
-                      WEBHOOK_URL
-                    </code>
-                  </span>
-                </td>
-                <td>
-                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-                    {t("alerts.webhook_target")}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ChannelsPanel t={t} />
 
       <div className="fx-panel">
         <div className="fx-panel-head">
@@ -424,4 +340,177 @@ function parseBackendHint(raw: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+const CHANNEL_ENV: Record<string, string> = {
+  slack: "SLACK_WEBHOOK_URL",
+  teams: "TEAMS_WEBHOOK_URL",
+  smtp: "SMTP_HOST · SMTP_FROM · SMTP_TO",
+};
+
+const CHANNEL_LABEL: Record<string, string> = {
+  slack: "Slack Webhook",
+  teams: "Microsoft Teams",
+  smtp: "Email (SMTP)",
+};
+
+/**
+ * Canaux de notification — statut live quand le backend répond, documentation
+ * des variables d'environnement sinon (offline-first). Le bouton d'alerte test
+ * valide la chaîne finding → règle → canal sans attendre un déclenchement réel.
+ */
+function ChannelsPanel({ t }: { t: (key: string) => string }) {
+  const channels = useQuery({
+    queryKey: ["alert-channels"],
+    queryFn: listAlertChannels,
+    retry: false,
+  });
+  const [testResult, setTestResult] = useState<AlertTestResponse | null>(null);
+  const testMutation = useMutation({
+    mutationFn: sendTestAlert,
+    onSuccess: setTestResult,
+  });
+
+  const live = channels.data ?? null;
+
+  return (
+    <div className="fx-panel" style={{ marginBottom: 16 }}>
+      <div className="fx-panel-head">
+        <div>
+          <h2>{t("alerts.channels_title")}</h2>
+        </div>
+        <span
+          className="fx-mono"
+          style={{
+            fontSize: 10,
+            padding: "3px 8px",
+            border: `1px solid ${live ? "var(--ok)" : "var(--border-strong)"}`,
+            color: live ? "var(--ok)" : "var(--muted)",
+          }}
+        >
+          {live ? "STATUT LIVE" : "DOC OFFLINE"}
+        </span>
+      </div>
+      <div className="fx-table-wrap">
+        <table data-testid="alerts-channel-table" className="fx-table">
+          <thead>
+            <tr>
+              <th>{t("alerts.channel")}</th>
+              <th>{t("alerts.status")}</th>
+              <th>{t("alerts.target")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(live ?? [
+              { name: "slack", configured: false, target: "" },
+              { name: "teams", configured: false, target: "" },
+              { name: "smtp", configured: false, target: "" },
+            ]).map((c) => (
+              <tr key={c.name}>
+                <td className="key">{CHANNEL_LABEL[c.name] ?? c.name}</td>
+                <td>
+                  {live ? (
+                    <span
+                      className="fx-mono"
+                      style={{
+                        fontSize: 11,
+                        color: c.configured ? "var(--ok)" : "var(--warn)",
+                      }}
+                    >
+                      {c.configured ? "● ACTIF" : "○ CONFIG REQUISE"}
+                    </span>
+                  ) : (
+                    <span className="fx-mono" style={{ fontSize: 11 }}>
+                      {t("alerts.configurable_via")}
+                    </span>
+                  )}{" "}
+                  <code
+                    style={{
+                      background: "var(--panel-2)",
+                      border: "1px solid var(--border)",
+                      padding: "1px 5px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 10,
+                    }}
+                  >
+                    {CHANNEL_ENV[c.name] ?? c.name}
+                  </code>
+                </td>
+                <td>
+                  <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                    {c.configured && c.target
+                      ? c.target
+                      : c.name === "slack"
+                        ? t("alerts.slack_target")
+                        : c.name === "teams"
+                          ? t("alerts.teams_target")
+                          : "Destinataires SMTP"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td className="key">Webhook B2B CloudEvents</td>
+              <td>
+                <span className="fx-mono" style={{ fontSize: 11 }}>
+                  {t("alerts.hmac_signed_via")}{" "}
+                  <code
+                    style={{
+                      background: "var(--panel-2)",
+                      border: "1px solid var(--border)",
+                      padding: "1px 5px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 10,
+                    }}
+                  >
+                    WEBHOOK_URL
+                  </code>
+                </span>
+              </td>
+              <td>
+                <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                  {t("alerts.webhook_target")}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        className="fx-panel-body"
+        style={{ borderTop: "1px solid var(--border)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}
+      >
+        <button
+          type="button"
+          className="fx-btn-ghost sm"
+          disabled={testMutation.isPending}
+          onClick={() => testMutation.mutate()}
+        >
+          {testMutation.isPending ? "◷ Envoi…" : "▶ Envoyer une alerte test"}
+        </button>
+        {testMutation.isError ? (
+          <span className="fx-mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+            Backend FastAPI requis pour l&apos;alerte test — la configuration des canaux
+            reste documentée ci-dessus.
+          </span>
+        ) : null}
+        {testResult ? (
+          <span className="fx-mono" style={{ fontSize: 11, color: "var(--fg-2)" }}>
+            {testResult.message}
+            {testResult.sent.map((d) => (
+              <span
+                key={d.channel}
+                style={{
+                  marginLeft: 8,
+                  color: d.delivered ? "var(--ok)" : "var(--risk)",
+                }}
+              >
+                {d.channel}: {d.delivered ? "✓" : "✕"}
+              </span>
+            ))}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
 }

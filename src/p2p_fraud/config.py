@@ -82,6 +82,16 @@ class Settings(BaseSettings):
     slack_webhook_url: str = ""
     teams_webhook_url: str = ""
 
+    # ─── Alertes email SMTP ──────────────────────────────────────────────────
+    # Canal SMTPChannel (alerts/channels.py). `smtp_to` accepte une liste
+    # séparée par des virgules. Si `smtp_host` est vide → canal non configuré.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_to: str = ""
+
     # ─── Signatures Ed25519 audit log (P5-5) ─────────────────────────────────
     # Clé privée Ed25519 (base64, 32 octets bruts). Générer hors ligne :
     #     python -c "from p2p_fraud.security.signing import Ed25519Signer; \\
@@ -124,6 +134,33 @@ class Settings(BaseSettings):
     pappers_api_key: str = ""
     pappers_base_url: str = "https://api.pappers.fr/v2"
     yente_base_url: str = "https://api.opensanctions.org"
+
+    # ─── Bodacc (procédures collectives) ─────────────────────────────────────
+    # API open data DILA (opendatasoft) — aucune clé requise. Le connecteur
+    # est DISPONIBLE dès que `enrichment_mode == "live"`.
+    bodacc_base_url: str = "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1"
+
+    # ─── FNC-RF (Banque de France, mai 2026) ─────────────────────────────────
+    # Fichier National Commun de la Relation Frauduleuse — IBAN frauduleux
+    # partagés entre PSP. L'API n'est PAS encore ouverte aux entreprises :
+    # ces variables sont l'EMPLACEMENT réservé du connecteur. Tant que
+    # `fnc_rf_api_url` est vide, le connecteur s'affiche « EN ATTENTE API ».
+    fnc_rf_api_url: str = ""
+    fnc_rf_api_key: str = ""
+
+    # ─── VoP — Verification of Payee (IPR 2024/886) ──────────────────────────
+    # Le pre-check VoP passe par un prestataire PSP (SEPAmail Diamond,
+    # Swift PMPC, offre bancaire…). Tant que `vop_provider_url` est vide,
+    # la simulation locale (fuzzy match nom ↔ nom attendu) fait office de démo.
+    vop_provider_url: str = ""
+    vop_provider_key: str = ""
+
+    # ─── Chorus Pro (facturation électronique secteur public) ────────────────
+    # Emplacement réservé — flux structuré Factur-X via le portail AIFE
+    # (https://developer.aife.economie.gouv.fr). Ingestion directe des factures
+    # des entités publiques dans le pipeline de détection.
+    chorus_pro_api_url: str = ""
+    chorus_pro_api_key: str = ""
 
     # ─── Logging ─────────────────────────────────────────────────────────────
     log_level: str = "INFO"

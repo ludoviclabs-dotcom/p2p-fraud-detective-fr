@@ -104,7 +104,7 @@ export function Referentials() {
 
       <CTA
         href="/methodology"
-        hint="Mapping complet ISA 240 · AS 2401 · Sapin 2 · DORA · LCB-FT"
+        hint="Mapping complet ISA 240 · Sapin 2 · DORA · LCB-FT · NIS2 · VoP · FNC-RF"
         label="Lire la méthodologie"
       />
     </section>
@@ -212,7 +212,14 @@ export function Footer() {
             <h4>Preuve</h4>
             <a href="#trust">Trust center</a>
             <Link href="/methodology">Méthodologie</Link>
-            <Link href="/methodology">Mapping ISA 240</Link>
+            <Link href="/cac-partner">CAC Partner</Link>
+            <Link href="/fnc-rf-fraude-iban">FNC-RF & VoP</Link>
+          </div>
+          <div className="footer-col">
+            <h4>Marchés</h4>
+            <Link href="/secteur-public">Secteur public</Link>
+            <Link href="/connecteurs">Connecteurs</Link>
+            <Link href="/sandbox">Démo 60 s</Link>
             <Link href="/risk-docs">Changelog v2</Link>
           </div>
           <div className="footer-col">
