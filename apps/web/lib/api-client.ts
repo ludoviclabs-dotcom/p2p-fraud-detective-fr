@@ -439,3 +439,84 @@ export const setCaseDecision = (
 
 export const createCaseFromWorkflow = (body: CaseBootstrapBody) =>
   api.post<CaseOutV1>("/api/v1/cases/bootstrap", body);
+
+// ─── Écosystème (section 7 API v1) — connecteurs, alertes push, conflits, VoP ─
+// Types locaux tant que `pnpm sdk:gen-types` n'a pas régénéré @p2pfd/shared-types.
+
+export interface ConnectorOut {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: "actif" | "disponible" | "config_requise" | "en_attente_api" | "roadmap";
+  mode: "demo" | "live" | "slot";
+  env_vars: string[];
+  signals: string[];
+  docs_url: string;
+}
+
+export const listConnectors = () => api.get<ConnectorOut[]>("/api/v1/connectors");
+
+export interface AlertChannelOut {
+  name: string;
+  configured: boolean;
+  target: string;
+}
+
+export const listAlertChannels = () =>
+  api.get<AlertChannelOut[]>("/api/v1/alerts/channels");
+
+export interface AlertTestResponse {
+  sent: { channel: string; delivered: boolean }[];
+  message: string;
+}
+
+export const sendTestAlert = () =>
+  api.post<AlertTestResponse>("/api/v1/alerts/test", {});
+
+export interface EmployeeIn {
+  employee_id: string;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  iban?: string | null;
+  department?: string | null;
+  can_approve_payments?: boolean;
+}
+
+export interface VendorIn {
+  siren: string;
+  name: string;
+  iban_list?: string[];
+  address?: string | null;
+}
+
+export interface ConflictFindingOut {
+  rule_id: string;
+  signal: string;
+  severity: string;
+  vendor_name: string;
+  siren: string;
+  employee_id: string;
+  evidence: Record<string, unknown>;
+}
+
+export const scanConflicts = (body: {
+  employees: EmployeeIn[];
+  vendors: VendorIn[];
+  name_similarity_threshold?: number;
+}) => api.post<ConflictFindingOut[]>("/api/v1/conflicts/scan", body);
+
+export interface VopPrecheckOut {
+  verdict: "match" | "close_match" | "no_match" | "not_available";
+  similarity: number | null;
+  detail: string;
+  provider: string;
+}
+
+export const vopPrecheck = (body: {
+  beneficiary_name: string;
+  iban: string;
+  expected_name?: string;
+}) => api.post<VopPrecheckOut>("/api/v1/vop/precheck", body);

@@ -1557,3 +1557,264 @@ def llm_narrative_stream(
             "X-Accel-Buffering": "no",  # désactive buffering nginx/proxies
         },
     )
+
+
+# ─── 7. Écosystème — connecteurs, alertes push, conflits d'intérêts, VoP ─────
+
+
+class ConnectorOut(BaseModel):
+    id: str
+    name: str
+    category: str
+    description: str
+    status: str
+    mode: str
+    env_vars: list[str]
+    signals: list[str]
+    docs_url: str
+
+
+@router.get("/connectors", response_model=list[ConnectorOut])
+def list_connectors_endpoint(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[ConnectorOut]:
+    """Registre des connecteurs externes avec statut calculé depuis l'environnement.
+
+    Alimente la page `/connecteurs` du frontend. Les statuts distinguent les
+    connecteurs actifs, activables par config, et les emplacements réservés
+    (FNC-RF en attente d'ouverture de l'API Banque de France, Chorus Pro).
+    """
+    from p2p_fraud.connectors import list_connectors
+
+    return [ConnectorOut(**c.__dict__) for c in list_connectors()]
+
+
+class AlertChannelOut(BaseModel):
+    name: str
+    configured: bool
+    target: str  # cible masquée (hostname / domaine), jamais l'URL complète
+
+
+class AlertTestDelivery(BaseModel):
+    channel: str
+    delivered: bool
+
+
+class AlertTestResponse(BaseModel):
+    sent: list[AlertTestDelivery]
+    message: str
+
+
+def _mask_url(url: str) -> str:
+    if not url:
+        return ""
+    try:
+        from urllib.parse import urlparse
+
+        return urlparse(url).netloc or "configuré"
+    except ValueError:
+        return "configuré"
+
+
+def _build_channels() -> list:
+    """Instancie les canaux configurés depuis Settings (Slack, Teams, SMTP)."""
+    from p2p_fraud.alerts.channels import SlackWebhook, SMTPChannel, TeamsWebhook
+    from p2p_fraud.config import get_settings
+
+    s = get_settings()
+    channels: list = []
+    if s.slack_webhook_url:
+        channels.append(SlackWebhook(url=s.slack_webhook_url))
+    if s.teams_webhook_url:
+        channels.append(TeamsWebhook(url=s.teams_webhook_url))
+    if s.smtp_host and s.smtp_from and s.smtp_to:
+        channels.append(
+            SMTPChannel(
+                host=s.smtp_host,
+                port=s.smtp_port,
+                username=s.smtp_username,
+                password=s.smtp_password,
+                from_addr=s.smtp_from,
+                to_addrs=[a.strip() for a in s.smtp_to.split(",") if a.strip()],
+            )
+        )
+    return channels
+
+
+@router.get("/alerts/channels", response_model=list[AlertChannelOut])
+def list_alert_channels(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[AlertChannelOut]:
+    """État de configuration des canaux d'alerte push (jamais de secret exposé)."""
+    from p2p_fraud.config import get_settings
+
+    s = get_settings()
+    smtp_target = s.smtp_to.split("@")[-1] if "@" in s.smtp_to else ""
+    return [
+        AlertChannelOut(
+            name="slack",
+            configured=bool(s.slack_webhook_url),
+            target=_mask_url(s.slack_webhook_url),
+        ),
+        AlertChannelOut(
+            name="teams",
+            configured=bool(s.teams_webhook_url),
+            target=_mask_url(s.teams_webhook_url),
+        ),
+        AlertChannelOut(
+            name="smtp",
+            configured=bool(s.smtp_host and s.smtp_from and s.smtp_to),
+            target=f"…@{smtp_target}" if smtp_target else "",
+        ),
+    ]
+
+
+@router.post("/alerts/test", response_model=AlertTestResponse)
+def send_test_alert(
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> AlertTestResponse:
+    """Envoie une alerte de test vers tous les canaux configurés.
+
+    Permet de valider la chaîne finding → règle → canal sans attendre un
+    déclenchement réel. Sans canal configuré, renvoie la liste des variables
+    d'environnement à poser.
+    """
+    channels = _build_channels()
+    if not channels:
+        return AlertTestResponse(
+            sent=[],
+            message=(
+                "Aucun canal configuré — poser SLACK_WEBHOOK_URL, TEAMS_WEBHOOK_URL "
+                "ou SMTP_HOST/SMTP_FROM/SMTP_TO puis relancer."
+            ),
+        )
+    deliveries = [
+        AlertTestDelivery(
+            channel=ch.name,
+            delivered=ch.send(
+                title="[TEST] P2P Fraud Detective — canal d'alerte opérationnel",
+                body=(
+                    "Alerte de test émise depuis /api/v1/alerts/test. "
+                    "La chaîne finding → règle → canal est fonctionnelle."
+                ),
+                severity="low",
+                metadata={"source": "alerts/test", "environment": "manual-check"},
+            ),
+        )
+        for ch in channels
+    ]
+    ok = sum(1 for d in deliveries if d.delivered)
+    return AlertTestResponse(
+        sent=deliveries,
+        message=f"{ok}/{len(deliveries)} canal(aux) ont accepté l'alerte de test.",
+    )
+
+
+class EmployeeIn(BaseModel):
+    employee_id: str
+    full_name: str
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    iban: str | None = None
+    department: str | None = None
+    can_approve_payments: bool = False
+
+
+class VendorIn(BaseModel):
+    siren: str
+    name: str
+    iban_list: list[str] = Field(default_factory=list)
+    address: str | None = None
+
+
+class ConflictsScanBody(BaseModel):
+    employees: list[EmployeeIn]
+    vendors: list[VendorIn]
+    name_similarity_threshold: float = 90.0
+
+
+class ConflictFindingOut(BaseModel):
+    rule_id: str
+    signal: str
+    severity: str
+    vendor_name: str
+    siren: str
+    employee_id: str
+    evidence: dict
+
+
+@router.post("/conflicts/scan", response_model=list[ConflictFindingOut])
+def scan_conflicts(
+    body: ConflictsScanBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> list[ConflictFindingOut]:
+    """Croise un référentiel RH avec les fournisseurs — conflits d'intérêts.
+
+    Stateless : le référentiel RH transite dans la requête et n'est jamais
+    persisté (RGPD : minimisation). Le scan retourne les liens non déclarés
+    (IBAN partagé, adresse commune, homonymie, rupture 4-eyes).
+    """
+    from p2p_fraud.detectors.conflicts import detect_conflicts_of_interest
+    from p2p_fraud.schema import EmployeeRecord, Vendor
+
+    employees = [EmployeeRecord(**e.model_dump()) for e in body.employees]
+    vendors = [Vendor(**v.model_dump()) for v in body.vendors]
+    findings = detect_conflicts_of_interest(
+        employees,
+        vendors,
+        name_similarity_threshold=body.name_similarity_threshold,
+    )
+    return [
+        ConflictFindingOut(
+            rule_id=f.rule_id,
+            signal=f.signal,
+            severity=f.severity.value,
+            vendor_name=str(f.evidence.get("vendor_name", "")),
+            siren=str(f.evidence.get("siren", "")),
+            employee_id=str(f.evidence.get("employee_id", "")),
+            evidence=f.evidence,
+        )
+        for f in findings
+    ]
+
+
+class VopPrecheckBody(BaseModel):
+    beneficiary_name: str
+    iban: str
+    expected_name: str | None = None
+
+
+class VopPrecheckOut(BaseModel):
+    verdict: str
+    similarity: float | None = None
+    detail: str
+    provider: str
+
+
+@router.post("/vop/precheck", response_model=VopPrecheckOut)
+def vop_precheck(
+    body: VopPrecheckBody,
+    _: Annotated[str, Depends(_require_auth_v1)],
+) -> VopPrecheckOut:
+    """Pré-check VoP nom ↔ IBAN à la saisie du RIB (avant la couche PSP).
+
+    Simulation locale par défaut (fuzzy nom saisi vs nom attendu) ; bascule
+    automatiquement sur le prestataire VoP quand VOP_PROVIDER_URL est posée.
+    """
+    from p2p_fraud.config import get_settings
+    from p2p_fraud.enrichment.vop_client import VopClient
+
+    s = get_settings()
+    client = VopClient(provider_url=s.vop_provider_url, provider_key=s.vop_provider_key)
+    result = client.precheck(
+        beneficiary_name=body.beneficiary_name,
+        iban=body.iban,
+        expected_name=body.expected_name,
+    )
+    return VopPrecheckOut(
+        verdict=result.verdict,
+        similarity=result.similarity,
+        detail=result.detail,
+        provider=result.provider,
+    )

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CaseGraph } from "./case-graph";
 import { SCENARIOS } from "./data";
@@ -94,8 +95,32 @@ export function Hero() {
               <span>
                 <span className="dot" />1 247 fournisseurs surveillés
               </span>
-              <span>· 8 détecteurs en cascade ·</span>
+              <span>· 10 détecteurs en cascade ·</span>
               <span>Piste d&apos;audit Ed25519</span>
+            </div>
+
+            <div
+              style={{
+                marginTop: 18,
+                border: "1px solid var(--border)",
+                borderLeft: "2px solid var(--risk)",
+                padding: "12px 14px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                lineHeight: 1.8,
+                color: "var(--muted)",
+              }}
+            >
+              <span style={{ color: "var(--fg)" }}>FNC-RF</span> (Banque de France · mai 2026)
+              filtre les IBAN déjà signalés, côté banque. <span style={{ color: "var(--fg)" }}>VoP</span>{" "}
+              (oct. 2025) vérifie le nom au moment du virement.{" "}
+              <span style={{ color: "var(--fg)" }}>
+                Cet outil agit en amont — au changement du master data
+              </span>
+              , avec une preuve Ed25519 qu&apos;un tiers vérifie sans accès à la plateforme.{" "}
+              <Link href="/fnc-rf-fraude-iban" style={{ color: "var(--risk)", textDecoration: "none" }}>
+                Les 3 couches →
+              </Link>
             </div>
           </div>
 

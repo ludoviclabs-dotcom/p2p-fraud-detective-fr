@@ -178,8 +178,11 @@ export const REFERENTIALS: Referential[] = [
   { num: "I", name: "ISA 240", desc: "Responsabilités de l'auditeur concernant les fraudes. Tests JET, contrôles 4-eyes, Benford en outil de scoping.", tag: "Audit légal" },
   { num: "II", name: "AS 2401", desc: "Équivalent PCAOB · applicable à l'audit des entités cotées SEC (filiales US d'ETI françaises).", tag: "PCAOB · US" },
   { num: "III", name: "Sapin 2 · Art. 17", desc: "Cartographie des risques de corruption. Réutilise le risk engine du module P2P pour la conformité.", tag: "Anti-corruption" },
-  { num: "IV", name: "DORA", desc: "Résilience opérationnelle numérique · registre des prestataires TIC alimenté par le client Sirene.", tag: "Résilience UE" },
+  { num: "IV", name: "DORA · Art. 28", desc: "Résilience opérationnelle numérique · registre des prestataires TIC alimenté par le client Sirene.", tag: "Résilience UE" },
   { num: "V", name: "LCB-FT", desc: "Lutte contre le blanchiment · matching fuzzy contre OpenSanctions, Trésor FR, OFAC SDN.", tag: "Conformité bancaire" },
+  { num: "VI", name: "NIS2 · supply chain", desc: "Gestion du risque tiers (art. 21) · le registre fournisseurs scoré couvre le pilier chaîne d'approvisionnement.", tag: "Cyber · UE" },
+  { num: "VII", name: "IPR 2024/886 · VoP", desc: "Verification of Payee obligatoire (oct. 2025) · pré-check nom ↔ IBAN dès la saisie du RIB, en amont du PSP.", tag: "Paiements UE" },
+  { num: "VIII", name: "FNC-RF · BdF 2026", desc: "Fichier des IBAN frauduleux partagé entre PSP · connecteur réservé, complémentaire du contrôle interne pre-payment.", tag: "Banque de France" },
 ];
 
 export const HASH_CHAIN: string[] = [

@@ -52,6 +52,8 @@ const SECTIONS: NavSection[] = [
       { href: "/structuring", labelKey: "nav.structuring", glyph: "⌒" },
       { href: "/sanctions", labelKey: "nav.sanctions", glyph: "✕", badge: "risk" },
       { href: "/rings", labelKey: "nav.rings", glyph: "◇" },
+      { href: "/ghost-vendor", labelKey: "nav.ghost_vendor", glyph: "◌", badge: "new" },
+      { href: "/conflicts", labelKey: "nav.conflicts", glyph: "⋈", badge: "new" },
       { href: "/score", labelKey: "nav.score", glyph: "Σ" },
     ],
   },
@@ -63,6 +65,7 @@ const SECTIONS: NavSection[] = [
       { href: "/sirene", labelKey: "nav.sirene", glyph: "✓", badge: "live" },
       { href: "/decp-rbe", labelKey: "nav.decp_rbe", glyph: "✓", badge: "live" },
       { href: "/master-history", labelKey: "nav.master_history", glyph: "↺" },
+      { href: "/connecteurs", labelKey: "nav.connectors", glyph: "⊕", badge: "new" },
     ],
   },
   {
@@ -73,6 +76,15 @@ const SECTIONS: NavSection[] = [
       { href: "/audit", labelKey: "nav.audit", glyph: "✓" },
       { href: "/exports", labelKey: "nav.exports", glyph: "↓" },
       { href: "/governance", labelKey: "nav.governance", glyph: "★" },
+    ],
+  },
+  {
+    code: "07",
+    titleKey: "nav.section_ecosystem",
+    items: [
+      { href: "/secteur-public", labelKey: "nav.secteur_public", glyph: "▦", badge: "new" },
+      { href: "/cac-partner", labelKey: "nav.cac_partner", glyph: "✓", badge: "new" },
+      { href: "/fnc-rf-fraude-iban", labelKey: "nav.fnc_rf", glyph: "◉", badge: "new" },
     ],
   },
 ];

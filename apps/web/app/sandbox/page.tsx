@@ -25,6 +25,8 @@ const DETECTOR_TO_PAGE: Record<string, string> = {
   pep: "/sanctions",
   benford: "/benford",
   score_explorer: "/score",
+  ghost_vendor: "/ghost-vendor",
+  conflicts_of_interest: "/conflicts",
 };
 
 export default function SandboxPage() {
@@ -148,6 +150,8 @@ const DETECTOR_HINT: Record<string, string> = {
   pep: "Exposition personne politiquement exposée",
   benford: "Distribution Benford sur montants",
   score_explorer: "Score de risque consolidé",
+  ghost_vendor: "Faisceau fournisseur fantôme",
+  conflicts_of_interest: "Croisement RH ↔ fournisseurs",
 };
 
 function ScenarioDetail({ scenario }: { scenario: ScenarioMeta }) {
