@@ -7,7 +7,8 @@ test("alerts page stays usable in fallback mode without FastAPI", async ({ page 
     page.getByRole("heading", { level: 1, name: "Alertes & monitoring" }),
   ).toBeVisible();
   await expect(page.locator("[data-testid='alerts-channel-table']")).toBeVisible();
-  await expect(page.locator("[data-testid='alerts-channel-table'] tbody tr")).toHaveCount(3);
+  // Fallback (sans FastAPI) : Slack, Teams, SMTP + Webhook B2B CloudEvents.
+  await expect(page.locator("[data-testid='alerts-channel-table'] tbody tr")).toHaveCount(4);
   await expect(page.locator("[data-testid='alerts-stream-message']")).toContainText(
     "bascule en polling",
   );
